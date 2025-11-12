@@ -1,13 +1,13 @@
 # ====== Сборка ======
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 COPY . .
-RUN mvn clean package -DskipTests
+RUN gradle clean build -x test
 
 # ====== Запуск ======
 FROM eclipse-temurin:17-jdk
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
