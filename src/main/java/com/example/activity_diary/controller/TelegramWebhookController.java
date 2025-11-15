@@ -16,11 +16,9 @@ public class TelegramWebhookController {
 
     private final AuthService authService;
 
-    // Telegram will POST JSON updates here
     @PostMapping("/webhook")
     public ResponseEntity<String> onUpdate(@RequestBody Map<String, Object> update) {
         try {
-            // safe extraction without tight DTO
             if (update.containsKey("message")) {
                 Map<String, Object> message = (Map<String, Object>) update.get("message");
                 Map<String, Object> chat = (Map<String, Object>) message.get("chat");
@@ -30,12 +28,14 @@ public class TelegramWebhookController {
                 Object textObj = message.get("text");
                 if (textObj != null) {
                     String text = textObj.toString().trim();
+
                     if (text.startsWith("/start")) {
                         String[] parts = text.split(" ");
                         String token = null;
+
                         if (parts.length >= 2) token = parts[1].trim();
-                        // also handle /start<token> style
-                        if (token == null && text.startsWith("/start")) {
+
+                        if (token == null) {
                             String raw = text.substring(6).trim();
                             if (!raw.isEmpty()) token = raw;
                         }
@@ -43,7 +43,7 @@ public class TelegramWebhookController {
                         if (token != null && !token.isEmpty()) {
                             boolean ok = authService.linkTelegramByToken(token, chatId);
                             if (ok) return ResponseEntity.ok("linked");
-                            else return ResponseEntity.badRequest().body("invalid token");
+                            else return ResponseEntity.ok("invalid token"); // FIX
                         }
                     }
                 }
@@ -51,7 +51,7 @@ public class TelegramWebhookController {
         } catch (Exception e) {
             log.error("Webhook handling error", e);
         }
-        // return 200 so Telegram won't retry too aggressively
+
         return ResponseEntity.ok("ignored");
     }
 }
