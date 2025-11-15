@@ -32,7 +32,14 @@ public class User {
 
     private String fullName;
 
+    // NEW: chatId and verifyToken
+    private Long chatId;
+
+    @Column(unique = true)
+    private String verifyToken;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
+    @Builder.Default
     private List<DiaryEntry> diaryEntries = new ArrayList<>();
 }

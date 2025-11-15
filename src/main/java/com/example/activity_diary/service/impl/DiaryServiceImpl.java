@@ -57,11 +57,17 @@ public class DiaryServiceImpl implements DiaryService {
     }
 
     @Override
-    public DiaryEntry update(Long id, DiaryEntry updated) {
+    public DiaryEntry update(Long id, DiaryEntry updated, UserDetails currentUser) {
         DiaryEntry existing = diaryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Diary entry not found with id " + id));
 
-        // Обновляем поля
+        User user = userRepository.findByEmail(currentUser.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!existing.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Access denied: this entry does not belong to the current user");
+        }
+
         existing.setWhatHappened(updated.getWhatHappened());
         existing.setWhat(updated.getWhat());
         existing.setWhenStarted(updated.getWhenStarted());
@@ -71,10 +77,8 @@ public class DiaryServiceImpl implements DiaryService {
         existing.setStatus(updated.getStatus());
         existing.setUpdatedAt(LocalDateTime.now());
 
-        // Считаем длительность, если есть даты
         computeDuration(existing);
 
-        // Обновляем активити
         existing.getWhatDidYouDo().clear();
         if (updated.getWhatDidYouDo() != null) {
             for (ActivityItem item : updated.getWhatDidYouDo()) {
@@ -85,6 +89,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         return diaryRepository.save(existing);
     }
+
 
     @Override
     public DiaryEntry getByIdForUser(Long id, UserDetails currentUser) {
@@ -104,8 +109,18 @@ public class DiaryServiceImpl implements DiaryService {
     }
 
     @Override
-    public void delete(Long id) {
-        diaryRepository.deleteById(id);
+    public void delete(Long id, UserDetails currentUser) {
+        DiaryEntry entry = diaryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Diary entry not found"));
+
+        User user = userRepository.findByEmail(currentUser.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!entry.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Access denied");
+        }
+
+        diaryRepository.delete(entry);
     }
 
     @Override

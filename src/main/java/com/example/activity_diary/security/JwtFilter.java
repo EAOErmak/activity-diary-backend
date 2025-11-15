@@ -10,6 +10,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,25 +26,48 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
         String username = null;
         String token = null;
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            if (jwtUtils.validateToken(token)) {
-                username = jwtUtils.getUsernameFromToken(token);
+
+            try {
+                if (jwtUtils.validateToken(token)) {
+                    username = jwtUtils.getUsernameFromToken(token);
+                }
+            } catch (Exception e) {
+                // Ошибка в токене → просто пропускаем без аутентификации
+                filterChain.doFilter(request, response);
+                return;
             }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails ud = userDetailsService.loadUserByUsername(username);
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            try {
+                UserDetails ud = userDetailsService.loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
+
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+
+            } catch (UsernameNotFoundException e) {
+                // ВАЖНО: пользователь удалён — значит токен устарел
+                // Пропускаем дальше, но НЕ ставим аутентификацию
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
 
         filterChain.doFilter(request, response);
     }
 }
+

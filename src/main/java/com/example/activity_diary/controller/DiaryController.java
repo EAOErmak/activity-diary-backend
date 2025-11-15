@@ -52,16 +52,15 @@ public class DiaryController {
 
     @PutMapping("/{id}")
     public ResponseEntity<DiaryEntry> update(@PathVariable Long id,
-                                             @Valid @RequestBody DiaryEntry entry,
+                                             @RequestBody DiaryEntry entry,
                                              @AuthenticationPrincipal UserDetails ud) {
-        // Optional: check ownership
-        DiaryEntry updated = diaryService.update(id, entry);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(diaryService.update(id, entry, ud));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal UserDetails ud) {
-        diaryService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @AuthenticationPrincipal UserDetails ud) {
+        diaryService.delete(id, ud);
         return ResponseEntity.noContent().build();
     }
 }

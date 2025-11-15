@@ -35,6 +35,7 @@ public class DiaryEntry {
 
     @OneToMany(mappedBy = "diaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
+    @Builder.Default
     private List<ActivityItem> whatDidYouDo = new ArrayList<>();
 
     @Min(1)
@@ -47,6 +48,7 @@ public class DiaryEntry {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private EntryStatus status = EntryStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -54,6 +56,8 @@ public class DiaryEntry {
     @JsonBackReference
     private User user;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 }
