@@ -1,11 +1,11 @@
 package com.example.activity_diary.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
+public class UserDto {
+    private Long id;
     private String email;
-    private String password;
     private String fullName;
-    private Long chatId;
 }

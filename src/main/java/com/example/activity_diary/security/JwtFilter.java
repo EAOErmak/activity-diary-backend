@@ -1,27 +1,32 @@
 package com.example.activity_diary.security;
 
+import com.example.activity_diary.entity.User;
+import com.example.activity_diary.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.example.activity_diary.exception.types.*;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final CustomUserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -29,45 +34,50 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        String username = null;
-        String token = null;
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-
-            try {
-                if (jwtUtils.validateToken(token)) {
-                    username = jwtUtils.getUsernameFromToken(token);
-                }
-            } catch (Exception e) {
-                // Ошибка в токене → просто пропускаем без аутентификации
-                filterChain.doFilter(request, response);
-                return;
-            }
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            try {
-                UserDetails ud = userDetailsService.loadUserByUsername(username);
+        String token = authHeader.substring(7);
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
-
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(auth);
-
-            } catch (UsernameNotFoundException e) {
-                // ВАЖНО: пользователь удалён — значит токен устарел
-                // Пропускаем дальше, но НЕ ставим аутентификацию
-                filterChain.doFilter(request, response);
-                return;
+        try {
+            if (!jwtUtils.isValid(token)) {
+                throw new UnauthorizedException("Invalid or expired token");
             }
+
+            String email = jwtUtils.extractEmail(token);
+            if (email == null) {
+                throw new UnauthorizedException("Invalid token payload");
+            }
+
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null || !user.getEnabled()) {
+                throw new UnauthorizedException("User disabled or deleted");
+            }
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails ud = userDetailsService.loadUserByUsername(email);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UnauthorizedException("JWT authentication failed");
         }
 
         filterChain.doFilter(request, response);
     }
-}
 
+    private void unauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"success\":false,\"message\":\"" + message + "\"}");
+    }
+}

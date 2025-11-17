@@ -16,9 +16,8 @@ public class JwtUtils {
     private String jwtSecret;
 
     @Value("${jwt.expiration-ms}")
-    private long jwtExpirationMs;
+    private long accessExpirationMs;
 
-    // РЕКОМЕНДУЮ ДОБАВИТЬ ОТДЕЛЬНЫЙ refresh срок:
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
@@ -26,48 +25,62 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ------------------- ACCESS TOKEN -------------------
-    public String generateToken(String username) {
-        Date now = new Date();
+    // ============================================================
+    // TOKEN GENERATION
+    // ============================================================
 
+    public String generateAccessToken(String email) {
+        return buildToken(email, accessExpirationMs);
+    }
+
+    public String generateRefreshToken(String email) {
+        return buildToken(email, refreshExpirationMs);
+    }
+
+    private String buildToken(String email, long expirationTime) {
+        long now = System.currentTimeMillis();
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + jwtExpirationMs))
+                .setSubject(email)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String getUsernameFromToken(String token) {
+    // ============================================================
+    // EXTRACTION
+    // ============================================================
+
+    public String extractEmail(String token) {
+        return validateAndParse(token).getBody().getSubject();
+    }
+
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+
+    public boolean isValid(String token) {
+        try {
+            validateAndParse(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isExpired(String token) {
+        try {
+            Date exp = validateAndParse(token).getBody().getExpiration();
+            return exp.before(new Date());
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    private Jws<Claims> validateAndParse(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    // ------------------- REFRESH TOKEN -------------------
-    public String generateRefreshToken(String username) {
-        Date now = new Date();
-
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + refreshExpirationMs)) // 30 days
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (JwtException ex) {
-            return false;
-        }
+                .parseClaimsJws(token);
     }
 }

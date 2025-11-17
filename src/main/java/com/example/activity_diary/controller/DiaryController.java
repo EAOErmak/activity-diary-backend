@@ -1,8 +1,9 @@
 package com.example.activity_diary.controller;
 
-import com.example.activity_diary.entity.DiaryEntry;
-import com.example.activity_diary.service.DiaryService;
-import com.example.activity_diary.service.UserService;
+import com.example.activity_diary.dto.*;
+import com.example.activity_diary.dto.mappers.DiaryEntryMapper;
+import com.example.activity_diary.entity.User;
+import com.example.activity_diary.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,46 +22,51 @@ public class DiaryController {
 
     private final DiaryService diaryService;
     private final UserService userService;
-
-    @GetMapping
-    public ResponseEntity<List<DiaryEntry>> getAll() {
-        return ResponseEntity.ok(diaryService.getAll());
-    }
+    private final DiaryEntryMapper mapper;
 
     @GetMapping("/mine")
-    public ResponseEntity<List<DiaryEntry>> myEntries(@AuthenticationPrincipal UserDetails ud) {
-        var opt = userService.findByEmail(ud.getUsername());
-        if (opt.isEmpty()) return ResponseEntity.status(401).build();
-        var list = diaryService.getByUserId(opt.get().getId());
-        return ResponseEntity.ok(list);
+    public ResponseEntity<ApiResponse<List<DiaryEntryDto>>> myEntries(@AuthenticationPrincipal UserDetails ud) {
+        User user = userService.findByEmail(ud.getUsername())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        List<DiaryEntryDto> result = diaryService.getByUserId(user.getId())
+                .stream()
+                .map(mapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
-    // ✅ Получить запись по ID
     @GetMapping("/{id}")
-    public DiaryEntry getById(@PathVariable Long id, @AuthenticationPrincipal UserDetails ud) {
-        return diaryService.getByIdForUser(id, ud);
+    public ResponseEntity<ApiResponse<DiaryEntryDto>> getById(@PathVariable Long id,
+                                                              @AuthenticationPrincipal UserDetails ud) {
+        var entry = diaryService.getByIdForUser(id, ud);
+        return ResponseEntity.ok(ApiResponse.ok(mapper.toDto(entry)));
     }
 
     @PostMapping
-    public ResponseEntity<DiaryEntry> create(@Valid @RequestBody DiaryEntry entry,
-                                             @AuthenticationPrincipal UserDetails ud) {
-        var user = userService.findByEmail(ud.getUsername()).orElseThrow();
-        entry.setUser(user);
-        DiaryEntry created = diaryService.create(entry);
-        return ResponseEntity.ok(created);
+    public ResponseEntity<ApiResponse<DiaryEntryDto>> create(@Valid @RequestBody DiaryEntryCreateDto dto,
+                                                             @AuthenticationPrincipal UserDetails ud) {
+        User user = userService.findByEmail(ud.getUsername())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        var entry = diaryService.create(dto, user);
+        return ResponseEntity.ok(ApiResponse.ok(mapper.toDto(entry)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DiaryEntry> update(@PathVariable Long id,
-                                             @RequestBody DiaryEntry entry,
-                                             @AuthenticationPrincipal UserDetails ud) {
-        return ResponseEntity.ok(diaryService.update(id, entry, ud));
+    public ResponseEntity<ApiResponse<DiaryEntryDto>> update(@PathVariable Long id,
+                                                             @Valid @RequestBody DiaryEntryUpdateDto dto,
+                                                             @AuthenticationPrincipal UserDetails ud) {
+        var entry = diaryService.update(id, dto, ud);
+        return ResponseEntity.ok(ApiResponse.ok(mapper.toDto(entry)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id,
-                                       @AuthenticationPrincipal UserDetails ud) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id,
+                                                    @AuthenticationPrincipal UserDetails ud) {
         diaryService.delete(id, ud);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.okMessage("Deleted successfully"));
     }
+
 }

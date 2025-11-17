@@ -3,7 +3,7 @@ package com.example.activity_diary.dto;
 import lombok.Data;
 
 @Data
-public class AuthRequest {
+public class VerificationConfirmDto {
     private String email;
-    private String password;
+    private String code;
 }

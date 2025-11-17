@@ -5,6 +5,7 @@ import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.example.activity_diary.exception.types.*;
 
 import java.util.Optional;
 
@@ -21,10 +22,4 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> findById(Long id) { return userRepository.findById(id); }
-
-    @Override
-    public User findByUsername(String username) {
-        return userRepository.findByEmail(username) // если username = email
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
-    }
 }

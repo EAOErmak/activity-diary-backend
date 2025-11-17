@@ -1,6 +1,7 @@
 package com.example.activity_diary.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +9,7 @@ import lombok.*;
 @Table(name = "activity_item")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ActivityItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,6 +20,7 @@ public class ActivityItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "diary_entry_id", nullable = false)
-    @JsonBackReference
+    @JsonIgnore
     private DiaryEntry diaryEntry;
 }
+

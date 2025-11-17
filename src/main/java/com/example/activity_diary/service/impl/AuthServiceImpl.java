@@ -1,95 +1,133 @@
 package com.example.activity_diary.service.impl;
 
-import com.example.activity_diary.dto.AuthRequest;
-import com.example.activity_diary.dto.AuthResponse;
-import com.example.activity_diary.dto.RegisterRequest;
-import com.example.activity_diary.dto.VerifyCodeRequest;
+import com.example.activity_diary.dto.AuthRequestDto;
+import com.example.activity_diary.dto.AuthResponseDto;
+import com.example.activity_diary.dto.RegisterRequestDto;
 import com.example.activity_diary.entity.User;
+import com.example.activity_diary.exception.types.BadRequestException;
+import com.example.activity_diary.exception.types.ForbiddenException;
+import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.security.JwtUtils;
 import com.example.activity_diary.service.AuthService;
 import com.example.activity_diary.service.TelegramService;
-import org.springframework.beans.factory.annotation.Value;
+import com.example.activity_diary.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Value("${telegram.bot.name}")
-    private String botName;
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationService verificationService;
     private final TelegramService telegramService;
     private final JwtUtils jwtUtils;
 
     @Override
-    public AuthResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new RuntimeException("Email already used");
+    public AuthResponseDto register(RegisterRequestDto req) {
+        String email = req.getEmail().trim().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("Email already registered");
         }
 
         User user = User.builder()
-                .email(req.getEmail())
+                .email(email)
                 .password(passwordEncoder.encode(req.getPassword()))
-                .fullName(req.getFullName())
+                .fullName(req.getFullName().trim())
                 .enabled(false)
                 .build();
 
         userRepository.save(user);
 
-        // generate verify token
-        String verifyToken = UUID.randomUUID().toString();
-        user.setVerifyToken(verifyToken);
-        userRepository.save(user);
-
-        // build t.me link (frontend will open it)
-        String link = "https://t.me/" + botName + "?start=" + verifyToken;
-
-        // Return AuthResponse carrying link (token still null)
-        AuthResponse resp = new AuthResponse(null, user.getEmail(), user.getId(), link);
-        resp.setUserId(user.getId());            // extend AuthResponse (см. ниже)
-        resp.setVerifyLink(link);
-        return resp;
+        // Возвращаем только инфо — без токенов, без verifyLink
+        return new AuthResponseDto(
+                null,
+                null,
+                user.getEmail(),
+                user.getId(),
+                null
+        );
     }
 
     @Override
-    public boolean linkTelegramByToken(String verifyToken, Long chatId) {
-        var opt = userRepository.findByVerifyToken(verifyToken);
-        if (opt.isEmpty()) return false;
+    public void requestVerificationCode(String email) {
+        User user = userRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        User user = opt.get();
-        user.setChatId(chatId);
-        user.setEnabled(true);         // activate
-        user.setVerifyToken(null);     // one-time token
+        if (user.getEnabled()) {
+            throw new BadRequestException("Account already verified");
+        }
+
+        verificationService.createAndSendCode(user.getEmail(), user.getChatId());
+    }
+
+    @Override
+    public boolean verifyCode(String email, String code) {
+        boolean ok = verificationService.verify(email.trim().toLowerCase(), code);
+        if (!ok) return false;
+
+        User user = userRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        user.setEnabled(true);
         userRepository.save(user);
 
-        // optional: notify user via telegram that linking succeeded
-        telegramService.sendMessage(chatId, "Ваш аккаунт успешно привязан к " + user.getEmail());
         return true;
     }
 
+
     @Override
-    public AuthResponse login(AuthRequest req) {
+    public AuthResponseDto login(AuthRequestDto req) {
+        String email = req.getEmail().trim().toLowerCase();
 
-        User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!user.isEnabled()) {
-            throw new RuntimeException("Account not verified");
-        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new BadRequestException("Invalid credentials");
         }
 
-        String token = jwtUtils.generateToken(user.getEmail());
-        return new AuthResponse(token, user.getEmail(), user.getId(), null);
+        if (!user.getEnabled()) {
+            throw new ForbiddenException("Account not verified");
+        }
+
+        String accessToken = jwtUtils.generateAccessToken(email);
+        String refreshToken = jwtUtils.generateRefreshToken(email);
+
+        return new AuthResponseDto(
+                accessToken,
+                refreshToken,
+                email,
+                user.getId(),
+                null
+        );
+    }
+
+    @Override
+    public AuthResponseDto refresh(String refreshToken) {
+        if (!jwtUtils.isValid(refreshToken)) {
+            throw new BadRequestException("Invalid or expired refresh token");
+        }
+
+        String email = jwtUtils.extractEmail(refreshToken);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (!user.getEnabled()) {
+            throw new ForbiddenException("User not verified");
+        }
+
+        return new AuthResponseDto(
+                jwtUtils.generateAccessToken(email),
+                jwtUtils.generateRefreshToken(email),
+                email,
+                user.getId(),
+                null
+        );
     }
 }

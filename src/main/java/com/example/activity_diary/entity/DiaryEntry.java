@@ -1,6 +1,7 @@
 package com.example.activity_diary.entity;
 
 import com.example.activity_diary.entity.enums.EntryStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -17,33 +18,28 @@ import java.util.List;
 @Table(name = "diary_entry")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class DiaryEntry {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(length = 50)
-    @Size(max = 50)
     private String whatHappened;
 
     @Column(length = 50)
-    @Size(max = 50)
     private String what;
 
     private LocalDateTime whenStarted;
     private LocalDateTime whenEnded;
-    private Integer duration; // minutes
+    private Integer duration;
 
     @OneToMany(mappedBy = "diaryEntry", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     @Builder.Default
     private List<ActivityItem> whatDidYouDo = new ArrayList<>();
 
-    @Min(1)
-    @Max(5)
     private Short howYouWereFeeling;
 
     @Column(length = 1000)
-    @Size(max = 1000)
     private String anyDescription;
 
     @Enumerated(EnumType.STRING)
@@ -53,11 +49,21 @@ public class DiaryEntry {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @JsonBackReference
+    @JsonIgnore
     private User user;
 
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
-    @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+        updatedAt = createdAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
+

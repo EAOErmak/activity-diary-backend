@@ -1,9 +1,16 @@
 package com.example.activity_diary.service.impl;
 
+import com.example.activity_diary.dto.ActivityItemDto;
+import com.example.activity_diary.dto.DiaryEntryCreateDto;
+import com.example.activity_diary.dto.DiaryEntryUpdateDto;
+import com.example.activity_diary.dto.mappers.DiaryEntryMapper;
 import com.example.activity_diary.entity.ActivityItem;
 import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.enums.EntryStatus;
+import com.example.activity_diary.exception.types.BadRequestException;
+import com.example.activity_diary.exception.types.ForbiddenException;
+import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DiaryRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.DiaryService;
@@ -24,6 +31,7 @@ public class DiaryServiceImpl implements DiaryService {
 
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
+    private final DiaryEntryMapper mapper;
 
     @Override
     public List<DiaryEntry> getAll() {
@@ -46,63 +54,79 @@ public class DiaryServiceImpl implements DiaryService {
             EntryStatus entryStatus = EntryStatus.valueOf(status.toUpperCase());
             return diaryRepository.findByStatus(entryStatus);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + status);
+            throw new BadRequestException("Invalid status value: " + status);
         }
     }
 
     @Override
-    public DiaryEntry create(DiaryEntry entry) {
+    public DiaryEntry create(DiaryEntryCreateDto dto, User user) {
+
+        validateDates(dto.getWhenStarted(), dto.getWhenEnded());
+
+        DiaryEntry entry = mapper.toEntity(dto);
+
+        entry.setWhatHappened(normalize(dto.getWhatHappened()));
+        entry.setWhat(normalize(dto.getWhat()));
+        entry.setAnyDescription(normalize(dto.getAnyDescription()));
+
+        entry.setUser(user);
+
         prepareEntry(entry);
+
+        if (dto.getWhatDidYouDo() != null) {
+            for (ActivityItemDto itemDto : dto.getWhatDidYouDo()) {
+                ActivityItem item = mapper.toActivityItem(itemDto);
+                item.setDiaryEntry(entry);
+                entry.getWhatDidYouDo().add(item);
+            }
+        }
+
         return diaryRepository.save(entry);
     }
 
     @Override
-    public DiaryEntry update(Long id, DiaryEntry updated, UserDetails currentUser) {
-        DiaryEntry existing = diaryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Diary entry not found with id " + id));
+    public DiaryEntry update(Long id, DiaryEntryUpdateDto dto, UserDetails currentUser) {
 
-        User user = userRepository.findByEmail(currentUser.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        validateDates(dto.getWhenStarted(), dto.getWhenEnded());
 
-        if (!existing.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Access denied: this entry does not belong to the current user");
+        DiaryEntry existing = getByIdForUser(id, currentUser);
+
+        existing.setWhatHappened(normalize(dto.getWhatHappened()));
+        existing.setWhat(normalize(dto.getWhat()));
+        existing.setWhenStarted(dto.getWhenStarted());
+        existing.setWhenEnded(dto.getWhenEnded());
+        existing.setHowYouWereFeeling(dto.getHowYouWereFeeling());
+        existing.setAnyDescription(normalize(dto.getAnyDescription()));
+
+        if (dto.getStatus() != null) {
+            existing.setStatus(EntryStatus.valueOf(dto.getStatus().toUpperCase()));
         }
-
-        existing.setWhatHappened(updated.getWhatHappened());
-        existing.setWhat(updated.getWhat());
-        existing.setWhenStarted(updated.getWhenStarted());
-        existing.setWhenEnded(updated.getWhenEnded());
-        existing.setHowYouWereFeeling(updated.getHowYouWereFeeling());
-        existing.setAnyDescription(updated.getAnyDescription());
-        existing.setStatus(updated.getStatus());
-        existing.setUpdatedAt(LocalDateTime.now());
 
         computeDuration(existing);
 
         existing.getWhatDidYouDo().clear();
-        if (updated.getWhatDidYouDo() != null) {
-            for (ActivityItem item : updated.getWhatDidYouDo()) {
+        if (dto.getWhatDidYouDo() != null) {
+            for (ActivityItemDto itemDto : dto.getWhatDidYouDo()) {
+                ActivityItem item = mapper.toActivityItem(itemDto);
                 item.setDiaryEntry(existing);
                 existing.getWhatDidYouDo().add(item);
             }
         }
 
+        // updatedAt будет выставлен через @PreUpdate
         return diaryRepository.save(existing);
     }
-
 
     @Override
     public DiaryEntry getByIdForUser(Long id, UserDetails currentUser) {
         DiaryEntry entry = diaryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Diary entry not found with id " + id));
+                .orElseThrow(() -> new NotFoundException("Diary entry not found: " + id));
 
-        // Загружаем реального пользователя из базы по username (email)
         User user = userRepository.findByEmail(currentUser.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // Проверяем владельца
         if (!entry.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Access denied: this entry does not belong to the current user");
+            throw new ForbiddenException("Access denied: entry belongs to another user");
         }
 
         return entry;
@@ -111,13 +135,13 @@ public class DiaryServiceImpl implements DiaryService {
     @Override
     public void delete(Long id, UserDetails currentUser) {
         DiaryEntry entry = diaryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Diary entry not found"));
+                .orElseThrow(() -> new NotFoundException("Diary entry not found"));
 
         User user = userRepository.findByEmail(currentUser.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!entry.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Access denied");
+            throw new ForbiddenException("Access denied");
         }
 
         diaryRepository.delete(entry);
@@ -128,25 +152,23 @@ public class DiaryServiceImpl implements DiaryService {
         diaryRepository.deleteAll();
     }
 
-    // =============================================================
-    // 🧠 Дополнительные приватные методы
-    // =============================================================
+    // ===================== PRIVATE HELPERS =========================
+
+    private void validateDates(LocalDateTime start, LocalDateTime end) {
+        if (start != null && end != null && end.isBefore(start)) {
+            throw new BadRequestException("End time cannot be earlier than start time");
+        }
+    }
+
+    private String normalize(String value) {
+        return value == null ? null : value.trim();
+    }
 
     private void prepareEntry(DiaryEntry entry) {
-        entry.setCreatedAt(LocalDateTime.now());
-        entry.setUpdatedAt(LocalDateTime.now());
-
         if (entry.getStatus() == null) {
             entry.setStatus(EntryStatus.ACTIVE);
         }
-
         computeDuration(entry);
-
-        if (entry.getWhatDidYouDo() != null) {
-            for (ActivityItem item : entry.getWhatDidYouDo()) {
-                item.setDiaryEntry(entry);
-            }
-        }
     }
 
     private void computeDuration(DiaryEntry entry) {
