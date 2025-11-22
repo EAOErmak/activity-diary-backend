@@ -22,7 +22,7 @@ public class User {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String email; // <-- new unique email field
+    private String username; // <-- new unique username field
 
     @Column(nullable = false)
     private String password;
@@ -34,9 +34,11 @@ public class User {
     @Builder.Default
     private Boolean enabled = false;
 
+    @Column(unique = true)
     private Long chatId;
 
-    private String verifyToken;
+    @Column(name = "registration_ip")
+    private String registrationIp;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

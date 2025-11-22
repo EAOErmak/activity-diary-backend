@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Random;
+import java.security.SecureRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -26,15 +26,27 @@ public class VerificationServiceImpl implements VerificationService {
 
     private static final int CODE_TTL_MINUTES = 1;
     private static final int MAX_ATTEMPTS = 5;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     @Override
     @Transactional
-    public String createAndSendCode(String email, Long chatId) {
-        User user = userRepository.findByEmail(email.toLowerCase().trim())
+    public void createAndSendCode(String username, Long chatId) {
+        User user = userRepository.findByUsername(username.toLowerCase().trim())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (chatId == null) {
-            return "chatId_missing";
+            throw new BadRequestException("chatId must not be null");
+        }
+
+        User existing = userRepository.findByChatId(chatId).orElse(null);
+
+        if (existing != null && !existing.getId().equals(user.getId())) {
+            throw new BadRequestException("Этот Telegram аккаунт уже привязан к другому профилю: " + existing.getUsername());
+        }
+
+        if (user.getChatId() == null || !user.getChatId().equals(chatId)) {
+            user.setChatId(chatId);
+            userRepository.save(user);
         }
 
         // Удаляем предыдущий код и гарантируем выполнение перед insert
@@ -42,7 +54,7 @@ public class VerificationServiceImpl implements VerificationService {
         verificationCodeRepository.flush();
 
         // Генерация кода
-        String code = String.format("%06d", new Random().nextInt(1_000_000));
+        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
 
         VerificationCode vc = VerificationCode.builder()
                 .user(user)
@@ -60,13 +72,11 @@ public class VerificationServiceImpl implements VerificationService {
             // В случае ошибки отменяем действие
             throw new RuntimeException("Failed to send Telegram message: " + e.getMessage(), e);
         }
-
-        return "sent";
     }
 
     @Override
-    public boolean verify(String email, String inputCode) {
-        User user = userRepository.findByEmail(email.toLowerCase().trim())
+    public boolean verify(String username, String inputCode) {
+        User user = userRepository.findByUsername(username.toLowerCase().trim())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         VerificationCode vc = verificationCodeRepository.findByUserId(user.getId())

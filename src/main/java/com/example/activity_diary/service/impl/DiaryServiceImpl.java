@@ -122,7 +122,7 @@ public class DiaryServiceImpl implements DiaryService {
         DiaryEntry entry = diaryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Diary entry not found: " + id));
 
-        User user = userRepository.findByEmail(currentUser.getUsername())
+        User user = userRepository.findByUsername(currentUser.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!entry.getUser().getId().equals(user.getId())) {
@@ -137,7 +137,7 @@ public class DiaryServiceImpl implements DiaryService {
         DiaryEntry entry = diaryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Diary entry not found"));
 
-        User user = userRepository.findByEmail(currentUser.getUsername())
+        User user = userRepository.findByUsername(currentUser.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!entry.getUser().getId().equals(user.getId())) {

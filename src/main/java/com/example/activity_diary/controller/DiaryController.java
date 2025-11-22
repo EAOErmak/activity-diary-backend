@@ -26,7 +26,7 @@ public class DiaryController {
 
     @GetMapping("/mine")
     public ResponseEntity<ApiResponse<List<DiaryEntryDto>>> myEntries(@AuthenticationPrincipal UserDetails ud) {
-        User user = userService.findByEmail(ud.getUsername())
+        User user = userService.findByUsername(ud.getUsername())
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
         List<DiaryEntryDto> result = diaryService.getByUserId(user.getId())
@@ -47,7 +47,7 @@ public class DiaryController {
     @PostMapping
     public ResponseEntity<ApiResponse<DiaryEntryDto>> create(@Valid @RequestBody DiaryEntryCreateDto dto,
                                                              @AuthenticationPrincipal UserDetails ud) {
-        User user = userService.findByEmail(ud.getUsername())
+        User user = userService.findByUsername(ud.getUsername())
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
         var entry = diaryService.create(dto, user);

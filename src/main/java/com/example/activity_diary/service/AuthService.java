@@ -5,9 +5,9 @@ import com.example.activity_diary.dto.AuthResponseDto;
 import com.example.activity_diary.dto.RegisterRequestDto;
 
 public interface AuthService {
-    AuthResponseDto register(RegisterRequestDto req);
-    void requestVerificationCode(String email);
-    boolean verifyCode(String email, String code);
+    AuthResponseDto register(RegisterRequestDto req, String registrationIp);
+    void requestVerificationCode(String username);
+    boolean verifyCode(String username, String code);
     AuthResponseDto login(AuthRequestDto req);
     AuthResponseDto refresh(String refreshToken);
 }

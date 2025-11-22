@@ -12,9 +12,7 @@ public interface UserMapper {
 
     @Mapping(target = "diaryEntries", ignore = true) // не создаём каскад
     @Mapping(target = "password", ignore = true)
-    //@Mapping(target = "refreshToken", ignore = true)
     @Mapping(target = "enabled", ignore = true)
     @Mapping(target = "chatId", ignore = true)
-    @Mapping(target = "verifyToken", ignore = true)
     User toEntity(UserDto dto);
 }

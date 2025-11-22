@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class VerificationConfirmDto {
-    private String email;
+    private String username;
     private String code;
 }

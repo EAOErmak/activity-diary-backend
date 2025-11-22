@@ -29,18 +29,18 @@ public class JwtUtils {
     // TOKEN GENERATION
     // ============================================================
 
-    public String generateAccessToken(String email) {
-        return buildToken(email, accessExpirationMs);
+    public String generateAccessToken(String username) {
+        return buildToken(username, accessExpirationMs);
     }
 
-    public String generateRefreshToken(String email) {
-        return buildToken(email, refreshExpirationMs);
+    public String generateRefreshToken(String username) {
+        return buildToken(username, refreshExpirationMs);
     }
 
-    private String buildToken(String email, long expirationTime) {
+    private String buildToken(String username, long expirationTime) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(username)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -51,7 +51,7 @@ public class JwtUtils {
     // EXTRACTION
     // ============================================================
 
-    public String extractEmail(String token) {
+    public String extractUsername(String token) {
         return validateAndParse(token).getBody().getSubject();
     }
 

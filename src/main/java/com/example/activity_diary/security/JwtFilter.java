@@ -48,18 +48,18 @@ public class JwtFilter extends OncePerRequestFilter {
                 throw new UnauthorizedException("Invalid or expired token");
             }
 
-            String email = jwtUtils.extractEmail(token);
-            if (email == null) {
+            String username = jwtUtils.extractUsername(token);
+            if (username == null) {
                 throw new UnauthorizedException("Invalid token payload");
             }
 
-            User user = userRepository.findByEmail(email).orElse(null);
+            User user = userRepository.findByUsername(username).orElse(null);
             if (user == null || !user.getEnabled()) {
                 throw new UnauthorizedException("User disabled or deleted");
             }
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails ud = userDetailsService.loadUserByUsername(email);
+                UserDetails ud = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

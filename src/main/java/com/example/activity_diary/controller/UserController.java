@@ -20,7 +20,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserDto>> me(@AuthenticationPrincipal UserDetails ud) {
-        var user = userService.findByEmail(ud.getUsername())
+        var user = userService.findByUsername(ud.getUsername())
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
         return ResponseEntity.ok(
