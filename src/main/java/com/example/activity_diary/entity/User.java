@@ -1,9 +1,11 @@
 package com.example.activity_diary.entity;
 
+import com.example.activity_diary.entity.base.BaseEntity;
+import com.example.activity_diary.entity.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,14 +17,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+@EntityListeners(AuditingEntityListener.class)
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String username; // <-- new unique username field
+    private String username;
 
     @Column(nullable = false)
     private String password;
@@ -37,10 +40,13 @@ public class User {
     @Column(unique = true)
     private Long chatId;
 
-    @Column(name = "registration_ip")
-    private String registrationIp;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Role role = Role.USER;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<DiaryEntry> diaryEntries = new ArrayList<>();
 }

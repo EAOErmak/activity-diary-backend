@@ -1,6 +1,7 @@
 package com.example.activity_diary.security;
 
 import com.example.activity_diary.entity.User;
+import com.example.activity_diary.exception.types.UnauthorizedException;
 import com.example.activity_diary.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import com.example.activity_diary.exception.types.*;
 
 import java.io.IOException;
 
@@ -29,10 +29,11 @@ public class JwtFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -44,7 +45,8 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            if (!jwtUtils.isValid(token)) {
+            // Новая проверка access-токена
+            if (!jwtUtils.isAccessTokenValid(token)) {
                 throw new UnauthorizedException("Invalid or expired token");
             }
 
@@ -60,10 +62,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails ud = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authentication =
+
+                UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                auth.setDetails(new WebAuthenticationDetailsSource()
+                        .buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
         } catch (UnauthorizedException e) {
@@ -73,11 +79,5 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private void unauthorized(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write("{\"success\":false,\"message\":\"" + message + "\"}");
     }
 }

@@ -1,6 +1,7 @@
 package com.example.activity_diary.controller;
 
-import com.example.activity_diary.service.TelegramWebhookService;
+import com.example.activity_diary.rate.RateLimit;
+import com.example.activity_diary.service.telegram.TelegramWebhookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +18,9 @@ import java.util.Map;
 public class TelegramWebhookController {
 
     private final TelegramWebhookService telegramWebhookService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    @GetMapping("/webhook")
-    public String test() {
-        return "Webhook is alive";
-    }
-
+    @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 1)
     @PostMapping(
             value = "/webhook",
             consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE}
@@ -33,7 +30,7 @@ public class TelegramWebhookController {
             Map<String, Object> update = objectMapper.readValue(rawBody, Map.class);
             telegramWebhookService.processUpdate(update);
         } catch (Exception e) {
-            log.error("Failed to parse webhook update: {}", e.getMessage());
+            log.error("Failed to parse webhook update", e);
         }
 
         return ResponseEntity.ok().build();

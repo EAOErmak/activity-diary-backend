@@ -2,6 +2,7 @@ package com.example.activity_diary.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,32 +19,27 @@ public class JwtUtils {
     @Value("${jwt.expiration-ms}")
     private long accessExpirationMs;
 
-    @Value("${jwt.refresh-expiration-ms}")
-    private long refreshExpirationMs;
+    private Key signingKey;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    @PostConstruct
+    public void init() {
+        if (jwtSecret == null || jwtSecret.length() < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes (256 bits).");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     // ============================================================
-    // TOKEN GENERATION
+    // GENERATION
     // ============================================================
 
     public String generateAccessToken(String username) {
-        return buildToken(username, accessExpirationMs);
-    }
-
-    public String generateRefreshToken(String username) {
-        return buildToken(username, refreshExpirationMs);
-    }
-
-    private String buildToken(String username, long expirationTime) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + expirationTime))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(now + accessExpirationMs))
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -51,35 +47,38 @@ public class JwtUtils {
     // EXTRACTION
     // ============================================================
 
-    public String extractUsername(String token) {
-        return validateAndParse(token).getBody().getSubject();
+    public String extractUsername(String accessToken) {
+        return parse(accessToken).getBody().getSubject();
     }
 
     // ============================================================
     // VALIDATION
     // ============================================================
 
-    public boolean isValid(String token) {
+    public boolean isAccessTokenValid(String accessToken) {
         try {
-            validateAndParse(token);
+            parse(accessToken);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean isExpired(String token) {
+    public boolean isAccessTokenExpired(String accessToken) {
         try {
-            Date exp = validateAndParse(token).getBody().getExpiration();
-            return exp.before(new Date());
+            return parse(accessToken).getBody().getExpiration().before(new Date());
         } catch (Exception e) {
             return true;
         }
     }
 
-    private Jws<Claims> validateAndParse(String token) {
+    // ============================================================
+    // INTERNAL
+    // ============================================================
+
+    private Jws<Claims> parse(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token);
     }

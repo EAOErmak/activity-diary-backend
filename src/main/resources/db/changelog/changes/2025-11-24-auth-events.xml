@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+         http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- ========================================================== -->
+    <!-- 1. REGISTRATION_EVENT TABLE                                -->
+    <!-- ========================================================== -->
+    <changeSet id="20251124-01-create-registration-event" author="you">
+
+        <createTable tableName="registration_event">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="ip" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Index for fast lookup by IP -->
+        <createIndex tableName="registration_event" indexName="idx_reg_event_ip">
+            <column name="ip"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="registration_event"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"
+                constraintName="fk_registration_event_user"/>
+    </changeSet>
+
+    <!-- ========================================================== -->
+    <!-- 2. LOGIN_EVENT TABLE                                       -->
+    <!-- ========================================================== -->
+    <changeSet id="20251124-02-create-login-event" author="you">
+
+        <createTable tableName="login_event">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="bigint"/>
+            <column name="ip" type="varchar(45)"/>
+            <column name="user_agent" type="varchar(500)"/>
+
+            <column name="success" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="login_event" indexName="idx_login_event_user">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="login_event" indexName="idx_login_event_ip">
+            <column name="ip"/>
+        </createIndex>
+
+        <!-- FK to users -->
+        <addForeignKeyConstraint
+                baseTableName="login_event"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="SET NULL"
+                constraintName="fk_login_event_user"/>
+
+    </changeSet>
+
+</databaseChangeLog>

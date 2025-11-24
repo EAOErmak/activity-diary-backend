@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+         http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- ============================= -->
+    <!-- DiaryEntry performance indexes -->
+    <!-- ============================= -->
+
+    <changeSet id="idx-diary-entry" author="chatgpt">
+        <createIndex tableName="diary_entry" indexName="idx_diary_entry_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="diary_entry" indexName="idx_diary_entry_when_started">
+            <column name="when_started"/>
+        </createIndex>
+
+        <createIndex tableName="diary_entry" indexName="idx_diary_entry_when_ended">
+            <column name="when_ended"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================= -->
+    <!-- Dictionary performance indexes -->
+    <!-- ============================= -->
+
+    <changeSet id="idx-dictionary" author="chatgpt">
+
+        <!-- WHAT HAPPENED -->
+        <createIndex tableName="what_happened_dict" indexName="idx_wh_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex tableName="what_happened_dict" indexName="idx_wh_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <!-- WHAT -->
+        <createIndex tableName="what_dict" indexName="idx_w_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex tableName="what_dict" indexName="idx_w_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <createIndex tableName="what_dict" indexName="idx_w_parent">
+            <column name="what_happened_id"/>
+        </createIndex>
+
+        <!-- Item Name -->
+        <createIndex tableName="activity_item_name_dict" indexName="idx_item_name_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex tableName="activity_item_name_dict" indexName="idx_item_name_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <!-- Unit -->
+        <createIndex tableName="activity_item_unit_dict" indexName="idx_unit_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex tableName="activity_item_unit_dict" indexName="idx_unit_active">
+            <column name="is_active"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

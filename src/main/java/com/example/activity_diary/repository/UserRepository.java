@@ -10,5 +10,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByChatId(Long chatId);
     boolean existsByUsername(String username);
     boolean existsByChatId(Long chatId);
-    long countByRegistrationIp(String registrationIp);
 }
