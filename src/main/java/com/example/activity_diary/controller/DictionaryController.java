@@ -34,6 +34,7 @@ public class DictionaryController {
     }
 
     @GetMapping("/what-happened")
+    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getAllWhatHappened() {
         return ResponseEntity.ok(ApiResponse.ok(dictionaryService.getAllWhatHappened()));
     }
@@ -57,6 +58,7 @@ public class DictionaryController {
     }
 
     @GetMapping("/what")
+    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getWhatByParent(
             @RequestParam @Positive Long parentId
     ) {
@@ -81,6 +83,7 @@ public class DictionaryController {
     }
 
     @GetMapping("/item-name")
+    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getAllItemNames() {
         return ResponseEntity.ok(ApiResponse.ok(dictionaryService.getAllItemNames()));
     }
@@ -103,6 +106,7 @@ public class DictionaryController {
     }
 
     @GetMapping("/unit")
+    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getAllUnits() {
         return ResponseEntity.ok(ApiResponse.ok(dictionaryService.getAllUnits()));
     }
@@ -117,6 +121,7 @@ public class DictionaryController {
     }
 
     @GetMapping("/search")
+    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> search(
             @RequestParam String query
     ) {

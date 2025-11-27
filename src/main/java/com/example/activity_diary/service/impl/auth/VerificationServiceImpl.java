@@ -82,6 +82,66 @@ public class VerificationServiceImpl implements VerificationService {
     }
 
     @Override
+    public void createAndSendLoginCode(String username, Long chatId) {
+
+        if (chatId == null) {
+            throw new BadRequestException("Telegram not linked");
+        }
+
+        User user = userRepository.findByUsername(username.toLowerCase().trim())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        verificationCodeRepository.deleteByUserId(user.getId());
+        verificationCodeRepository.flush();
+
+        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
+
+        VerificationCode vc = VerificationCode.builder()
+                .user(user)
+                .verificationCode(code)
+                .expiresAt(LocalDateTime.now().plusMinutes(2))
+                .attempts(5)
+                .build();
+
+        verificationCodeRepository.save(vc);
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        telegramService.sendVerificationCode(chatId, code);
+                    }
+                }
+        );
+    }
+
+    @Override
+    public boolean verifyLoginCode(String username, String inputCode) {
+
+        User user = userRepository.findByUsername(username.toLowerCase().trim())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        VerificationCode vc = verificationCodeRepository.findByUserId(user.getId())
+                .orElse(null);
+
+        if (vc == null) return false;
+
+        if (vc.getAttempts() <= 0 || vc.getExpiresAt().isBefore(LocalDateTime.now())) {
+            verificationCodeRepository.delete(vc);
+            return false;
+        }
+
+        if (!vc.getVerificationCode().equals(inputCode)) {
+            vc.setAttempts(vc.getAttempts() - 1);
+            verificationCodeRepository.save(vc);
+            return false;
+        }
+
+        verificationCodeRepository.delete(vc);
+        return true;
+    }
+
+    @Override
     public boolean verify(String username, String inputCode) {
         User user = userRepository.findByUsername(username.toLowerCase().trim())
                 .orElseThrow(() -> new NotFoundException("User not found"));

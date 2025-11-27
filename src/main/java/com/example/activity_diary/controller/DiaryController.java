@@ -7,6 +7,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class DiaryController {
     public ResponseEntity<ApiResponse<Page<DiaryEntryDto>>> myEntries(
             @AuthenticationPrincipal UserDetails ud,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         Page<DiaryEntryDto> result = diaryService.getMyEntries(ud, page, size);
         return ResponseEntity.ok(ApiResponse.ok(result));

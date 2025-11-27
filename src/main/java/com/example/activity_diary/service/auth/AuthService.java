@@ -10,4 +10,5 @@ public interface AuthService {
     boolean verifyCode(String username, String code);
     AuthResponseDto login(AuthRequestDto req, String ip, String userAgent);
     AuthResponseDto refresh(String refreshToken);
+    AuthResponseDto confirmLogin(String username, String code);
 }

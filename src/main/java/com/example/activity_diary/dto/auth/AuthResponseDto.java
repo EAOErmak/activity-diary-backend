@@ -14,4 +14,5 @@ public class AuthResponseDto {
     private String refreshToken; // new
     private String username;
     private Long userId;
+    private Boolean twoFactorRequired;
 }

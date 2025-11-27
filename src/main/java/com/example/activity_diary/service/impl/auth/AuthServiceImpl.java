@@ -76,7 +76,11 @@ public class AuthServiceImpl implements AuthService {
 
         registrationEventRepository.save(event);
 
-        return new AuthResponseDto(null, null, username, user.getId());
+        return AuthResponseDto.builder()
+                .username(username)
+                .userId(user.getId())
+                .twoFactorRequired(true)
+                .build();
     }
 
 
@@ -160,17 +164,42 @@ public class AuthServiceImpl implements AuthService {
         // SUCCESS
         loginEventService.recordSuccess(user.getId(), ip, userAgent);
 
-        String accessToken = jwtUtils.generateAccessToken(username);
-        RefreshToken refreshToken = refreshTokenService.create(user);
+        verificationService.createAndSendLoginCode(user.getUsername(), user.getChatId());
 
-        return new AuthResponseDto(
-                accessToken,
-                refreshToken.getTokenHash(),
-                username,
-                user.getId()
-        );
+        return AuthResponseDto.builder()
+                .twoFactorRequired(true)
+                .username(username)
+                .userId(user.getId())
+                .build();
     }
 
+    @Override
+    public AuthResponseDto confirmLogin(String username, String code) {
+
+        boolean ok = verificationService.verifyLoginCode(username, code);
+        if (!ok) {
+            throw new BadRequestException("Invalid or expired 2FA code");
+        }
+
+        User user = userRepository.findByUsername(username.trim().toLowerCase())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new ForbiddenException("User not verified");
+        }
+
+        loginEventService.recordSuccess(user.getId(), null, null);
+
+        String accessToken = jwtUtils.generateAccessToken(user.getUsername());
+        RefreshToken refreshToken = refreshTokenService.create(user);
+
+        return AuthResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getTokenHash())
+                .username(user.getUsername())
+                .userId(user.getId())
+                .build();
+    }
 
     // ============================================================
     // REFRESH (rotate-on-use)

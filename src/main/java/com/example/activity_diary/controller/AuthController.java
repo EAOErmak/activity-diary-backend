@@ -27,7 +27,7 @@ public class AuthController {
     ) {
         String realIp = IpUtils.getClientIp(http);
         AuthResponseDto result = authService.register(req, realIp);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @RateLimit(capacity = 5, refillTokens = 5, refillPeriodSeconds = 60)
@@ -40,7 +40,7 @@ public class AuthController {
         String userAgent = http.getHeader("User-Agent");
 
         AuthResponseDto result = authService.login(req, ip, userAgent);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
@@ -50,6 +50,16 @@ public class AuthController {
     ) {
         String token = req.getRefreshToken();
         return ResponseEntity.ok(ApiResponse.success(authService.refresh(token)));
+    }
+
+    @RateLimit(capacity = 5, refillTokens = 5, refillPeriodSeconds = 60)
+    @PostMapping("/login/confirm")
+    public ResponseEntity<ApiResponse<AuthResponseDto>> confirmLogin(
+            @Valid @RequestBody VerificationConfirmDto req
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(authService.confirmLogin(req.getUsername(), req.getCode()))
+        );
     }
 
     // Telegram-only verification

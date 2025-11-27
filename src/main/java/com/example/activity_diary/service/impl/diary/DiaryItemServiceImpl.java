@@ -18,33 +18,37 @@ public class DiaryItemServiceImpl implements DiaryItemService {
 
     private final DiaryEntryMapper mapper;
 
-    // ============================================
-    //            CREATE ITEMS
-    // ============================================
+    // =======================================================
+    //                       CREATE
+    // =======================================================
     @Override
     public void applyItems(List<ActivityItemCreateDto> dtos, DiaryEntry entry) {
-        if (dtos == null || dtos.isEmpty()) return;
-
-        List<ActivityItem> result = new ArrayList<>();
-
-        for (ActivityItemCreateDto dto : dtos) {
-            ActivityItem item = mapper.toActivityItem(dto);
-            item.setDiaryEntry(entry);
-            result.add(item);
+        if (dtos == null || dtos.isEmpty()) {
+            entry.getWhatDidYouDo().clear();
+            return;
         }
 
+        List<ActivityItem> items = dtos.stream()
+                .map(mapper::toActivityItem)
+                .peek(i -> i.setDiaryEntry(entry))
+                .toList();
+
+        // orphanRemoval = true → Hibernate удалит старые items
         entry.getWhatDidYouDo().clear();
-        entry.getWhatDidYouDo().addAll(result);
+        entry.getWhatDidYouDo().addAll(items);
     }
 
-    // ============================================
-    //            UPDATE ITEMS
-    // ============================================
+
+    // =======================================================
+    //                       UPDATE
+    // =======================================================
     @Override
     public void updateItems(List<ActivityItemUpdateDto> dtos, DiaryEntry entry) {
 
         List<ActivityItem> existing = entry.getWhatDidYouDo();
-        Map<Long, ActivityItem> oldById = existing.stream()
+
+        // Map existing items: id → entity
+        Map<Long, ActivityItem> oldMap = existing.stream()
                 .filter(i -> i.getId() != null)
                 .collect(Collectors.toMap(ActivityItem::getId, i -> i));
 
@@ -52,11 +56,15 @@ public class DiaryItemServiceImpl implements DiaryItemService {
 
         if (dtos != null) {
             for (ActivityItemUpdateDto dto : dtos) {
-                // UPDATE EXISTING
-                if (dto.getId() != null && oldById.containsKey(dto.getId())) {
 
-                    ActivityItem item = oldById.get(dto.getId());
+                // =====================
+                //    UPDATE EXISTING
+                // =====================
+                if (dto.getId() != null && oldMap.containsKey(dto.getId())) {
 
+                    ActivityItem item = oldMap.get(dto.getId());
+
+                    // update fields
                     if (dto.getNameId() != null) {
                         item.setName(mapper.mapName(dto.getNameId()));
                     }
@@ -68,31 +76,37 @@ public class DiaryItemServiceImpl implements DiaryItemService {
                     }
 
                     result.add(item);
-                    oldById.remove(dto.getId());
+                    oldMap.remove(dto.getId());
                 }
 
-                // CREATE NEW ITEM
+                // =====================
+                //    CREATE NEW ITEM
+                // =====================
                 else {
-                    ActivityItem item = mapper.toActivityItem(
-                            new ActivityItemCreateDto() {{
-                                setNameId(dto.getNameId());
-                                setUnitId(dto.getUnitId());
-                                setCount(dto.getCount());
-                            }}
-                    );
-                    item.setDiaryEntry(entry);
-                    result.add(item);
+                    ActivityItemCreateDto createDto = new ActivityItemCreateDto();
+                    createDto.setNameId(dto.getNameId());
+                    createDto.setUnitId(dto.getUnitId());
+                    createDto.setCount(dto.getCount());
+
+                    ActivityItem newItem = mapper.toActivityItem(createDto);
+                    newItem.setDiaryEntry(entry);
+                    result.add(newItem);
                 }
             }
         }
 
-        // REMOVE missing items
-        for (ActivityItem removed : oldById.values()) {
-            existing.remove(removed);
+        // =====================
+        //     DELETE MISSING
+        // =====================
+        for (ActivityItem removed : oldMap.values()) {
+            existing.remove(removed); // JPA orphanRemoval → DELETE SQL
         }
 
-        // APPLY RESULT LIST
+        // =====================
+        //     APPLY RESULT
+        // =====================
         existing.clear();
         existing.addAll(result);
     }
 }
+
