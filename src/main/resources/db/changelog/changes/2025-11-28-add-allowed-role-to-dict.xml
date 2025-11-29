@@ -1,0 +1,26 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="add-allowed-role-to-dictionary" author="you">
+
+        <addColumn tableName="what_dict">
+            <column name="allowed_role" type="varchar(50)"/>
+        </addColumn>
+
+        <addColumn tableName="what_happened_dict">
+            <column name="allowed_role" type="varchar(50)"/>
+        </addColumn>
+
+        <addColumn tableName="activity_item_name_dict">
+            <column name="allowed_role" type="varchar(50)"/>
+        </addColumn>
+
+        <addColumn tableName="activity_item_unit_dict">
+            <column name="allowed_role" type="varchar(50)"/>
+        </addColumn>
+
+    </changeSet>
+</databaseChangeLog>

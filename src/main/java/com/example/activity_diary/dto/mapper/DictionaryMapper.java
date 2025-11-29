@@ -16,8 +16,9 @@ public interface DictionaryMapper {
     DictionaryResponseDto toDto(WhatHappenedDict d);
 
     // WHAT
-    @Mapping(source = "whatHappened.id", target = "parentId")
+    @Mapping(source = "whatHappenedId", target = "parentId")
     DictionaryResponseDto toDto(WhatDict d);
+
 
     // ITEM NAME
     @Mapping(target = "parentId", ignore = true)

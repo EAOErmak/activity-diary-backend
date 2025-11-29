@@ -4,17 +4,20 @@ import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
+import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.base.BaseDictionary;
 import com.example.activity_diary.entity.dict.*;
+import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.ActivityItemNameDictRepository;
-import com.example.activity_diary.repository.ActivityItemUnitDictRepository;
-import com.example.activity_diary.repository.WhatDictRepository;
-import com.example.activity_diary.repository.WhatHappenedDictRepository;
+import com.example.activity_diary.repository.*;
+import com.example.activity_diary.service.dictionary.DictionaryService;
+
 import com.example.activity_diary.service.dictionary.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,12 +26,13 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class DictionaryServiceImpl implements com.example.activity_diary.service.dictionary.DictionaryService {
+public class DictionaryServiceImpl implements DictionaryService {
 
     private final WhatHappenedDictRepository whatHappenedRepo;
     private final WhatDictRepository whatRepo;
     private final ActivityItemNameDictRepository nameRepo;
     private final ActivityItemUnitDictRepository unitRepo;
+    private final UserRepository userRepository;
 
     private final DictionaryValidator validator;
     private final DictionaryCache cache;
@@ -41,10 +45,11 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
         if (whatHappenedRepo.existsByNameIgnoreCase(name)) {
             throw new BadRequestException("WhatHappened with this name already exists");
         }
-        WhatHappenedDict ent = WhatHappenedDict.builder()
-                .name(name)
-                .isActive(Boolean.TRUE)
-                .build();
+
+        WhatHappenedDict ent = new WhatHappenedDict();
+        ent.setName(name);
+        ent.setIsActive(true);
+
         WhatHappenedDict saved = whatHappenedRepo.save(ent);
         cache.insert(saved);
         return mapper.toDto(saved);
@@ -52,9 +57,20 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getAllWhatHappened() {
-        return cache.getAllWhatHappened().stream().map(mapper::toDto).collect(Collectors.toList());
+    public List<DictionaryResponseDto> getAllWhatHappened(UserDetails ud) {
+
+        User user = userRepository.findByUsername(ud.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        String userRole = user.getRole().name();
+
+        return cache.getAllWhatHappened()
+                .stream()
+                .filter(dict -> hasAccess(dict, user))
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
+
 
     @Override
     public DictionaryResponseDto createWhat(Long parentId, DictionaryCreateDto dto) {
@@ -68,11 +84,11 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
             throw new BadRequestException("What with this name already exists under parent");
         }
 
-        WhatDict ent = WhatDict.builder()
-                .name(name)
-                .whatHappened(parent)
-                .isActive(Boolean.TRUE)
-                .build();
+        WhatDict ent = new WhatDict();
+
+        ent.setWhatHappenedId(parent.getId());
+        ent.setName(name);
+        ent.setIsActive(true);
 
         WhatDict saved = whatRepo.save(ent);
 
@@ -83,10 +99,22 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getWhatByParent(Long parentId) {
-        resolver.getWhatHappened(parentId); // validation
-        return cache.getWhatByParent(parentId).stream().map(mapper::toDto).collect(Collectors.toList());
+    public List<DictionaryResponseDto> getWhatByParent(Long parentId, UserDetails ud) {
+
+        resolver.getWhatHappened(parentId); // валидация родителя
+
+        User user = userRepository.findByUsername(ud.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        String userRole = user.getRole().name();
+
+        return cache.getWhatByParent(parentId)
+                .stream()
+                .filter(dict -> hasAccess(dict, user))
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
+
 
     @Override
     public DictionaryResponseDto createItemName(DictionaryCreateDto dto) {
@@ -94,10 +122,10 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
         if (nameRepo.existsByNameIgnoreCase(name)) {
             throw new BadRequestException("Item name already exists");
         }
-        ActivityItemNameDict ent = ActivityItemNameDict.builder()
-                .name(name)
-                .isActive(Boolean.TRUE)
-                .build();
+        ActivityItemNameDict ent = new ActivityItemNameDict();
+        ent.setName(name);
+        ent.setIsActive(true);
+
         ActivityItemNameDict saved = nameRepo.save(ent);
         cache.insert(saved);
         return mapper.toDto(saved);
@@ -105,8 +133,18 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getAllItemNames() {
-        return cache.getAllItemNames().stream().map(mapper::toDto).collect(Collectors.toList());
+    public List<DictionaryResponseDto> getAllItemNames(UserDetails ud) {
+
+        User user = userRepository.findByUsername(ud.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        String userRole = user.getRole().name();
+
+        return cache.getAllItemNames()
+                .stream()
+                .filter(dict -> hasAccess(dict, user))
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -115,10 +153,11 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
         if (unitRepo.existsByNameIgnoreCase(name)) {
             throw new BadRequestException("Unit already exists");
         }
-        ActivityItemUnitDict ent = ActivityItemUnitDict.builder()
-                .name(name)
-                .isActive(Boolean.TRUE)
-                .build();
+        ActivityItemUnitDict ent = new ActivityItemUnitDict();
+
+        ent.setName(name);
+        ent.setIsActive(true);
+
         ActivityItemUnitDict saved = unitRepo.save(ent);
         cache.insert(saved);
         return mapper.toDto(saved);
@@ -126,8 +165,18 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getAllUnits() {
-        return cache.getAllUnits().stream().map(mapper::toDto).collect(Collectors.toList());
+    public List<DictionaryResponseDto> getAllUnits(UserDetails ud) {
+
+        User user = userRepository.findByUsername(ud.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        String userRole = user.getRole().name();
+
+        return cache.getAllUnits()
+                .stream()
+                .filter(dict -> hasAccess(dict, user))
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -193,5 +242,15 @@ public class DictionaryServiceImpl implements com.example.activity_diary.service
             else if (ent instanceof WhatHappenedDict w) w.setIsActive(dto.getIsActive());
             else if (ent instanceof WhatDict wd) wd.setIsActive(dto.getIsActive());
         }
+    }
+    private boolean hasAccess(BaseDictionary dict, User user) {
+        // ✅ публичное слово
+        if (dict.getAllowedRole() == null) return true;
+
+        // ✅ админ видит всё
+        if (user.getRole() == Role.ADMIN) return true;
+
+        // ✅ совпадение роли
+        return dict.getAllowedRole().equals(user.getRole().name());
     }
 }

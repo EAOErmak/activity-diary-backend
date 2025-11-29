@@ -1,5 +1,6 @@
 package com.example.activity_diary.entity.log;
 
+import com.example.activity_diary.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,11 +13,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "login_event")
-public class LoginEvent {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class LoginEvent extends BaseEntity {
 
     private Long userId;
 
@@ -29,9 +26,6 @@ public class LoginEvent {
     @Builder.Default
     @Column(nullable = false)
     private boolean success = false;
-
-    @Column(nullable = false)
-    private Instant createdAt;
 }
 
 

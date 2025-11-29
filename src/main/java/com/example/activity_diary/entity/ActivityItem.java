@@ -18,10 +18,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class ActivityItem extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dict_name_id", nullable = false)
     private ActivityItemNameDict name;

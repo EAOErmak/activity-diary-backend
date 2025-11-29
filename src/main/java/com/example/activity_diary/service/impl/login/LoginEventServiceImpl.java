@@ -21,7 +21,6 @@ public class LoginEventServiceImpl implements LoginEventService {
                 .ip(ip)
                 .userAgent(userAgent)
                 .success(true)
-                .createdAt(Instant.now())
                 .build();
         repo.save(e);
     }
@@ -33,7 +32,6 @@ public class LoginEventServiceImpl implements LoginEventService {
                 .ip(ip)
                 .userAgent(userAgent)
                 .success(false)
-                .createdAt(Instant.now())
                 .build();
         repo.save(e);
     }

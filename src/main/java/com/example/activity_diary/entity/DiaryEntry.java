@@ -23,10 +23,6 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 public class DiaryEntry extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     // Category (parent)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "what_happened_id", nullable = false)

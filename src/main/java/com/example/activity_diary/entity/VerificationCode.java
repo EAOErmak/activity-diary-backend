@@ -1,5 +1,6 @@
 package com.example.activity_diary.entity;
 
+import com.example.activity_diary.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -11,11 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VerificationCode {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class VerificationCode extends BaseEntity {
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true, nullable = false)

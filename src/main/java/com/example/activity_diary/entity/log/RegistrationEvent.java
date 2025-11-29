@@ -1,10 +1,9 @@
-package com.example.activity_diary.entity;
+package com.example.activity_diary.entity.log;
 
+import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "registration_event", indexes = {
@@ -15,11 +14,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegistrationEvent {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RegistrationEvent extends BaseEntity {
 
     @Column(nullable = false, length = 45) // IPv6-safe
     private String ip;
@@ -27,8 +22,4 @@ public class RegistrationEvent {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
 }

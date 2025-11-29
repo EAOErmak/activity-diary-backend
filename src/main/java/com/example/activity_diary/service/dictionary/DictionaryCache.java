@@ -64,7 +64,7 @@ public class DictionaryCache {
     public List<WhatDict> getWhatByParent(Long parentId) {
         List<WhatDict> list = new ArrayList<>();
         for (WhatDict d : whatMap.values()) {
-            if (d.getWhatHappened().getId().equals(parentId)) {
+            if (d.getWhatHappenedId().equals(parentId)) {
                 list.add(d);
             }
         }

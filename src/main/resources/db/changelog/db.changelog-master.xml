@@ -14,5 +14,8 @@
     <include file="db/changelog/changes/2025-11-24-verification-codes.xml"/>
     <include file="db/changelog/changes/2025-11-24-fix-refresh-token-updated-at.xml"/>
     <include file="db/changelog/changes/2025-11-25-fix-activity-item.xml"/>
+    <include file="db/changelog/changes/2025-11-28-add-user-lock-fields.xml"/>
+    <include file="db/changelog/changes/2025-11-28-add-allowed-role-to-dict.xml"/>
+    <include file="db/changelog/changes/2025-11-28-add-updated-at-to-events.xml"/>
 
 </databaseChangeLog>

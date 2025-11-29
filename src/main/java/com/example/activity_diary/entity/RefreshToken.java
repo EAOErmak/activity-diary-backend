@@ -17,10 +17,6 @@ import java.time.Instant;
 @EntityListeners(AuditingEntityListener.class)
 public class RefreshToken extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 

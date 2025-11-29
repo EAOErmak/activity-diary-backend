@@ -3,7 +3,7 @@ package com.example.activity_diary.service.impl.auth;
 import com.example.activity_diary.dto.auth.AuthRequestDto;
 import com.example.activity_diary.dto.auth.AuthResponseDto;
 import com.example.activity_diary.dto.auth.RegisterRequestDto;
-import com.example.activity_diary.entity.RegistrationEvent;
+import com.example.activity_diary.entity.log.RegistrationEvent;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.RefreshToken;
 import com.example.activity_diary.repository.RegistrationEventRepository;
@@ -19,6 +19,8 @@ import com.example.activity_diary.service.login.LoginEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -161,6 +163,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Invalid username or password");
         }
 
+        cheсkForLock(user);
+
         // SUCCESS
         loginEventService.recordSuccess(user.getId(), ip, userAgent);
 
@@ -187,6 +191,8 @@ public class AuthServiceImpl implements AuthService {
         if (!Boolean.TRUE.equals(user.getEnabled())) {
             throw new ForbiddenException("User not verified");
         }
+
+        cheсkForLock(user);
 
         loginEventService.recordSuccess(user.getId(), null, null);
 
@@ -215,6 +221,8 @@ public class AuthServiceImpl implements AuthService {
             throw new ForbiddenException("User not verified");
         }
 
+        cheсkForLock(user);
+
         String accessToken = jwtUtils.generateAccessToken(user.getUsername());
 
         return AuthResponseDto.builder()
@@ -230,5 +238,24 @@ public class AuthServiceImpl implements AuthService {
             // Фиксированная задержка 150–250ms, чтобы скрыть разницу в ответах
             Thread.sleep(150 + (int)(Math.random() * 100));
         } catch (InterruptedException ignored) {}
+    }
+
+    private void cheсkForLock(User user){
+        if (Boolean.TRUE.equals(user.getAccountLocked())) {
+            // ✅ если срок блокировки ещё не истёк — не пускаем
+            if (user.getLockUntil() != null
+                    && user.getLockUntil().isAfter(LocalDateTime.now())) {
+
+                throw new ForbiddenException(
+                        "Account locked until " + user.getLockUntil()
+                );
+            }
+
+            // ✅ если срок ИСТЁК — автоматически разблокируем
+            user.setAccountLocked(false);
+            user.setLockUntil(null);
+            user.setFailed2faAttempts(0);
+            userRepository.save(user);
+        }
     }
 }

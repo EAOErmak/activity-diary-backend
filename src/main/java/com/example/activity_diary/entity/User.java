@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +20,6 @@ import java.util.List;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class User extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -44,6 +41,15 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.USER;
+
+    @Column(name = "account_locked", nullable = false)
+    private Boolean accountLocked = false;
+
+    @Column(name = "lock_until")
+    private LocalDateTime lockUntil;
+
+    @Column(name = "failed_2fa_attempts", nullable = false)
+    private Integer failed2faAttempts = 0;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
