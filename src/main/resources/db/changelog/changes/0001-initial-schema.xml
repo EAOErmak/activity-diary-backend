@@ -10,6 +10,11 @@
     <!-- USERS -->
     <!-- ========================================================= -->
     <changeSet id="001-users" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+        </preConditions>
         <createTable tableName="users">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -60,6 +65,11 @@
     <!-- VERIFICATION CODES -->
     <!-- ========================================================= -->
     <changeSet id="002-verification-codes" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="verification_codes"/>
+            </not>
+        </preConditions>
         <createTable tableName="verification_codes">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -100,6 +110,11 @@
     <!-- DICTIONARY ITEM -->
     <!-- ========================================================= -->
     <changeSet id="003-dictionary-item" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="dictionary_item"/>
+            </not>
+        </preConditions>
         <createTable tableName="dictionary_item">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -134,6 +149,11 @@
     <!-- DICTIONARY SUGGESTION -->
     <!-- ========================================================= -->
     <changeSet id="004-dictionary-suggestion" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="dictionary_suggestion"/>
+            </not>
+        </preConditions>
         <createTable tableName="dictionary_suggestion">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -180,6 +200,11 @@
     <!-- DIARY ENTRY -->
     <!-- ========================================================= -->
     <changeSet id="005-diary-entry" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="diary_entry"/>
+            </not>
+        </preConditions>
         <createTable tableName="diary_entry">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -251,6 +276,11 @@
     <!-- ACTIVITY ITEM -->
     <!-- ========================================================= -->
     <changeSet id="006-activity-item" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="activity_item"/>
+            </not>
+        </preConditions>
         <createTable tableName="activity_item">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -307,6 +337,11 @@
     <!-- LOGIN EVENT -->
     <!-- ========================================================= -->
     <changeSet id="007-login-event" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="login_event"/>
+            </not>
+        </preConditions>
         <createTable tableName="login_event">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -337,6 +372,11 @@
     <!-- REGISTRATION EVENT -->
     <!-- ========================================================= -->
     <changeSet id="008-registration-event" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="registration_event"/>
+            </not>
+        </preConditions>
         <createTable tableName="registration_event">
 
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -376,6 +416,11 @@
     <!-- REFRESH TOKEN -->
     <!-- ========================================================= -->
     <changeSet id="009-refresh-token" author="init">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="refresh_token"/>
+            </not>
+        </preConditions>
         <createTable tableName="refresh_token">
 
             <column name="id" type="BIGINT" autoIncrement="true">
