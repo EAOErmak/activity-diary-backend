@@ -6,8 +6,6 @@ import com.example.activity_diary.service.login.LoginEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-
 @Service
 @RequiredArgsConstructor
 public class LoginEventServiceImpl implements LoginEventService {
@@ -16,23 +14,43 @@ public class LoginEventServiceImpl implements LoginEventService {
 
     @Override
     public void recordSuccess(Long userId, String ip, String userAgent) {
+
+        if (ip == null || ip.isBlank()) {
+            ip = "UNKNOWN";
+        }
+
+        if (userAgent == null || userAgent.isBlank()) {
+            userAgent = "UNKNOWN";
+        }
+
         LoginEvent e = LoginEvent.builder()
                 .userId(userId)
                 .ip(ip)
                 .userAgent(userAgent)
                 .success(true)
                 .build();
+
         repo.save(e);
     }
 
     @Override
     public void recordFailure(String ip, String userAgent) {
+
+        if (ip == null || ip.isBlank()) {
+            ip = "UNKNOWN";
+        }
+
+        if (userAgent == null || userAgent.isBlank()) {
+            userAgent = "UNKNOWN";
+        }
+
         LoginEvent e = LoginEvent.builder()
                 .userId(null)
                 .ip(ip)
                 .userAgent(userAgent)
                 .success(false)
                 .build();
+
         repo.save(e);
     }
 }

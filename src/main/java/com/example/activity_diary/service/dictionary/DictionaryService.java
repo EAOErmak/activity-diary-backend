@@ -1,37 +1,29 @@
+// src/main/java/com/example/activity_diary/service/dictionary/DictionaryService.java
 package com.example.activity_diary.service.dictionary;
 
 import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
+import com.example.activity_diary.entity.enums.DictionaryType;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 
 public interface DictionaryService {
 
-    DictionaryResponseDto createWhatHappened(DictionaryCreateDto dto);
+    DictionaryResponseDto create(DictionaryCreateDto dto);
 
-    List<DictionaryResponseDto> getAllWhatHappened(UserDetails ud);
+    // Для пользователя (фильтрация по ролям и active = true)
+    List<DictionaryResponseDto> getByType(DictionaryType type, UserDetails ud);
 
-    DictionaryResponseDto createWhat(Long parentId, DictionaryCreateDto dto);
+    // Для админа (без фильтра по active/role)
+    List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type);
 
-    List<DictionaryResponseDto> getWhatByParent(Long parentId, UserDetails ud);
+    DictionaryResponseDto update(Long id, DictionaryUpdateDto dto);
 
-    DictionaryResponseDto createItemName(DictionaryCreateDto dto);
+    // Поиск для пользователя
+    List<DictionaryResponseDto> search(String query, UserDetails ud);
 
-    List<DictionaryResponseDto> getAllItemNames(UserDetails ud);
-
-    DictionaryResponseDto createUnit(DictionaryCreateDto dto);
-
-    List<DictionaryResponseDto> getAllUnits(UserDetails ud);
-
-    DictionaryResponseDto updateItemName(Long id, DictionaryUpdateDto dto);
-
-    DictionaryResponseDto updateUnit(Long id, DictionaryUpdateDto dto);
-
-    DictionaryResponseDto updateWhatHappened(Long id, DictionaryUpdateDto dto);
-
-    DictionaryResponseDto updateWhat(Long id, DictionaryUpdateDto dto);
-
-    List<DictionaryResponseDto> search(String query);
+    // Поиск для админа
+    List<DictionaryResponseDto> searchForAdmin(String query);
 }

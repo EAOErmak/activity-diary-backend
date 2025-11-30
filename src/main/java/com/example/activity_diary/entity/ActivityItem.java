@@ -1,8 +1,7 @@
 package com.example.activity_diary.entity;
 
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.dict.ActivityItemNameDict;
-import com.example.activity_diary.entity.dict.ActivityItemUnitDict;
+import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,12 +19,13 @@ public class ActivityItem extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dict_name_id", nullable = false)
-    private ActivityItemNameDict name;
+    private DictionaryItem name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dict_unit_id", nullable = false)
-    private ActivityItemUnitDict unit;
+    private DictionaryItem  unit;
 
+    @Column(nullable = false)
     private Integer count;
 
     @ManyToOne(fetch = FetchType.LAZY)

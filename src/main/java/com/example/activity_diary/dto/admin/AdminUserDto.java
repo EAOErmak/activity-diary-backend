@@ -1,3 +1,4 @@
+// src/main/java/com/example/activity_diary/dto/admin/AdminUserDto.java
 package com.example.activity_diary.dto.admin;
 
 import lombok.Data;

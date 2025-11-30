@@ -23,6 +23,11 @@ public class DiaryItemServiceImpl implements DiaryItemService {
     // =======================================================
     @Override
     public void applyItems(List<ActivityItemCreateDto> dtos, DiaryEntry entry) {
+
+        if (entry.getWhatDidYouDo() == null) {
+            entry.setWhatDidYouDo(new ArrayList<>());
+        }
+
         if (dtos == null || dtos.isEmpty()) {
             entry.getWhatDidYouDo().clear();
             return;
@@ -33,11 +38,9 @@ public class DiaryItemServiceImpl implements DiaryItemService {
                 .peek(i -> i.setDiaryEntry(entry))
                 .toList();
 
-        // orphanRemoval = true → Hibernate удалит старые items
         entry.getWhatDidYouDo().clear();
         entry.getWhatDidYouDo().addAll(items);
     }
-
 
     // =======================================================
     //                       UPDATE
@@ -45,9 +48,13 @@ public class DiaryItemServiceImpl implements DiaryItemService {
     @Override
     public void updateItems(List<ActivityItemUpdateDto> dtos, DiaryEntry entry) {
 
+        if (entry.getWhatDidYouDo() == null) {
+            entry.setWhatDidYouDo(new ArrayList<>());
+        }
+
         List<ActivityItem> existing = entry.getWhatDidYouDo();
 
-        // Map existing items: id → entity
+        // id → entity
         Map<Long, ActivityItem> oldMap = existing.stream()
                 .filter(i -> i.getId() != null)
                 .collect(Collectors.toMap(ActivityItem::getId, i -> i));
@@ -64,13 +71,14 @@ public class DiaryItemServiceImpl implements DiaryItemService {
 
                     ActivityItem item = oldMap.get(dto.getId());
 
-                    // update fields
                     if (dto.getNameId() != null) {
-                        item.setName(mapper.mapName(dto.getNameId()));
+                        item.setName(mapper.map(dto.getNameId()));
                     }
+
                     if (dto.getUnitId() != null) {
-                        item.setUnit(mapper.mapUnit(dto.getUnitId()));
+                        item.setUnit(mapper.map(dto.getUnitId()));
                     }
+
                     if (dto.getCount() != null) {
                         item.setCount(dto.getCount());
                     }
@@ -78,11 +86,11 @@ public class DiaryItemServiceImpl implements DiaryItemService {
                     result.add(item);
                     oldMap.remove(dto.getId());
                 }
-
                 // =====================
                 //    CREATE NEW ITEM
                 // =====================
                 else {
+
                     ActivityItemCreateDto createDto = new ActivityItemCreateDto();
                     createDto.setNameId(dto.getNameId());
                     createDto.setUnitId(dto.getUnitId());
@@ -90,16 +98,10 @@ public class DiaryItemServiceImpl implements DiaryItemService {
 
                     ActivityItem newItem = mapper.toActivityItem(createDto);
                     newItem.setDiaryEntry(entry);
+
                     result.add(newItem);
                 }
             }
-        }
-
-        // =====================
-        //     DELETE MISSING
-        // =====================
-        for (ActivityItem removed : oldMap.values()) {
-            existing.remove(removed); // JPA orphanRemoval → DELETE SQL
         }
 
         // =====================
@@ -107,6 +109,6 @@ public class DiaryItemServiceImpl implements DiaryItemService {
         // =====================
         existing.clear();
         existing.addAll(result);
+        // orphanRemoval = true → Hibernate сам удалит лишние записи
     }
 }
-

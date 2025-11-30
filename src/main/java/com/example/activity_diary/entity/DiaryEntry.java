@@ -1,8 +1,7 @@
 package com.example.activity_diary.entity;
 
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.dict.WhatDict;
-import com.example.activity_diary.entity.dict.WhatHappenedDict;
+import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -26,16 +25,20 @@ public class DiaryEntry extends BaseEntity {
     // Category (parent)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "what_happened_id", nullable = false)
-    private WhatHappenedDict whatHappened;
+    private DictionaryItem whatHappened;
 
     // Subcategory
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "what_id", nullable = false)
-    private WhatDict what;
+    private DictionaryItem  what;
 
+    @Column(nullable = false)
     private LocalDateTime whenStarted;
+
+    @Column(nullable = false)
     private LocalDateTime whenEnded;
 
+    @Column(nullable = false)
     private Integer duration;
 
     // Activity items
@@ -54,7 +57,7 @@ public class DiaryEntry extends BaseEntity {
     private EntryStatus status = EntryStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;
 }

@@ -1,3 +1,4 @@
+// src/main/java/com/example/activity_diary/service/impl/dictionary/DictionaryServiceImpl.java
 package com.example.activity_diary.service.impl.dictionary;
 
 import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
@@ -5,252 +6,188 @@ import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
 import com.example.activity_diary.entity.User;
-import com.example.activity_diary.entity.base.BaseDictionary;
-import com.example.activity_diary.entity.dict.*;
+import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.*;
+import com.example.activity_diary.repository.DictionaryRepository;
+import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.dictionary.DictionaryService;
-
-import com.example.activity_diary.service.dictionary.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class DictionaryServiceImpl implements DictionaryService {
 
-    private final WhatHappenedDictRepository whatHappenedRepo;
-    private final WhatDictRepository whatRepo;
-    private final ActivityItemNameDictRepository nameRepo;
-    private final ActivityItemUnitDictRepository unitRepo;
+    private final DictionaryRepository dictionaryRepository;
     private final UserRepository userRepository;
-
-    private final DictionaryValidator validator;
-    private final DictionaryCache cache;
     private final DictionaryMapper mapper;
-    private final DictionaryResolver resolver;
+
+    // ============================
+    // CREATE
+    // ============================
 
     @Override
-    public DictionaryResponseDto createWhatHappened(DictionaryCreateDto dto) {
-        String name = validator.validateName(dto.getName());
-        if (whatHappenedRepo.existsByNameIgnoreCase(name)) {
-            throw new BadRequestException("WhatHappened with this name already exists");
+    public DictionaryResponseDto create(DictionaryCreateDto dto) {
+
+        if (dto.getType() == null) {
+            throw new BadRequestException("Dictionary type is required");
         }
 
-        WhatHappenedDict ent = new WhatHappenedDict();
-        ent.setName(name);
-        ent.setIsActive(true);
+        if (dto.getLabel() == null || dto.getLabel().trim().isEmpty()) {
+            throw new BadRequestException("Label is required");
+        }
 
-        WhatHappenedDict saved = whatHappenedRepo.save(ent);
-        cache.insert(saved);
-        return mapper.toDto(saved);
+        String cleanLabel = dto.getLabel().trim();
+
+        if (dictionaryRepository.existsByTypeAndLabelIgnoreCase(dto.getType(), cleanLabel)) {
+            throw new BadRequestException("Dictionary item already exists");
+        }
+
+        DictionaryItem item = DictionaryItem.builder()
+                .type(dto.getType())
+                .label(cleanLabel)
+                .allowedRole(dto.getAllowedRole())
+                .active(true)
+                .build();
+
+        return mapper.toDto(dictionaryRepository.save(item));
     }
+
+    // ============================
+    // READ (USER)
+    // ============================
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getAllWhatHappened(UserDetails ud) {
+    public List<DictionaryResponseDto> getByType(DictionaryType type, UserDetails ud) {
 
         User user = userRepository.findByUsername(ud.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        String userRole = user.getRole().name();
-
-        return cache.getAllWhatHappened()
+        return dictionaryRepository
+                .findAllByTypeAndActiveTrueOrderByLabelAsc(type)
                 .stream()
-                .filter(dict -> hasAccess(dict, user))
+                .filter(item -> hasAccess(item, user))
                 .map(mapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-
-    @Override
-    public DictionaryResponseDto createWhat(Long parentId, DictionaryCreateDto dto) {
-
-        WhatHappenedDict parent = resolver.getWhatHappened(parentId);
-
-        String name = validator.validateName(dto.getName());
-
-        // ✔ вызываем правильный метод
-        if (whatRepo.existsByNameIgnoreCaseAndWhatHappenedId(name, parent.getId())) {
-            throw new BadRequestException("What with this name already exists under parent");
-        }
-
-        WhatDict ent = new WhatDict();
-
-        ent.setWhatHappenedId(parent.getId());
-        ent.setName(name);
-        ent.setIsActive(true);
-
-        WhatDict saved = whatRepo.save(ent);
-
-        cache.insert(saved);
-
-        return mapper.toDto(saved);
-    }
+    // ============================
+    // READ (ADMIN)
+    // ============================
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getWhatByParent(Long parentId, UserDetails ud) {
+    public List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type) {
+        return dictionaryRepository
+                .findAllByTypeOrderByLabelAsc(type)
+                .stream()
+                .map(mapper::toDto)
+                .toList();
+    }
 
-        resolver.getWhatHappened(parentId); // валидация родителя
+    // ============================
+    // UPDATE
+    // ============================
+
+    @Override
+    public DictionaryResponseDto update(Long id, DictionaryUpdateDto dto) {
+
+        DictionaryItem item = dictionaryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
+
+        if (dto.getLabel() != null) {
+            String clean = dto.getLabel().trim();
+
+            if (clean.isEmpty()) {
+                throw new BadRequestException("Label cannot be empty");
+            }
+
+            boolean exists = dictionaryRepository
+                    .existsByTypeAndLabelIgnoreCaseAndIdNot(
+                            item.getType(),
+                            clean,
+                            item.getId()
+                    );
+
+            if (exists) {
+                throw new BadRequestException("Dictionary item with this label already exists");
+            }
+
+            item.setLabel(clean);
+        }
+
+        if (dto.getActive() != null) {
+            item.setActive(dto.getActive());
+        }
+
+        if (dto.getAllowedRole() != null) {
+            item.setAllowedRole(dto.getAllowedRole());
+        }
+
+        return mapper.toDto(dictionaryRepository.save(item));
+    }
+
+    // ============================
+    // SEARCH (USER)
+    // ============================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DictionaryResponseDto> search(String query, UserDetails ud) {
+
+        if (query == null || query.trim().isEmpty()) {
+            return List.of();
+        }
 
         User user = userRepository.findByUsername(ud.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        String userRole = user.getRole().name();
-
-        return cache.getWhatByParent(parentId)
+        return dictionaryRepository
+                .findAllByLabelContainingIgnoreCaseAndActiveTrueOrderByTypeAscLabelAsc(query.trim())
                 .stream()
-                .filter(dict -> hasAccess(dict, user))
+                .filter(item -> hasAccess(item, user))
                 .map(mapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-
-    @Override
-    public DictionaryResponseDto createItemName(DictionaryCreateDto dto) {
-        String name = validator.validateName(dto.getName());
-        if (nameRepo.existsByNameIgnoreCase(name)) {
-            throw new BadRequestException("Item name already exists");
-        }
-        ActivityItemNameDict ent = new ActivityItemNameDict();
-        ent.setName(name);
-        ent.setIsActive(true);
-
-        ActivityItemNameDict saved = nameRepo.save(ent);
-        cache.insert(saved);
-        return mapper.toDto(saved);
-    }
+    // ============================
+    // SEARCH (ADMIN)
+    // ============================
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getAllItemNames(UserDetails ud) {
+    public List<DictionaryResponseDto> searchForAdmin(String query) {
 
-        User user = userRepository.findByUsername(ud.getUsername())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        if (query == null || query.trim().isEmpty()) {
+            return List.of();
+        }
 
-        String userRole = user.getRole().name();
-
-        return cache.getAllItemNames()
+        return dictionaryRepository
+                .findAllByLabelContainingIgnoreCaseOrderByTypeAscLabelAsc(query.trim())
                 .stream()
-                .filter(dict -> hasAccess(dict, user))
                 .map(mapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    @Override
-    public DictionaryResponseDto createUnit(DictionaryCreateDto dto) {
-        String name = validator.validateName(dto.getName());
-        if (unitRepo.existsByNameIgnoreCase(name)) {
-            throw new BadRequestException("Unit already exists");
-        }
-        ActivityItemUnitDict ent = new ActivityItemUnitDict();
+    // ============================
+    // ACCESS CONTROL
+    // ============================
 
-        ent.setName(name);
-        ent.setIsActive(true);
+    private boolean hasAccess(DictionaryItem item, User user) {
 
-        ActivityItemUnitDict saved = unitRepo.save(ent);
-        cache.insert(saved);
-        return mapper.toDto(saved);
-    }
+        if (item.getAllowedRole() == null) return true;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getAllUnits(UserDetails ud) {
-
-        User user = userRepository.findByUsername(ud.getUsername())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        String userRole = user.getRole().name();
-
-        return cache.getAllUnits()
-                .stream()
-                .filter(dict -> hasAccess(dict, user))
-                .map(mapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public DictionaryResponseDto updateItemName(Long id, DictionaryUpdateDto dto) {
-        ActivityItemNameDict ent = nameRepo.findById(id).orElseThrow(() -> new NotFoundException("Item not found"));
-        applyUpdate(ent, dto);
-        ActivityItemNameDict saved = nameRepo.save(ent);
-        cache.update(saved);
-        return mapper.toDto(saved);
-    }
-
-    @Override
-    public DictionaryResponseDto updateUnit(Long id, DictionaryUpdateDto dto) {
-        ActivityItemUnitDict ent = unitRepo.findById(id).orElseThrow(() -> new NotFoundException("Unit not found"));
-        applyUpdate(ent, dto);
-        ActivityItemUnitDict saved = unitRepo.save(ent);
-        cache.update(saved);
-        return mapper.toDto(saved);
-    }
-
-    @Override
-    public DictionaryResponseDto updateWhatHappened(Long id, DictionaryUpdateDto dto) {
-        WhatHappenedDict ent = whatHappenedRepo.findById(id).orElseThrow(() -> new NotFoundException("Category not found"));
-        applyUpdate(ent, dto);
-        WhatHappenedDict saved = whatHappenedRepo.save(ent);
-        cache.update(saved);
-        return mapper.toDto(saved);
-    }
-
-    @Override
-    public DictionaryResponseDto updateWhat(Long id, DictionaryUpdateDto dto) {
-        WhatDict ent = whatRepo.findById(id).orElseThrow(() -> new NotFoundException("What not found"));
-        applyUpdate(ent, dto);
-        WhatDict saved = whatRepo.save(ent);
-        cache.update(saved);
-        return mapper.toDto(saved);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> search(String query) {
-        if (query == null || query.trim().isEmpty()) return List.of();
-        String q = query.trim();
-        List<DictionaryResponseDto> byWhatHappened = whatHappenedRepo.findByNameContainingIgnoreCase(q).stream().map(mapper::toDto).collect(Collectors.toList());
-        List<DictionaryResponseDto> byWhat = whatRepo.findByNameContainingIgnoreCase(q).stream().map(mapper::toDto).collect(Collectors.toList());
-        List<DictionaryResponseDto> byName = nameRepo.findByNameContainingIgnoreCase(q).stream().map(mapper::toDto).collect(Collectors.toList());
-        List<DictionaryResponseDto> byUnit = unitRepo.findByNameContainingIgnoreCase(q).stream().map(mapper::toDto).collect(Collectors.toList());
-        return Stream.of(byWhatHappened, byWhat, byName, byUnit).flatMap(List::stream).collect(Collectors.toList());
-    }
-
-    private void applyUpdate(Object ent, DictionaryUpdateDto dto) {
-        if (dto == null) return;
-        if (dto.getName() != null) {
-            String clean = validator.validateName(dto.getName());
-            if (ent instanceof ActivityItemNameDict n) n.setName(clean);
-            else if (ent instanceof ActivityItemUnitDict u) u.setName(clean);
-            else if (ent instanceof WhatHappenedDict w) w.setName(clean);
-            else if (ent instanceof WhatDict wd) wd.setName(clean);
-        }
-        if (dto.getIsActive() != null) {
-            if (ent instanceof ActivityItemNameDict n) n.setIsActive(dto.getIsActive());
-            else if (ent instanceof ActivityItemUnitDict u) u.setIsActive(dto.getIsActive());
-            else if (ent instanceof WhatHappenedDict w) w.setIsActive(dto.getIsActive());
-            else if (ent instanceof WhatDict wd) wd.setIsActive(dto.getIsActive());
-        }
-    }
-    private boolean hasAccess(BaseDictionary dict, User user) {
-        // ✅ публичное слово
-        if (dict.getAllowedRole() == null) return true;
-
-        // ✅ админ видит всё
         if (user.getRole() == Role.ADMIN) return true;
 
-        // ✅ совпадение роли
-        return dict.getAllowedRole().equals(user.getRole().name());
+        return item.getAllowedRole().equals(user.getRole().name());
     }
 }

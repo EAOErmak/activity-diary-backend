@@ -56,7 +56,7 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             User user = userRepository.findByUsername(username).orElse(null);
-            if (user == null || !user.getEnabled()) {
+            if (user == null || !user.isEnabled()) {
                 throw new UnauthorizedException("User disabled or deleted");
             }
 

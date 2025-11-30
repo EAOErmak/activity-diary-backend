@@ -18,12 +18,8 @@ public class DiaryEntryCreateDto {
     @Min(value = 1, message = "whatId must be a positive ID")
     private Long whatId;
 
-    // Дата начала — опциональна, но если передана, не может быть из будущего
-    @PastOrPresent(message = "whenStarted cannot be in the future")
     private LocalDateTime whenStarted;
 
-    // Дата конца — опциональна, но если передана, не может быть раньше начала и не может быть из будущего
-    @PastOrPresent(message = "whenEnded cannot be in the future")
     private LocalDateTime whenEnded;
 
     @Min(value = 1, message = "howYouWereFeeling must be between 1 and 5")

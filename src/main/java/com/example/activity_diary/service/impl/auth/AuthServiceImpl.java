@@ -81,6 +81,7 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponseDto.builder()
                 .username(username)
                 .userId(user.getId())
+                .role(user.getRole().name())
                 .twoFactorRequired(true)
                 .build();
     }
@@ -101,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
 
-        if (!Boolean.TRUE.equals(user.getEnabled())) {
+        if (!Boolean.TRUE.equals(user.isEnabled())) {
             fakeDelay();
             return;
         }
@@ -157,7 +158,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Invalid username or password");
         }
 
-        if (!Boolean.TRUE.equals(user.getEnabled())) {
+        if (!Boolean.TRUE.equals(user.isEnabled())) {
             fakeDelay();
             loginEventService.recordFailure(ip, userAgent);
             throw new BadRequestException("Invalid username or password");
@@ -174,6 +175,7 @@ public class AuthServiceImpl implements AuthService {
                 .twoFactorRequired(true)
                 .username(username)
                 .userId(user.getId())
+                .role(user.getRole().name())
                 .build();
     }
 
@@ -188,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(username.trim().toLowerCase())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        if (!Boolean.TRUE.equals(user.getEnabled())) {
+        if (!Boolean.TRUE.equals(user.isEnabled())) {
             throw new ForbiddenException("User not verified");
         }
 
@@ -204,6 +206,7 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken.getTokenHash())
                 .username(user.getUsername())
                 .userId(user.getId())
+                .role(user.getRole().name())
                 .build();
     }
 
@@ -217,7 +220,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken newToken = refreshTokenService.verifyAndRotate(rawRefreshToken);
 
         User user = newToken.getUser();
-        if (!user.getEnabled()) {
+        if (!user.isEnabled()) {
             throw new ForbiddenException("User not verified");
         }
 
@@ -230,6 +233,7 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(newToken.getTokenHash())
                 .username(user.getUsername())
                 .userId(user.getId())
+                .role(user.getRole().name())
                 .build();
     }
 
@@ -241,7 +245,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void cheсkForLock(User user){
-        if (Boolean.TRUE.equals(user.getAccountLocked())) {
+        if (Boolean.TRUE.equals(user.isAccountLocked())) {
             // ✅ если срок блокировки ещё не истёк — не пускаем
             if (user.getLockUntil() != null
                     && user.getLockUntil().isAfter(LocalDateTime.now())) {

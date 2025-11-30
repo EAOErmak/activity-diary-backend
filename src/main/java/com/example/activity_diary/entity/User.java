@@ -32,7 +32,7 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean enabled = false;
+    private boolean enabled = false;
 
     @Column(unique = true)
     private Long chatId;
@@ -42,14 +42,16 @@ public class User extends BaseEntity {
     @Builder.Default
     private Role role = Role.USER;
 
+    @Builder.Default
     @Column(name = "account_locked", nullable = false)
-    private Boolean accountLocked = false;
+    private boolean accountLocked = false;
 
     @Column(name = "lock_until")
     private LocalDateTime lockUntil;
 
+    @Builder.Default
     @Column(name = "failed_2fa_attempts", nullable = false)
-    private Integer failed2faAttempts = 0;
+    private int failed2faAttempts = 0;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

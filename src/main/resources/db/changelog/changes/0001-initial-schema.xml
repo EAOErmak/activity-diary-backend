@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- ========================================================= -->
+    <!-- USERS -->
+    <!-- ========================================================= -->
+    <changeSet id="001-users" author="init">
+        <createTable tableName="users">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="username" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="full_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="enabled" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="chat_id" type="BIGINT">
+                <constraints unique="true"/>
+            </column>
+
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="account_locked" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="lock_until" type="TIMESTAMP"/>
+
+            <column name="failed_2fa_attempts" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- VERIFICATION CODES -->
+    <!-- ========================================================= -->
+    <changeSet id="002-verification-codes" author="init">
+        <createTable tableName="verification_codes">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="verification_code" type="VARCHAR(6)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="attempts" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_verification_codes_user"
+                baseTableName="verification_codes"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- DICTIONARY ITEM -->
+    <!-- ========================================================= -->
+    <changeSet id="003-dictionary-item" author="init">
+        <createTable tableName="dictionary_item">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="label" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="allowed_role" type="VARCHAR(50)"/>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="dictionary_item"
+                columnNames="type,label"/>
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- DICTIONARY SUGGESTION -->
+    <!-- ========================================================= -->
+    <changeSet id="004-dictionary-suggestion" author="init">
+        <createTable tableName="dictionary_suggestion">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="dict_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="parent_id" type="BIGINT"/>
+
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="moderator_id" type="BIGINT"/>
+            <column name="moderator_comment" type="VARCHAR(255)"/>
+            <column name="reviewed_at" type="TIMESTAMP"/>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_dictionary_suggestion_user"
+                baseTableName="dictionary_suggestion"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- DIARY ENTRY -->
+    <!-- ========================================================= -->
+    <changeSet id="005-diary-entry" author="init">
+        <createTable tableName="diary_entry">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="what_happened_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="what_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="when_started" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="when_ended" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="duration" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="how_you_were_feeling" type="SMALLINT"/>
+            <column name="any_description" type="VARCHAR(1000)"/>
+
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_diary_entry_what_happened"
+                baseTableName="diary_entry"
+                baseColumnNames="what_happened_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"/>
+
+
+        <addForeignKeyConstraint
+                constraintName="fk_diary_entry_what"
+                baseTableName="diary_entry"
+                baseColumnNames="what_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"/>
+
+
+        <addForeignKeyConstraint
+                constraintName="fk_diary_entry_user"
+                baseTableName="diary_entry"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- ACTIVITY ITEM -->
+    <!-- ========================================================= -->
+    <changeSet id="006-activity-item" author="init">
+        <createTable tableName="activity_item">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="dict_name_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="dict_unit_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="diary_entry_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_activity_item_name"
+                baseTableName="activity_item"
+                baseColumnNames="dict_name_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"/>
+
+
+        <addForeignKeyConstraint
+                constraintName="fk_activity_item_unit"
+                baseTableName="activity_item"
+                baseColumnNames="dict_unit_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"/>
+
+
+        <addForeignKeyConstraint
+                constraintName="fk_activity_item_diary_entry"
+                baseTableName="activity_item"
+                baseColumnNames="diary_entry_id"
+                referencedTableName="diary_entry"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- LOGIN EVENT -->
+    <!-- ========================================================= -->
+    <changeSet id="007-login-event" author="init">
+        <createTable tableName="login_event">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT"/>
+
+            <column name="ip" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_agent" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="success" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- REGISTRATION EVENT -->
+    <!-- ========================================================= -->
+    <changeSet id="008-registration-event" author="init">
+        <createTable tableName="registration_event">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="ip" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="success" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_registration_event_user"
+                baseTableName="registration_event"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+        <createIndex tableName="registration_event" indexName="idx_reg_ip">
+            <column name="ip"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ========================================================= -->
+    <!-- REFRESH TOKEN -->
+    <!-- ========================================================= -->
+    <changeSet id="009-refresh-token" author="init">
+        <createTable tableName="refresh_token">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT"/>
+
+            <column name="token_hash" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="revoked" type="BOOLEAN"/>
+
+            <column name="replaced_by" type="BIGINT"/>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_refresh_token_user"
+                baseTableName="refresh_token"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

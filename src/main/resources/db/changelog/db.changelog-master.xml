@@ -6,16 +6,6 @@
          http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
-    <include file="db/changelog/changes/2025-11-24-create-tables.xml"/>
-    <include file="db/changelog/changes/2025-01-idx-tuning.xml"/>
-
-    <include file="db/changelog/changes/2025-11-24-remove-registration-ip.xml"/>
-    <include file="db/changelog/changes/2025-11-24-auth-events.xml"/>
-    <include file="db/changelog/changes/2025-11-24-verification-codes.xml"/>
-    <include file="db/changelog/changes/2025-11-24-fix-refresh-token-updated-at.xml"/>
-    <include file="db/changelog/changes/2025-11-25-fix-activity-item.xml"/>
-    <include file="db/changelog/changes/2025-11-28-add-user-lock-fields.xml"/>
-    <include file="db/changelog/changes/2025-11-28-add-allowed-role-to-dict.xml"/>
-    <include file="db/changelog/changes/2025-11-28-add-updated-at-to-events.xml"/>
-
+    <include file="db/changelog/changes/0001-initial-schema.xml"/>
+    <include file="db/changelog/changes/0002-indexes.xml"/>
 </databaseChangeLog>
