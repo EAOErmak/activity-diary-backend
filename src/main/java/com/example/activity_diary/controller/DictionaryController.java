@@ -29,12 +29,13 @@ public class DictionaryController {
 
     @GetMapping("/{type}")
     @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
-    public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getByType(
+    public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getByTypeOrParent(
             @PathVariable DictionaryType type,
+            @RequestParam(required = false) Long parentId,
             @AuthenticationPrincipal UserDetails ud
     ) {
         return ResponseEntity.ok(
-                ApiResponse.ok(dictionaryService.getByType(type, ud))
+                ApiResponse.ok(dictionaryService.getByTypeOrParent(type, parentId, ud))
         );
     }
 

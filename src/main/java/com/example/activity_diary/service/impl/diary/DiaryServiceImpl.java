@@ -33,6 +33,7 @@ public class DiaryServiceImpl implements DiaryService {
     private final DiaryAccessService accessService;
     private final DiaryItemService itemProcessor;
     private final DiaryCalculationService calculationService;
+    private final EntryStatusResolver entryStatusResolver;
 
     private final DiaryEntryMapper mapper;
 
@@ -109,15 +110,12 @@ public class DiaryServiceImpl implements DiaryService {
         // ✅ Нормализация и длительность
         calculationService.normalizeEntry(dto, entry);
 
-        if (dto.getStatus() != null) {
-            try {
-                entry.setStatus(EntryStatus.valueOf(dto.getStatus().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("Invalid entry status");
-            }
-        } else {
-            entry.setStatus(EntryStatus.ACTIVE);
-        }
+        entry.setStatus(
+                entryStatusResolver.resolve(
+                        entry.getWhenStarted(),
+                        entry.getWhenEnded()
+                )
+        );
 
         calculationService.computeDuration(entry);
 

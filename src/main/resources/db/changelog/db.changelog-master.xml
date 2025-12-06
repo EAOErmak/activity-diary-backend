@@ -3,9 +3,16 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="
-         http://www.liquibase.org/xml/ns/dbchangelog
-         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
-    <include file="db/changelog/changes/0001-initial-schema.xml"/>
+    <include file="db/changelog/changes/0001-core.xml"/>
+    <include file="db/changelog/changes/0002-dictionary.xml"/>
+    <include file="db/changelog/changes/0003-diary.xml"/>
+    <include file="db/changelog/changes/0004-auth.xml"/>
+    <include file="db/changelog/changes/0005-logs.xml"/>
     <include file="db/changelog/changes/0002-indexes.xml"/>
+    <include file="db/changelog/changes/0006-entry-config.xml"/>
+    <include file="db/changelog/changes/0007-entry-config-fix.xml"/>
+
 </databaseChangeLog>

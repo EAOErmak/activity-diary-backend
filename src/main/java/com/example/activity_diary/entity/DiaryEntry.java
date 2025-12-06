@@ -53,8 +53,7 @@ public class DiaryEntry extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
-    private EntryStatus status = EntryStatus.ACTIVE;
+    private EntryStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

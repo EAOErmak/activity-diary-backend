@@ -32,6 +32,11 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
             DictionaryType type
     );
 
+    List<DictionaryItem> findAllByTypeAndParentIdAndActiveTrueOrderByLabelAsc(
+            DictionaryType type,
+            Long parentId
+    );
+
     List<DictionaryItem> findAllByTypeOrderByLabelAsc(
             DictionaryType type
     );

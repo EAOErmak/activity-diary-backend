@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <!-- ========================= -->
+    <!-- DICTIONARY ITEM -->
+    <!-- ========================= -->
+
+    <changeSet id="0002-dictionary-item" author="system">
+
+        <createTable tableName="dictionary_item">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="label" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="parent_id" type="BIGINT"/>
+            <column name="chart_type" type="VARCHAR(50)"/>
+
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="allowed_role" type="VARCHAR(50)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="dictionary_item"
+                columnNames="type, label"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_dictionary_item_parent"
+                baseTableName="dictionary_item"
+                baseColumnNames="parent_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <!-- ========================= -->
+    <!-- DICTIONARY SUGGESTION -->
+    <!-- ========================= -->
+
+    <changeSet id="0002-dictionary-suggestion" author="system">
+
+        <createTable tableName="dictionary_suggestion">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="dict_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="parent_id" type="BIGINT"/>
+
+            <column name="status" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="moderator_id" type="BIGINT"/>
+            <column name="moderator_comment" type="VARCHAR(255)"/>
+            <column name="reviewed_at" type="TIMESTAMP"/>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_dictionary_suggestion_user"
+                baseTableName="dictionary_suggestion"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <!-- ========================= -->
+    <!-- ENTRY FIELD CONFIG -->
+    <!-- ========================= -->
+
+    <changeSet id="0002-entry-field-config" author="system">
+
+        <createTable tableName="entry_field_config">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+
+            <column name="what_happened_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="show_what" type="BOOLEAN"/>
+            <column name="show_activities" type="BOOLEAN"/>
+            <column name="show_feeling" type="BOOLEAN"/>
+            <column name="show_description" type="BOOLEAN"/>
+
+            <column name="required_what" type="BOOLEAN"/>
+            <column name="required_activities" type="BOOLEAN"/>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_entry_field_config_what_happened"
+                baseTableName="entry_field_config"
+                baseColumnNames="what_happened_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"/>
+
+    </changeSet>
+
+</databaseChangeLog>

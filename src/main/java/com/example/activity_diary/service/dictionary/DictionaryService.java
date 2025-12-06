@@ -14,7 +14,7 @@ public interface DictionaryService {
     DictionaryResponseDto create(DictionaryCreateDto dto);
 
     // Для пользователя (фильтрация по ролям и active = true)
-    List<DictionaryResponseDto> getByType(DictionaryType type, UserDetails ud);
+    List<DictionaryResponseDto> getByTypeOrParent(DictionaryType type, Long parentId, UserDetails ud);
 
     // Для админа (без фильтра по active/role)
     List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type);

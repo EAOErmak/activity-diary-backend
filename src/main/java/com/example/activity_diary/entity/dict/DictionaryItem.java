@@ -1,6 +1,7 @@
 package com.example.activity_diary.entity.dict;
 
 import com.example.activity_diary.entity.base.BaseEntity;
+import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,6 +25,14 @@ public class DictionaryItem extends BaseEntity {
 
     @Column(nullable = false)
     private String label;          // текст, который видит пользователь
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private DictionaryItem parent;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "chart_type")
+    private ChartType chartType;
 
     @Column(nullable = false)
     @Builder.Default
