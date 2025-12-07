@@ -16,6 +16,7 @@ import com.example.activity_diary.service.auth.AuthService;
 import com.example.activity_diary.service.auth.RefreshTokenService;
 import com.example.activity_diary.service.auth.VerificationService;
 import com.example.activity_diary.service.login.LoginEventService;
+import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final VerificationService verificationService;
     private final RefreshTokenService refreshTokenService;
+    private final UserSyncService userSyncService;
     private final LoginEventService loginEventService;
     private final JwtUtils jwtUtils;
 
@@ -69,6 +71,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
+
+        userSyncService.initUser(user.getId());
 
         // FIX: сохраняем событие регистрации
         RegistrationEvent event = RegistrationEvent.builder()

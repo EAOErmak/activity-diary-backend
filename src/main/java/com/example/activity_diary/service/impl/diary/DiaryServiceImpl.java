@@ -14,11 +14,13 @@ import com.example.activity_diary.repository.DiaryRepository;
 import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.diary.*;
+import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.activity_diary.entity.enums.SyncEntityType;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,7 @@ public class DiaryServiceImpl implements DiaryService {
     private final DiaryItemService itemProcessor;
     private final DiaryCalculationService calculationService;
     private final EntryStatusResolver entryStatusResolver;
+    private final UserSyncService userSyncService;
 
     private final DiaryEntryMapper mapper;
 
@@ -124,6 +127,8 @@ public class DiaryServiceImpl implements DiaryService {
 
         DiaryEntry saved = diaryRepository.save(entry);
 
+        userSyncService.bump(user.getId(), SyncEntityType.DIARY);
+
         return mapper.toDto(saved);
     }
 
@@ -182,6 +187,11 @@ public class DiaryServiceImpl implements DiaryService {
 
         DiaryEntry saved = diaryRepository.save(existing);
 
+        userSyncService.bump(
+                existing.getUser().getId(),
+                SyncEntityType.DIARY
+        );
+
         return mapper.toDto(saved);
     }
 
@@ -195,5 +205,10 @@ public class DiaryServiceImpl implements DiaryService {
         DiaryEntry existing = accessService.getEntryForUser(id, currentUser);
 
         diaryRepository.delete(existing);
+
+        userSyncService.bump(
+                existing.getUser().getId(),
+                SyncEntityType.DIARY
+        );
     }
 }

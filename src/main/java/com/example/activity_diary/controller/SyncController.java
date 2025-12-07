@@ -9,29 +9,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
-@RequestMapping("/sync")
+@RequestMapping("/api/sync")
 @RequiredArgsConstructor
 public class SyncController {
 
     private final UserSyncService syncService;
 
-    @RestController
-    @RequestMapping("/sync")
-    @RequiredArgsConstructor
-    public class SyncController {
-
-        private final UserSyncService syncService;
-
-        @GetMapping("/state")
-        public SyncStateResponseDto getState(
-                @AuthenticationPrincipal Long userId
-        ) {
-            return new SyncStateResponseDto(
-                    syncService.getState(userId)
-            );
-        }
+    @GetMapping("/state")
+    public SyncStateResponseDto getState(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return syncService.getStateByUsername(userDetails.getUsername());
     }
 }

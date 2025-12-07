@@ -15,5 +15,6 @@
     <include file="db/changelog/changes/0006-entry-config.xml"/>
     <include file="db/changelog/changes/0007-entry-config-fix.xml"/>
     <include file="db/changelog/changes/0008-user-sync-state.xml"/>
+    <include file="db/changelog/changes/0009-sync-state-add-idx.xml"/>
 
 </databaseChangeLog>

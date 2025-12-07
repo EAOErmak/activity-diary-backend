@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserSyncServiceImpl implements UserSyncService {
 
-    private final UserSyncStateRepository repository;
+    private final UserSyncStateRepository userSyncStateRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -29,13 +29,36 @@ public class UserSyncServiceImpl implements UserSyncService {
             UserSyncState state = new UserSyncState(
                     userId, type, 0L, LocalDateTime.now()
             );
-            repository.save(state);
+            userSyncStateRepository.save(state);
         }
     }
 
     @Override
     public void bump(Long userId, SyncEntityType type) {
-        repository.increment(userId, type);
+        userSyncStateRepository.increment(userId, type);
+    }
+
+    @Override
+    public Map<SyncEntityType, Long> getState(Long userId) {
+
+        for (SyncEntityType type : SyncEntityType.values()) {
+            userSyncStateRepository.findByUserIdAndEntityType(userId, type)
+                    .orElseGet(() -> userSyncStateRepository.save(
+                            new UserSyncState(
+                                    userId,
+                                    type,
+                                    0L,
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return userSyncStateRepository.findAllByUserId(userId)
+                .stream()
+                .collect(Collectors.toMap(
+                        UserSyncState::getEntityType,
+                        UserSyncState::getVersion
+                ));
     }
 
     @Override
@@ -48,4 +71,5 @@ public class UserSyncServiceImpl implements UserSyncService {
         );
     }
 }
+
 

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserSyncStateRepository extends JpaRepository<UserSyncState, UserSyncStateId> {
 
@@ -23,5 +24,7 @@ public interface UserSyncStateRepository extends JpaRepository<UserSyncState, Us
                    @Param("type") SyncEntityType type);
 
     List<UserSyncState> findAllByUserId(Long userId);
+
+    Optional<UserSyncState> findByUserIdAndEntityType(Long userId, SyncEntityType type);
 }
 
