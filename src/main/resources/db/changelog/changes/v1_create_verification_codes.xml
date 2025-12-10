@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-11-create-verification-codes" author="diary">
+
+        <!-- ===================== -->
+        <!-- TABLE: verification_codes -->
+        <!-- ===================== -->
+
+        <createTable tableName="verification_codes">
+
+            <!-- ✅ BaseEntity -->
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ===================== -->
+            <!-- CORE FIELDS -->
+            <!-- ===================== -->
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="verification_code" type="VARCHAR(6)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="attempts" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- ===================== -->
+        <!-- INDEXES -->
+        <!-- ===================== -->
+
+        <createIndex indexName="idx_verification_user" tableName="verification_codes">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_verification_expires" tableName="verification_codes">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <!-- ===================== -->
+        <!-- FOREIGN KEY -->
+        <!-- ===================== -->
+
+        <addForeignKeyConstraint
+                baseTableName="verification_codes"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_verification_user"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>

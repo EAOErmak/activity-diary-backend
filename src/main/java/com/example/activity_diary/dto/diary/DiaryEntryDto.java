@@ -1,6 +1,7 @@
 package com.example.activity_diary.dto.diary;
 
 import lombok.Data;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,29 +11,31 @@ public class DiaryEntryDto {
 
     private Long id;
 
-    // ID + Name структуры словаря
-    private Long whatHappenedId;
-    private String whatHappenedName;
+    // ✅ Категория
+    private Long categoryId;
+    private String categoryName;
 
-    private Long whatId;
-    private String whatName;
+    // ✅ Подкатегория
+    private Long subCategoryId;
+    private String subCategoryName;
 
-    // Сами поля дневника
+    // ✅ Время
     private LocalDateTime whenStarted;
     private LocalDateTime whenEnded;
     private Integer duration;
 
-    private Short howYouWereFeeling;
-    private String anyDescription;
+    // ✅ Состояние
+    private Short mood;
+    private String description;
     private String status;
 
-    // Пользователь
+    // ✅ Пользователь
     private Long userId;
 
-    // Вложенные items
-    private List<ActivityItemResponseDto> whatDidYouDo;
+    // ✅ Метрики
+    private List<EntryMetricResponseDto> metrics;
 
-    // Auditing (BaseEntity)
+    // ✅ Auditing
     private Instant createdAt;
     private Instant updatedAt;
 }

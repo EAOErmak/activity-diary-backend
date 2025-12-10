@@ -18,13 +18,15 @@ public interface UserSyncStateRepository extends JpaRepository<UserSyncState, Us
        UPDATE UserSyncState s
        SET s.version = s.version + 1,
            s.lastUpdated = CURRENT_TIMESTAMP
-       WHERE s.userId = :userId AND s.entityType = :type
+       WHERE s.userId = :userId
+         AND s.entityType = :type
     """)
-    void increment(@Param("userId") Long userId,
-                   @Param("type") SyncEntityType type);
+    int increment(
+            @Param("userId") Long userId,
+            @Param("type") SyncEntityType type
+    );
 
     List<UserSyncState> findAllByUserId(Long userId);
 
     Optional<UserSyncState> findByUserIdAndEntityType(Long userId, SyncEntityType type);
 }
-

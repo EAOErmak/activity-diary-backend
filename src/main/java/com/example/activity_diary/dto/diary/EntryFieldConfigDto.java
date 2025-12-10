@@ -4,16 +4,20 @@ import lombok.Data;
 
 @Data
 public class EntryFieldConfigDto {
+
     private Long id;
     private String name;
 
-    private Long whatHappenedId; // nullable
+    // ✅ Категория (было: whatHappenedId)
+    private Long categoryId; // nullable
 
-    private Boolean showWhat;
-    private Boolean showActivities;
-    private Boolean showFeeling;
-    private Boolean showDescription;
+    // ✅ Что показывать
+    private Boolean showSubCategory;   // было: showWhat
+    private Boolean showMetrics;       // было: showActivities
+    private Boolean showMood;          // было: showFeeling
+    private Boolean showDescription;  // ✅ оставили как есть
 
-    private Boolean requiredWhat;
-    private Boolean requiredActivities;
+    // ✅ Что обязательно
+    private Boolean requiredSubCategory; // было: requiredWhat
+    private Boolean requiredMetrics;     // было: requiredActivities
 }

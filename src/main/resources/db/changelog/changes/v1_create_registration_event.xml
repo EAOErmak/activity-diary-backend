@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-08-create-registration-event" author="diary">
+
+        <!-- ===================== -->
+        <!-- TABLE: registration_event -->
+        <!-- ===================== -->
+
+        <createTable tableName="registration_event">
+
+            <!-- ✅ BaseEntity -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ===================== -->
+            <!-- ENTITY FIELDS -->
+            <!-- ===================== -->
+
+            <!-- ✅ IP (IPv6-safe) -->
+            <column name="ip" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ✅ пользователь -->
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ✅ успешна ли регистрация -->
+            <column name="success" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- ===================== -->
+        <!-- FOREIGN KEY -->
+        <!-- ===================== -->
+
+        <addForeignKeyConstraint
+                baseTableName="registration_event"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_registration_event_user"/>
+
+        <!-- ===================== -->
+        <!-- INDEXES -->
+        <!-- ===================== -->
+
+        <!-- ✅ лимиты регистраций по IP -->
+        <createIndex indexName="idx_reg_ip"
+                     tableName="registration_event">
+            <column name="ip"/>
+        </createIndex>
+
+        <!-- ✅ статистика по пользователю -->
+        <createIndex indexName="idx_reg_user"
+                     tableName="registration_event">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- ✅ фильтрация успешных/неуспешных -->
+        <createIndex indexName="idx_reg_success"
+                     tableName="registration_event">
+            <column name="success"/>
+        </createIndex>
+
+        <!-- ✅ аналитика по времени -->
+        <createIndex indexName="idx_reg_created_at"
+                     tableName="registration_event">
+            <column name="created_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

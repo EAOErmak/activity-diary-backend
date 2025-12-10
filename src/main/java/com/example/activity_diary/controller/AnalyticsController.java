@@ -21,39 +21,39 @@ public class AnalyticsController {
     // ====================== BY TIME ==========================
     // =========================================================
 
-    @GetMapping("/time/category/{whatHappenedId}")
+    @GetMapping("/time/category/{categoryId}")
     public ChartResponseDto getByTimeByCategory(
             @AuthenticationPrincipal UserDetails ud,
-            @PathVariable Long whatHappenedId,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @PathVariable Long categoryId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime to
     ) {
+        Long userId = extractUserId(ud);
+
         return analyticsService.buildByTimeByCategory(
-                ud,
-                whatHappenedId,
+                userId,
+                categoryId,
                 from,
                 to
         );
     }
 
-    @GetMapping("/time/what/{whatId}")
-    public ChartResponseDto getByTimeByWhat(
+    @GetMapping("/time/sub-category/{subCategoryId}")
+    public ChartResponseDto getByTimeBySubCategory(
             @AuthenticationPrincipal UserDetails ud,
-            @PathVariable Long whatId,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @PathVariable Long subCategoryId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime to
     ) {
-        return analyticsService.buildByTimeByWhat(
-                ud,
-                whatId,
+        Long userId = extractUserId(ud);
+
+        return analyticsService.buildByTimeBySubCategory(
+                userId,
+                subCategoryId,
                 from,
                 to
         );
@@ -63,41 +63,55 @@ public class AnalyticsController {
     // ==================== BY SEQUENCE ========================
     // =========================================================
 
-    @GetMapping("/sequence/category/{whatHappenedId}")
+    @GetMapping("/sequence/category/{categoryId}")
     public ChartResponseDto getBySequenceByCategory(
             @AuthenticationPrincipal UserDetails ud,
-            @PathVariable Long whatHappenedId,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @PathVariable Long categoryId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime to
     ) {
+        Long userId = extractUserId(ud);
+
         return analyticsService.buildBySequenceByCategory(
-                ud,
-                whatHappenedId,
+                userId,
+                categoryId,
                 from,
                 to
         );
     }
 
-    @GetMapping("/sequence/what/{whatId}")
-    public ChartResponseDto getBySequenceByWhat(
+    @GetMapping("/sequence/sub-category/{subCategoryId}")
+    public ChartResponseDto getBySequenceBySubCategory(
             @AuthenticationPrincipal UserDetails ud,
-            @PathVariable Long whatId,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @PathVariable Long subCategoryId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime to
     ) {
-        return analyticsService.buildBySequenceByWhat(
-                ud,
-                whatId,
+        Long userId = extractUserId(ud);
+
+        return analyticsService.buildBySequenceBySubCategory(
+                userId,
+                subCategoryId,
                 from,
                 to
         );
+    }
+
+    // =========================================================
+    // =============== USER ID EXTRACTION ======================
+    // =========================================================
+
+    private Long extractUserId(UserDetails ud) {
+        // ❗ ТОЛЬКО ОДИН ВАРИАНТ ДОЛЖЕН ОСТАТЬСЯ
+
+        // ✅ ЕСЛИ username = это ID:
+        // return Long.parseLong(ud.getUsername());
+
+        // ✅ ЕСЛИ используешь кастомный CustomUserDetails:
+        return ((com.example.activity_diary.security.CustomUserDetails) ud).getId();
     }
 }

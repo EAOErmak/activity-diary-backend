@@ -48,7 +48,7 @@ public class VerificationServiceImpl implements VerificationService {
         }
 
         if (user.getChatId() == null || !user.getChatId().equals(chatId)) {
-            user.setChatId(chatId);
+            user.bindChatId(chatId);
             userRepository.save(user);
         }
 

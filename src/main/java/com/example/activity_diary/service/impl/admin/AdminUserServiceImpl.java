@@ -28,8 +28,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        user.setAccountLocked(true);
-        user.setLockUntil(LocalDateTime.now().plusYears(100)); // жёсткая блокировка
+
+        user.lockUntil(LocalDateTime.now().plusYears(100)); // жёсткая блокировка
         userRepository.save(user);
     }
 
@@ -38,9 +38,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        user.setAccountLocked(false);
-        user.setLockUntil(null);
-        user.setFailed2faAttempts(0);
+        user.unlock();
         userRepository.save(user);
     }
 
@@ -57,7 +55,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        user.setRole(newRole);
+        user.changeRole(newRole);
         userRepository.save(user);
     }
 }

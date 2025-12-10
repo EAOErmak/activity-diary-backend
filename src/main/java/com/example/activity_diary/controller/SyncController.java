@@ -1,6 +1,8 @@
 package com.example.activity_diary.controller;
 
+import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.sync.SyncStateResponseDto;
+import com.example.activity_diary.security.CustomUserDetails;
 import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,9 +19,12 @@ public class SyncController {
     private final UserSyncService syncService;
 
     @GetMapping("/state")
-    public SyncStateResponseDto getState(
-            @AuthenticationPrincipal UserDetails userDetails
+    public ApiResponse<SyncStateResponseDto> getState(
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return syncService.getStateByUsername(userDetails.getUsername());
+        return ApiResponse.ok(
+                syncService.getStateDto(userDetails.getId())
+        );
     }
 }
+

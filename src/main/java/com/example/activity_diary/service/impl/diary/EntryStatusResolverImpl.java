@@ -12,16 +12,6 @@ public class EntryStatusResolverImpl implements EntryStatusResolver {
     @Override
     public EntryStatus resolve(LocalDateTime whenStarted, LocalDateTime whenEnded) {
 
-        LocalDateTime now = LocalDateTime.now();
-
-        if (whenEnded.isBefore(now)) {
-            return EntryStatus.FINISHED;
-        }
-
-        if (whenStarted.isAfter(now)) {
-            return EntryStatus.PLANNED;
-        }
-
-        return EntryStatus.ACTIVE;
+        return EntryStatus.DELETED;
     }
 }

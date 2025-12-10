@@ -10,7 +10,12 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_sync_state")
+@Table(
+        name = "user_sync_state",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id", "entity_type"})
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,14 +24,17 @@ import java.time.LocalDateTime;
 public class UserSyncState {
 
     @Id
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Id
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING) // ВАЖНО: колонка smallint в БД → ORDINAL
+    @Column(name = "entity_type", nullable = false)
     private SyncEntityType entityType;
 
+    @Column(nullable = false)
     private Long version;
 
+    @Column(nullable = false)
     private LocalDateTime lastUpdated;
 }
-

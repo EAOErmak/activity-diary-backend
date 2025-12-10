@@ -1,9 +1,8 @@
 package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.diary.*;
-import com.example.activity_diary.entity.ActivityItem;
+import com.example.activity_diary.entity.EntryMetric;
 import com.example.activity_diary.entity.DiaryEntry;
-import com.example.activity_diary.entity.dict.DictionaryItem;
 import org.mapstruct.*;
 
 import java.util.List;
@@ -18,14 +17,17 @@ public interface DiaryEntryMapper {
     //      ENTITY → RESPONSE DTO
     // ===========================
 
-    @Mapping(source = "whatHappened.id", target = "whatHappenedId")
-    @Mapping(source = "whatHappened.label", target = "whatHappenedName")
+    @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "category.label", target = "categoryName")
 
-    @Mapping(source = "what.id", target = "whatId")
-    @Mapping(source = "what.label", target = "whatName")
+    @Mapping(source = "subCategory.id", target = "subCategoryId")
+    @Mapping(source = "subCategory.label", target = "subCategoryName")
 
     @Mapping(source = "user.id", target = "userId")
-    @Mapping(source = "whatDidYouDo", target = "whatDidYouDo")
+    @Mapping(source = "metrics", target = "metrics")
+
+    @Mapping(source = "mood", target = "mood")
+    @Mapping(source = "description", target = "description")
     DiaryEntryDto toDto(DiaryEntry entry);
 
     // ===========================
@@ -34,12 +36,15 @@ public interface DiaryEntryMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "what", ignore = true)
-    @Mapping(target = "whatHappened", ignore = true)
+
+    @Mapping(target = "subCategory", ignore = true)
+    @Mapping(target = "category", ignore = true)
+
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "whatDidYouDo", ignore = true)
+
+    @Mapping(target = "metrics", ignore = true)
     DiaryEntry toEntity(DiaryEntryCreateDto dto);
 
     // ========================================
@@ -47,49 +52,32 @@ public interface DiaryEntryMapper {
     // ========================================
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "what", ignore = true)
-    @Mapping(target = "whatHappened", ignore = true)
+
+    @Mapping(target = "subCategory", ignore = true)
+    @Mapping(target = "category", ignore = true)
+
     @Mapping(target = "duration", ignore = true)
-    @Mapping(target = "whatDidYouDo", ignore = true)
+    @Mapping(target = "metrics", ignore = true)
+
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget DiaryEntry entry, DiaryEntryUpdateDto dto);
 
     // ========================================
-    //   ACTIVITY ITEM MAPPING
+    //   ENTRY METRIC → RESPONSE DTO
     // ========================================
 
-    // Entity → Response DTO
-    @Mapping(source = "name.id", target = "nameId")
-    @Mapping(source = "name.label", target = "name")
+    @Mapping(source = "metricType.id", target = "metricTypeId")
+    @Mapping(source = "metricType.label", target = "metricTypeName")
+
     @Mapping(source = "unit.id", target = "unitId")
-    @Mapping(source = "unit.label", target = "unit")
-    ActivityItemResponseDto toActivityItemResponseDto(ActivityItem item);
+    @Mapping(source = "unit.label", target = "unitName")
 
-    List<ActivityItemResponseDto> toActivityItemResponseDtoList(List<ActivityItem> list);
+    @Mapping(source = "value", target = "value")
+    EntryMetricResponseDto toMetricResponseDto(EntryMetric item);
 
-    // ========================================
-    //   CREATE DTO → ENTITY
-    // ========================================
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "diaryEntry", ignore = true)
-    @Mapping(source = "nameId", target = "name")
-    @Mapping(source = "unitId", target = "unit")
-    ActivityItem toActivityItem(ActivityItemCreateDto dto);
-
-    List<ActivityItem> toActivityItemList(List<ActivityItemCreateDto> list);
-
-    // ========================================
-    //   ID → DictionaryItem STUB (FIX)
-    // ========================================
-
-    default DictionaryItem map(Long id) {
-        if (id == null) return null;
-        DictionaryItem d = new DictionaryItem();
-        d.setId(id);
-        return d;
-    }
+    List<EntryMetricResponseDto> toMetricResponseDtoList(List<EntryMetric> list);
 }

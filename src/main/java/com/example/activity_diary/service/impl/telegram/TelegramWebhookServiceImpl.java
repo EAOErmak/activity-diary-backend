@@ -97,7 +97,7 @@ public class TelegramWebhookServiceImpl implements TelegramWebhookService {
 
         // 3. Привязываем chatId, если нужно
         if (user.getChatId() == null) {
-            user.setChatId(chatId);
+            user.bindChatId(chatId);
             userRepository.save(user);
         }
 

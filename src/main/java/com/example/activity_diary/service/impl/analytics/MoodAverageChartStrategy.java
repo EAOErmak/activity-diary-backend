@@ -11,15 +11,17 @@ import java.math.BigDecimal;
 public class MoodAverageChartStrategy implements ChartCalculationStrategy {
 
     @Override
-    public boolean supports(ChartType chartType) {
-        return chartType == ChartType.MOOD_AVERAGE;
+    public ChartType supportedType() {
+        return ChartType.MOOD_AVERAGE;
     }
 
     @Override
     public BigDecimal calculateY(DiaryEntry entry) {
-        if (entry == null || entry.getHowYouWereFeeling() == null) {
+
+        if (entry.getMood() == null) {
             return BigDecimal.ZERO;
         }
-        return BigDecimal.valueOf(entry.getHowYouWereFeeling());
+
+        return BigDecimal.valueOf(entry.getMood());
     }
 }

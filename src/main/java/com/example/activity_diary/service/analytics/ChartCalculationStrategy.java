@@ -7,7 +7,8 @@ import java.math.BigDecimal;
 
 public interface ChartCalculationStrategy {
 
-    boolean supports(ChartType chartType);
+    ChartType supportedType();
 
     BigDecimal calculateY(DiaryEntry entry);
 }
+

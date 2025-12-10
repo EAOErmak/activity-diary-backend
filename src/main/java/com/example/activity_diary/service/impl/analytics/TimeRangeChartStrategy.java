@@ -11,18 +11,22 @@ import java.math.RoundingMode;
 @Component
 public class TimeRangeChartStrategy implements ChartCalculationStrategy {
 
+    private static final BigDecimal MINUTES_IN_HOUR = BigDecimal.valueOf(60);
+
     @Override
-    public boolean supports(ChartType chartType) {
-        return chartType == ChartType.TIME_RANGE;
+    public ChartType supportedType() {
+        return ChartType.TIME_RANGE;
     }
 
     @Override
     public BigDecimal calculateY(DiaryEntry entry) {
-        if (entry == null || entry.getDuration() == null) {
+
+        if (entry.getDuration() == null) {
             return BigDecimal.ZERO;
         }
 
+        // duration хранится в минутах → перевод в часы
         return BigDecimal.valueOf(entry.getDuration())
-                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP); // часы
+                .divide(MINUTES_IN_HOUR, 2, RoundingMode.HALF_UP);
     }
 }

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-05-create-entry-metric" author="diary">
+
+        <!-- ===================== -->
+        <!-- TABLE: entry_metric -->
+        <!-- ===================== -->
+
+        <createTable tableName="entry_metric">
+
+            <!-- ✅ BaseEntity -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ===================== -->
+            <!-- RELATIONS -->
+            <!-- ===================== -->
+
+            <column name="metric_type_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_metric_type"
+                             referencedTableName="dictionary_item"
+                             referencedColumnNames="id"/>
+            </column>
+
+            <column name="unit_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_metric_unit"
+                             referencedTableName="dictionary_item"
+                             referencedColumnNames="id"/>
+            </column>
+
+            <column name="diary_entry_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_metric_entry"
+                             referencedTableName="diary_entry"
+                             referencedColumnNames="id"/>
+            </column>
+
+            <!-- ===================== -->
+            <!-- VALUE -->
+            <!-- ===================== -->
+
+            <column name="value" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- ===================== -->
+        <!-- INDEXES (строго как в entity) -->
+        <!-- ===================== -->
+
+        <createIndex indexName="idx_metric_entry"
+                     tableName="entry_metric">
+            <column name="diary_entry_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_metric_type"
+                     tableName="entry_metric">
+            <column name="metric_type_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

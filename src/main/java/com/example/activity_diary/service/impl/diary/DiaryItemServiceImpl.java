@@ -1,114 +1,113 @@
 package com.example.activity_diary.service.impl.diary;
 
-import com.example.activity_diary.dto.diary.ActivityItemCreateDto;
-import com.example.activity_diary.dto.diary.ActivityItemUpdateDto;
-import com.example.activity_diary.entity.ActivityItem;
+import com.example.activity_diary.dto.diary.EntryMetricCreateDto;
+import com.example.activity_diary.dto.diary.EntryMetricUpdateDto;
+import com.example.activity_diary.entity.EntryMetric;
 import com.example.activity_diary.entity.DiaryEntry;
-import com.example.activity_diary.dto.mapper.DiaryEntryMapper;
+import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.entity.enums.DictionaryType;
+import com.example.activity_diary.exception.types.BadRequestException;
+import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.service.diary.DiaryItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class DiaryItemServiceImpl implements DiaryItemService {
 
-    private final DiaryEntryMapper mapper;
+    private final DictionaryRepository dictionaryRepository;
 
-    // =======================================================
-    //                       CREATE
-    // =======================================================
+    // ============================================================
+    // CREATE
+    // ============================================================
+
     @Override
-    public void applyItems(List<ActivityItemCreateDto> dtos, DiaryEntry entry) {
-
-        if (entry.getWhatDidYouDo() == null) {
-            entry.setWhatDidYouDo(new ArrayList<>());
-        }
+    public void applyOnCreate(List<EntryMetricCreateDto> dtos, DiaryEntry entry) {
 
         if (dtos == null || dtos.isEmpty()) {
-            entry.getWhatDidYouDo().clear();
             return;
         }
 
-        List<ActivityItem> items = dtos.stream()
-                .map(mapper::toActivityItem)
-                .peek(i -> i.setDiaryEntry(entry))
-                .toList();
-
-        entry.getWhatDidYouDo().clear();
-        entry.getWhatDidYouDo().addAll(items);
+        for (EntryMetricCreateDto dto : dtos) {
+            EntryMetric item = createItem(
+                    entry,
+                    dto.getMetricId(),
+                    dto.getUnitId(),
+                    dto.getValue()
+            );
+            entry.addMetric(item);
+        }
     }
 
-    // =======================================================
-    //                       UPDATE
-    // =======================================================
+    // ============================================================
+    // UPDATE (REPLACE STRATEGY)
+    // ============================================================
+
     @Override
-    public void updateItems(List<ActivityItemUpdateDto> dtos, DiaryEntry entry) {
+    public void applyOnUpdate(List<EntryMetricUpdateDto> dtos, DiaryEntry entry) {
 
-        if (entry.getWhatDidYouDo() == null) {
-            entry.setWhatDidYouDo(new ArrayList<>());
+        if (dtos == null) {
+            return; // null → не трогаем вообще
         }
 
-        List<ActivityItem> existing = entry.getWhatDidYouDo();
-
-        // id → entity
-        Map<Long, ActivityItem> oldMap = existing.stream()
-                .filter(i -> i.getId() != null)
-                .collect(Collectors.toMap(ActivityItem::getId, i -> i));
-
-        List<ActivityItem> result = new ArrayList<>();
-
-        if (dtos != null) {
-            for (ActivityItemUpdateDto dto : dtos) {
-
-                // =====================
-                //    UPDATE EXISTING
-                // =====================
-                if (dto.getId() != null && oldMap.containsKey(dto.getId())) {
-
-                    ActivityItem item = oldMap.get(dto.getId());
-
-                    if (dto.getNameId() != null) {
-                        item.setName(mapper.map(dto.getNameId()));
-                    }
-
-                    if (dto.getUnitId() != null) {
-                        item.setUnit(mapper.map(dto.getUnitId()));
-                    }
-
-                    if (dto.getCount() != null) {
-                        item.setCount(dto.getCount());
-                    }
-
-                    result.add(item);
-                    oldMap.remove(dto.getId());
-                }
-                // =====================
-                //    CREATE NEW ITEM
-                // =====================
-                else {
-
-                    ActivityItemCreateDto createDto = new ActivityItemCreateDto();
-                    createDto.setNameId(dto.getNameId());
-                    createDto.setUnitId(dto.getUnitId());
-                    createDto.setCount(dto.getCount());
-
-                    ActivityItem newItem = mapper.toActivityItem(createDto);
-                    newItem.setDiaryEntry(entry);
-
-                    result.add(newItem);
-                }
-            }
+        // 1. Удаляем все текущие (orphanRemoval сделает своё)
+        List<EntryMetric> existing = new ArrayList<>(entry.getMetrics());
+        for (EntryMetric item : existing) {
+            entry.removeMetric(item);
         }
 
-        // =====================
-        //     APPLY RESULT
-        // =====================
-        existing.clear();
-        existing.addAll(result);
-        // orphanRemoval = true → Hibernate сам удалит лишние записи
+        // 2. Добавляем новые из запроса
+        if (dtos.isEmpty()) {
+            return;
+        }
+
+        for (EntryMetricUpdateDto dto : dtos) {
+            EntryMetric item = createItem(
+                    entry,
+                    dto.getMetricId(),
+                    dto.getUnitId(),
+                    dto.getValue()
+            );
+            entry.addMetric(item);
+        }
+    }
+
+    // ============================================================
+    // INTERNAL
+    // ============================================================
+
+    private EntryMetric createItem(
+            DiaryEntry entry,
+            Long nameId,
+            Long unitId,
+            Integer count
+    ) {
+        DictionaryItem name = resolveDictionary(nameId, DictionaryType.METRIC_NAME);
+        DictionaryItem unit = resolveDictionary(unitId, DictionaryType.METRIC_UNIT);
+
+        return EntryMetric.create(
+                entry,
+                name,
+                unit,
+                count
+        );
+    }
+
+    private DictionaryItem resolveDictionary(Long id, DictionaryType type) {
+
+        DictionaryItem item = dictionaryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Dictionary item not found: " + id));
+
+        if (item.getType() != type) {
+            throw new BadRequestException("Invalid dictionary type: " + type);
+        }
+
+        return item;
     }
 }

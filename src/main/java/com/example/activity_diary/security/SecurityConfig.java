@@ -28,11 +28,38 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // ✅ JWT → CSRF не нужен
                 .csrf(csrf -> csrf.disable())
+
+                // ✅ Явная CORS-конфигурация
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // ✅ Без сессий
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // ✅ Обработка ошибок безопасности
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(401);
+                            res.setContentType("application/json");
+                            res.getWriter().write("""
+                        {"error":"Unauthorized","message":"Authentication required"}
+                    """);
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setStatus(403);
+                            res.setContentType("application/json");
+                            res.getWriter().write("""
+                        {"error":"Forbidden","message":"Access denied"}
+                    """);
+                        })
+                )
+
+                // ✅ Доступы
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // ✅ ВАЖНО
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/telegram/**",
@@ -40,21 +67,31 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+
+                // ✅ JWT фильтр
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-
+    // ✅ Явная CORS-политика
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
+
         cfg.setAllowedOrigins(List.of(
                 "http://localhost:5174",
                 "https://activity-diary-frontend.vercel.app"
         ));
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+        cfg.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+
+        cfg.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type"
+        ));
+
         cfg.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
@@ -62,13 +99,17 @@ public class SecurityConfig {
         return src;
     }
 
+    // ✅ Безопасный хэш
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(10);
     }
 
+    // ✅ Для логина
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration
+    ) throws Exception {
         return configuration.getAuthenticationManager();
     }
 }

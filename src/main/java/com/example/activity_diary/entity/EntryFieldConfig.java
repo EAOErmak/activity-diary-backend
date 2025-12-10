@@ -13,17 +13,15 @@ import lombok.Setter;
 public class EntryFieldConfig extends BaseEntity {
 
     @Column(nullable = false, unique = true)
-    private String name; // ✅ имя шаблона конфига
+    private String name; // имя шаблона конфига
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "what_happened_id")
-    private DictionaryItem whatHappened;
-
-    private Boolean showWhat;
-    private Boolean showActivities;
-    private Boolean showFeeling;
+    // ✅ ЛОГИКА ОТОБРАЖЕНИЯ
+    private Boolean showSubCategory;
+    private Boolean showMetrics;
+    private Boolean showMood;
     private Boolean showDescription;
 
-    private Boolean requiredWhat;
-    private Boolean requiredActivities;
+    // ✅ ЛОГИКА ОБЯЗАТЕЛЬНОСТИ
+    private Boolean requiredSubCategory;
+    private Boolean requiredMetrics;
 }

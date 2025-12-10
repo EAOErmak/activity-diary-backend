@@ -6,7 +6,6 @@ import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
 import com.example.activity_diary.entity.EntryFieldConfig;
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
@@ -14,10 +13,8 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.repository.EntryFieldConfigRepository;
-import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +27,6 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     private final DictionaryRepository dictionaryRepository;
     private final EntryFieldConfigRepository entryFieldConfigRepository;
-    private final UserRepository userRepository;
     private final DictionaryMapper mapper;
 
     // ============================
@@ -46,14 +42,11 @@ public class DictionaryServiceImpl implements DictionaryService {
         if (dto.getLabel() == null || dto.getLabel().trim().isEmpty())
             throw new BadRequestException("Label is required");
 
-        if (dto.getType() == DictionaryType.WHAT_HAPPENED && dto.getChartType() == null) {
-            throw new BadRequestException("chartType is required for WHAT_HAPPENED");
-        }
+        if (dto.getType() == DictionaryType.CATEGORY && dto.getChartType() == null)
+            throw new BadRequestException("chartType is required for CATEGORY");
 
-        // ✅ НОВОЕ ПРАВИЛО: для WHAT_HAPPENED ОБЯЗАТЕЛЕН entryFieldConfigId
-        if (dto.getType() == DictionaryType.WHAT_HAPPENED && dto.getEntryFieldConfigId() == null) {
-            throw new BadRequestException("EntryFieldConfig is required for WHAT_HAPPENED");
-        }
+        if (dto.getType() == DictionaryType.CATEGORY && dto.getEntryFieldConfigId() == null)
+            throw new BadRequestException("EntryFieldConfig is required for CATEGORY");
 
         String cleanLabel = dto.getLabel().trim();
 
@@ -62,16 +55,22 @@ public class DictionaryServiceImpl implements DictionaryService {
 
         DictionaryItem parent = null;
 
-        // ✅ ЖЁСТКОЕ ПРАВИЛО: WHAT ТОЛЬКО С parentId
-        if (dto.getType() == DictionaryType.WHAT) {
+        if (dto.getType() == DictionaryType.SUB_CATEGORY) {
             if (dto.getParentId() == null)
-                throw new BadRequestException("parentId is required for WHAT");
+                throw new BadRequestException("parentId is required for SUB_CATEGORY");
 
             parent = dictionaryRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new NotFoundException("Parent not found"));
 
-            if (parent.getType() != DictionaryType.WHAT_HAPPENED)
-                throw new BadRequestException("WHAT can be linked only to WHAT_HAPPENED");
+            if (parent.getType() != DictionaryType.CATEGORY)
+                throw new BadRequestException("SUB_CATEGORY can be linked only to CATEGORY");
+        }
+
+        EntryFieldConfig config = null;
+
+        if (dto.getType() == DictionaryType.CATEGORY) {
+            config = entryFieldConfigRepository.findById(dto.getEntryFieldConfigId())
+                    .orElseThrow(() -> new NotFoundException("EntryFieldConfig not found"));
         }
 
         DictionaryItem item = DictionaryItem.builder()
@@ -81,24 +80,13 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .chartType(dto.getChartType())
                 .active(true)
                 .parent(parent)
+                .entryFieldConfig(config) // ✅ ВОТ ТУТ ГЛАВНОЕ ИЗМЕНЕНИЕ
                 .build();
 
         DictionaryItem saved = dictionaryRepository.save(item);
 
-        // ✅ ПРИВЯЗКА КОНФИГА ПОСЛЕ СОЗДАНИЯ WHAT_HAPPENED
-        if (saved.getType() == DictionaryType.WHAT_HAPPENED) {
-
-            EntryFieldConfig config = entryFieldConfigRepository
-                    .findById(dto.getEntryFieldConfigId())
-                    .orElseThrow(() -> new NotFoundException("EntryFieldConfig not found"));
-
-            config.setWhatHappened(saved);
-            entryFieldConfigRepository.save(config);
-        }
-
         return mapper.toDto(saved);
     }
-
 
     // ============================
     // READ (USER)
@@ -106,32 +94,18 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getByTypeOrParent(DictionaryType type, Long parentId, UserDetails ud) {
-
-        User user = userRepository.findByUsername(ud.getUsername())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        // ✅ ДЛЯ WHAT — ОБЯЗАТЕЛЕН parentId
-        if (type == DictionaryType.WHAT && parentId == null) {
+    public List<DictionaryResponseDto> getForUser(
+            DictionaryType type,
+            Long parentId,
+            Role role
+    ) {
+        if (type == DictionaryType.SUB_CATEGORY && parentId == null) {
             throw new BadRequestException("parentId is required for type WHAT");
         }
 
-        List<DictionaryItem> items;
-
-        // ✅ ИЕРАРХИЯ (WHAT -> WHAT_HAPPENED)
-        if (type == DictionaryType.WHAT) {
-            items = dictionaryRepository
-                    .findAllByTypeAndParentIdAndActiveTrueOrderByLabelAsc(type, parentId);
-        }
-        // ✅ ВСЕ ОСТАЛЬНЫЕ ТИПЫ БЕЗ PARENT
-        else {
-            items = dictionaryRepository
-                    .findAllByTypeAndActiveTrueOrderByLabelAsc(type);
-        }
-
-        // ✅ ФИЛЬТРАЦИЯ ПО РОЛЯМ
-        return items.stream()
-                .filter(item -> hasAccess(item, user))
+        return dictionaryRepository
+                .findVisibleForUser(type, parentId, role)
+                .stream()
                 .map(mapper::toDto)
                 .toList();
     }
@@ -198,19 +172,15 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> search(String query, UserDetails ud) {
+    public List<DictionaryResponseDto> search(String query, Role role) {
 
         if (query == null || query.trim().isEmpty()) {
             return List.of();
         }
 
-        User user = userRepository.findByUsername(ud.getUsername())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
         return dictionaryRepository
-                .findAllByLabelContainingIgnoreCaseAndActiveTrueOrderByTypeAscLabelAsc(query.trim())
+                .searchVisibleForUser(query.trim(), role.name())
                 .stream()
-                .filter(item -> hasAccess(item, user))
                 .map(mapper::toDto)
                 .toList();
     }
@@ -233,17 +203,5 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .map(mapper::toDto)
                 .toList();
     }
-
-    // ============================
-    // ACCESS CONTROL
-    // ============================
-
-    private boolean hasAccess(DictionaryItem item, User user) {
-
-        if (item.getAllowedRole() == null) return true;
-
-        if (user.getRole() == Role.ADMIN) return true;
-
-        return item.getAllowedRole().equals(user.getRole().name());
-    }
 }
+

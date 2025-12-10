@@ -17,7 +17,6 @@ import com.example.activity_diary.service.diary.*;
 import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.activity_diary.entity.enums.SyncEntityType;
@@ -32,183 +31,161 @@ public class DiaryServiceImpl implements DiaryService {
     private final DictionaryRepository dictionaryRepository;
 
     private final DiaryValidationService validationService;
-    private final DiaryAccessService accessService;
-    private final DiaryItemService itemProcessor;
-    private final DiaryCalculationService calculationService;
-    private final EntryStatusResolver entryStatusResolver;
+    private final DiaryItemService itemService;
     private final UserSyncService userSyncService;
-
     private final DiaryEntryMapper mapper;
 
     // ============================================================
-    // GET PAGED ENTRIES FOR CURRENT USER
+    // GET PAGED
     // ============================================================
 
     @Override
-    public Page<DiaryEntryDto> getMyEntries(UserDetails currentUser, int page, int size) {
-
-        Long userId = accessService.getUserId(currentUser);
-
-        Pageable pageable = PageRequest.of(
-                Math.max(0, page),
-                Math.max(1, size),
-                Sort.by("whenStarted").descending()
-        );
-
-        Page<DiaryEntry> entries = diaryRepository.findByUserId(userId, pageable);
-
-        return entries.map(mapper::toDto);
+    public Page<DiaryEntryDto> getMyEntries(Long userId, Pageable pageable) {
+        return diaryRepository
+                .findByUserIdAndStatusNot(userId, EntryStatus.DELETED, pageable)
+                .map(mapper::toDto);
     }
 
     // ============================================================
-    // GET SINGLE ENTRY
+    // GET ONE
     // ============================================================
 
     @Override
-    public DiaryEntryDto getMyEntryById(Long id, UserDetails currentUser) {
-        DiaryEntry entry = accessService.getEntryForUser(id, currentUser);
+    public DiaryEntryDto getMyEntryById(Long id, Long userId) {
+
+        DiaryEntry entry = diaryRepository.findById(id)
+                .filter(e -> e.getUser().getId().equals(userId))
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
+
         return mapper.toDto(entry);
     }
 
     // ============================================================
-    // CREATE ENTRY
+    // CREATE
     // ============================================================
 
     @Override
-    public DiaryEntryDto create(DiaryEntryCreateDto dto, UserDetails currentUser) {
+    public DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId) {
 
-        Long userId = accessService.getUserId(currentUser);
+        validationService.validateCreate(dto);
 
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
-        // ✅ Валидация
-        validationService.validateCreate(dto);
-
-        // ✅ Базовый маппинг
-        DiaryEntry entry = mapper.toEntity(dto);
-        entry.setUser(user);
-
-        // ✅ Разрешение WHAT_HAPPENED
-        DictionaryItem whatHappened = dictionaryRepository
-                .findById(dto.getWhatHappenedId())
-                .orElseThrow(() -> new NotFoundException("WHAT_HAPPENED not found"));
-
-        if (whatHappened.getType() != DictionaryType.WHAT_HAPPENED) {
-            throw new BadRequestException("Invalid dictionary type for WHAT_HAPPENED");
-        }
-
-        // ✅ Разрешение WHAT
-        DictionaryItem what = dictionaryRepository
-                .findById(dto.getWhatId())
-                .orElseThrow(() -> new NotFoundException("WHAT not found"));
-
-        if (what.getType() != DictionaryType.WHAT) {
-            throw new BadRequestException("Invalid dictionary type for WHAT");
-        }
-
-        entry.setWhatHappened(whatHappened);
-        entry.setWhat(what);
-
-        // ✅ Нормализация и длительность
-        calculationService.normalizeEntry(dto, entry);
-
-        entry.setStatus(
-                entryStatusResolver.resolve(
-                        entry.getWhenStarted(),
-                        entry.getWhenEnded()
-                )
+        DictionaryItem category = resolveDictionary(
+                dto.getCategoryId(),
+                DictionaryType.CATEGORY
         );
 
-        calculationService.computeDuration(entry);
+        DictionaryItem subCategory = resolveDictionary(
+                dto.getSubCategoryId(),
+                DictionaryType.SUB_CATEGORY
+        );
 
-        // ✅ ITEMS
-        itemProcessor.applyItems(dto.getWhatDidYouDo(), entry);
+        DiaryEntry entry = DiaryEntry.create(
+                user,
+                category,
+                subCategory,
+                dto.getWhenStarted(),
+                dto.getWhenEnded(),
+                dto.getMood(),
+                dto.getDescription()
+        );
+
+        itemService.applyOnCreate(dto.getMetrics(), entry);
 
         DiaryEntry saved = diaryRepository.save(entry);
 
-        userSyncService.bump(user.getId(), SyncEntityType.DIARY);
+        userSyncService.bump(userId, SyncEntityType.DIARY);
 
         return mapper.toDto(saved);
     }
 
     // ============================================================
-    // UPDATE ENTRY
+    // UPDATE
     // ============================================================
 
     @Override
-    public DiaryEntryDto update(Long id, DiaryEntryUpdateDto dto, UserDetails currentUser) {
+    public DiaryEntryDto update(Long id, DiaryEntryUpdateDto dto, Long userId) {
 
-        DiaryEntry existing = accessService.getEntryForUser(id, currentUser);
+        DiaryEntry entry = diaryRepository.findById(id)
+                .filter(e -> e.getUser().getId().equals(userId))
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
 
-        // ✅ Обновление WHAT_HAPPENED
-        if (dto.getWhatHappenedId() != null) {
-
-            DictionaryItem whatHappened = dictionaryRepository
-                    .findById(dto.getWhatHappenedId())
-                    .orElseThrow(() -> new NotFoundException("WHAT_HAPPENED not found"));
-
-            if (whatHappened.getType() != DictionaryType.WHAT_HAPPENED) {
-                throw new BadRequestException("Invalid dictionary type for WHAT_HAPPENED");
-            }
-
-            existing.setWhatHappened(whatHappened);
+        if (entry.isFinal()) {
+            throw new BadRequestException("Final entry cannot be modified");
         }
 
-        // ✅ Обновление WHAT
-        if (dto.getWhatId() != null) {
-
-            DictionaryItem what = dictionaryRepository
-                    .findById(dto.getWhatId())
-                    .orElseThrow(() -> new NotFoundException("WHAT not found"));
-
-            if (what.getType() != DictionaryType.WHAT) {
-                throw new BadRequestException("Invalid dictionary type for WHAT");
-            }
-
-            existing.setWhat(what);
+        if (dto.getCategoryId() != null) {
+            entry = updateCategory(entry, dto.getCategoryId());
         }
 
-        // ✅ Нормализация и статус
-        calculationService.normalizeEntry(dto, existing);
-
-        if (dto.getStatus() != null) {
-            try {
-                existing.setStatus(EntryStatus.valueOf(dto.getStatus().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("Invalid entry status");
-            }
+        if (dto.getSubCategoryId() != null) {
+            entry = updateSubCategory(entry, dto.getSubCategoryId());
         }
 
-        calculationService.computeDuration(existing);
+        if (dto.getWhenStarted() != null && dto.getWhenEnded() != null) {
+            entry.updateTime(dto.getWhenStarted(), dto.getWhenEnded());
+        }
 
-        // ✅ ITEMS
-        itemProcessor.updateItems(dto.getWhatDidYouDo(), existing);
+        if (dto.getDescription() != null) {
+            entry.updateDescription(dto.getDescription());
+        }
 
-        DiaryEntry saved = diaryRepository.save(existing);
+        if (dto.getMood() != null) {
+            entry.updateMood(dto.getMood());
+        }
 
-        userSyncService.bump(
-                existing.getUser().getId(),
-                SyncEntityType.DIARY
-        );
+        itemService.applyOnUpdate(dto.getMetrics(), entry);
+
+        DiaryEntry saved = diaryRepository.save(entry);
+
+        userSyncService.bump(userId, SyncEntityType.DIARY);
 
         return mapper.toDto(saved);
     }
 
     // ============================================================
-    // DELETE ENTRY
+    // DELETE (LOGICAL)
     // ============================================================
 
     @Override
-    public void delete(Long id, UserDetails currentUser) {
+    public void delete(Long id, Long userId) {
 
-        DiaryEntry existing = accessService.getEntryForUser(id, currentUser);
+        DiaryEntry entry = diaryRepository.findById(id)
+                .filter(e -> e.getUser().getId().equals(userId))
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
 
-        diaryRepository.delete(existing);
+        entry.markDeleted();
 
-        userSyncService.bump(
-                existing.getUser().getId(),
-                SyncEntityType.DIARY
-        );
+        diaryRepository.save(entry);
+
+        userSyncService.bump(userId, SyncEntityType.DIARY);
+    }
+
+    // ============================================================
+    // INTERNAL HELPERS
+    // ============================================================
+
+    private DictionaryItem resolveDictionary(Long id, DictionaryType type) {
+
+        DictionaryItem item = dictionaryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
+
+        if (item.getType() != type) {
+            throw new BadRequestException("Invalid dictionary type");
+        }
+
+        return item;
+    }
+
+    private DiaryEntry updateCategory(DiaryEntry entry, Long id) {
+        entry.changeCategory(resolveDictionary(id, DictionaryType.CATEGORY));
+        return entry;
+    }
+
+    private DiaryEntry updateSubCategory(DiaryEntry entry, Long id) {
+        entry.changeSubCategory(resolveDictionary(id, DictionaryType.SUB_CATEGORY));
+        return entry;
     }
 }

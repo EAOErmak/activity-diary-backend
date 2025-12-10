@@ -1,8 +1,5 @@
 package com.example.activity_diary.security;
 
-import com.example.activity_diary.entity.User;
-import com.example.activity_diary.exception.types.UnauthorizedException;
-import com.example.activity_diary.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,14 +16,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final CustomUserDetailsService userDetailsService;
-    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -45,39 +41,54 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            // Новая проверка access-токена
+            // ✅ Проверка access token
             if (!jwtUtils.isAccessTokenValid(token)) {
-                throw new UnauthorizedException("Invalid or expired token");
+                sendUnauthorized(response, "Invalid or expired token");
+                return;
             }
 
             String username = jwtUtils.extractUsername(token);
             if (username == null) {
-                throw new UnauthorizedException("Invalid token payload");
+                sendUnauthorized(response, "Invalid token payload");
+                return;
             }
 
-            User user = userRepository.findByUsername(username).orElse(null);
-            if (user == null || !user.isEnabled()) {
-                throw new UnauthorizedException("User disabled or deleted");
-            }
+            // ✅ Единственный источник пользователя — UserDetailsService
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails ud = userDetailsService.loadUserByUsername(username);
 
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
 
-                auth.setDetails(new WebAuthenticationDetailsSource()
-                        .buildDetails(request));
+                auth.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
-            throw new UnauthorizedException("JWT authentication failed");
+            log.warn("JWT authentication failed: {}", e.getMessage());
+            sendUnauthorized(response, "JWT authentication failed");
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    // ✅ Правильная обработка 401 на уровне фильтра
+    private void sendUnauthorized(HttpServletResponse response, String message)
+            throws IOException {
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("""
+            {"error":"Unauthorized","message":"%s"}
+        """.formatted(message));
     }
 }

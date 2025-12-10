@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-10-create-users" author="diary">
+
+        <!-- ===================== -->
+        <!-- TABLE: users -->
+        <!-- ===================== -->
+
+        <createTable tableName="users">
+
+            <!-- ✅ BaseEntity -->
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ===================== -->
+            <!-- CORE FIELDS -->
+            <!-- ===================== -->
+
+            <column name="username" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="full_name" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="chat_id" type="BIGINT">
+                <constraints unique="true"/>
+            </column>
+
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="account_locked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="lock_until" type="TIMESTAMP"/>
+
+            <column name="failed_2fa_attempts" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- ===================== -->
+        <!-- INDEXES -->
+        <!-- ===================== -->
+
+        <createIndex indexName="idx_user_username" tableName="users">
+            <column name="username"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_chat_id" tableName="users">
+            <column name="chat_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_locked" tableName="users">
+            <column name="account_locked"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_created" tableName="users">
+            <column name="created_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

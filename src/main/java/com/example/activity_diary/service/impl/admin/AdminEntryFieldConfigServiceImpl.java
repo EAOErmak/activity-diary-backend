@@ -3,9 +3,7 @@ package com.example.activity_diary.service.impl.admin;
 import com.example.activity_diary.dto.diary.EntryFieldConfigDto;
 import com.example.activity_diary.dto.mapper.EntryFieldConfigMapper;
 import com.example.activity_diary.entity.EntryFieldConfig;
-import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.repository.EntryFieldConfigRepository;
 import com.example.activity_diary.service.admin.AdminEntryFieldConfigService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,6 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
 
     private final EntryFieldConfigRepository repo;
     private final EntryFieldConfigMapper mapper;
-    private final DictionaryRepository dictionaryRepository;
 
     // ============================
     // CREATE
@@ -27,15 +24,12 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
 
     @Override
     public EntryFieldConfigDto create(EntryFieldConfigDto dto) {
-        EntryFieldConfig config = mapper.toEntity(dto);
 
-        // ✅ ВРУЧНУЮ ПРИВЯЗЫВАЕМ whatHappened ПО ID
-        if (dto.getWhatHappenedId() != null) {
-            DictionaryItem item = dictionaryRepository.findById(dto.getWhatHappenedId())
-                    .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
-
-            config.setWhatHappened(item);
+        if (repo.existsByNameIgnoreCase(dto.getName())) {
+            throw new IllegalArgumentException("Config with this name already exists");
         }
+
+        EntryFieldConfig config = mapper.toEntity(dto);
 
         return mapper.toDto(repo.save(config));
     }
@@ -50,20 +44,12 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
                 .orElseThrow(() -> new NotFoundException("Config not found"));
 
         config.setName(dto.getName());
-        config.setShowWhat(dto.getShowWhat());
-        config.setShowActivities(dto.getShowActivities());
-        config.setShowFeeling(dto.getShowFeeling());
+        config.setShowSubCategory(dto.getShowSubCategory());
+        config.setShowMetrics(dto.getShowMetrics());
+        config.setShowMood(dto.getShowMood());
         config.setShowDescription(dto.getShowDescription());
-        config.setRequiredWhat(dto.getRequiredWhat());
-        config.setRequiredActivities(dto.getRequiredActivities());
-
-        // ✅ ЕСЛИ НАДО ПЕРЕПРИВЯЗАТЬ whatHappened
-        if (dto.getWhatHappenedId() != null) {
-            DictionaryItem item = dictionaryRepository.findById(dto.getWhatHappenedId())
-                    .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
-
-            config.setWhatHappened(item);
-        }
+        config.setRequiredSubCategory(dto.getRequiredSubCategory());
+        config.setRequiredMetrics(dto.getRequiredMetrics());
 
         return mapper.toDto(repo.save(config));
     }
@@ -89,4 +75,3 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
         repo.deleteById(id);
     }
 }
-

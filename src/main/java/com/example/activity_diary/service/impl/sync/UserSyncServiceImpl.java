@@ -1,8 +1,6 @@
 package com.example.activity_diary.service.impl.sync;
 
 import com.example.activity_diary.dto.sync.SyncStateResponseDto;
-import com.example.activity_diary.repository.UserRepository;
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.UserSyncState;
 import com.example.activity_diary.entity.enums.SyncEntityType;
 import com.example.activity_diary.repository.UserSyncStateRepository;
@@ -21,26 +19,10 @@ import java.util.stream.Collectors;
 public class UserSyncServiceImpl implements UserSyncService {
 
     private final UserSyncStateRepository userSyncStateRepository;
-    private final UserRepository userRepository;
 
+    // INIT USER: создать записи, если их нет
     @Override
     public void initUser(Long userId) {
-        for (SyncEntityType type : SyncEntityType.values()) {
-            UserSyncState state = new UserSyncState(
-                    userId, type, 0L, LocalDateTime.now()
-            );
-            userSyncStateRepository.save(state);
-        }
-    }
-
-    @Override
-    public void bump(Long userId, SyncEntityType type) {
-        userSyncStateRepository.increment(userId, type);
-    }
-
-    @Override
-    public Map<SyncEntityType, Long> getState(Long userId) {
-
         for (SyncEntityType type : SyncEntityType.values()) {
             userSyncStateRepository.findByUserIdAndEntityType(userId, type)
                     .orElseGet(() -> userSyncStateRepository.save(
@@ -52,6 +34,29 @@ public class UserSyncServiceImpl implements UserSyncService {
                             )
                     ));
         }
+    }
+
+    // BUMP VERSION
+    @Override
+    public void bump(Long userId, SyncEntityType type) {
+        int updated = userSyncStateRepository.increment(userId, type);
+
+        if (updated == 0) {
+            userSyncStateRepository.save(
+                    new UserSyncState(
+                            userId,
+                            type,
+                            1L,
+                            LocalDateTime.now()
+                    )
+            );
+        }
+    }
+
+    // GET SYNC STATE (MAP)
+    @Override
+    public Map<SyncEntityType, Long> getState(Long userId) {
+        initUser(userId);
 
         return userSyncStateRepository.findAllByUserId(userId)
                 .stream()
@@ -61,15 +66,9 @@ public class UserSyncServiceImpl implements UserSyncService {
                 ));
     }
 
+    // GET SYNC STATE (DTO)
     @Override
-    public SyncStateResponseDto getStateByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return new SyncStateResponseDto(
-                getState(user.getId())
-        );
+    public SyncStateResponseDto getStateDto(Long userId) {
+        return new SyncStateResponseDto(getState(userId));
     }
 }
-
-

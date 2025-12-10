@@ -23,24 +23,20 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponseDto>> register(
             @Valid @RequestBody RegisterRequestDto req,
-            HttpServletRequest http
+            HttpServletRequest request
     ) {
-        String realIp = IpUtils.getClientIp(http);
-        AuthResponseDto result = authService.register(req, realIp);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        AuthResponseDto result = authService.register(req, request);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @RateLimit(capacity = 5, refillTokens = 5, refillPeriodSeconds = 60)
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponseDto>> login(
             @Valid @RequestBody AuthRequestDto req,
-            HttpServletRequest http
+            HttpServletRequest request
     ) {
-        String ip = http.getRemoteAddr();
-        String userAgent = http.getHeader("User-Agent");
-
-        AuthResponseDto result = authService.login(req, ip, userAgent);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        AuthResponseDto result = authService.login(req, request);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
@@ -48,8 +44,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponseDto>> refresh(
             @Valid @RequestBody RefreshTokenRequest req
     ) {
-        String token = req.getRefreshToken();
-        return ResponseEntity.ok(ApiResponse.success(authService.refresh(token)));
+        AuthResponseDto result = authService.refresh(req.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @RateLimit(capacity = 5, refillTokens = 5, refillPeriodSeconds = 60)
@@ -57,32 +53,41 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponseDto>> confirmLogin(
             @Valid @RequestBody VerificationConfirmDto req
     ) {
-        return ResponseEntity.ok(
-                ApiResponse.ok(authService.confirmLogin(req.getUsername(), req.getCode()))
-        );
+        AuthResponseDto result =
+                authService.confirmLogin(req.getUsername(), req.getCode());
+
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    // Telegram-only verification
     @RateLimit(capacity = 3, refillTokens = 3, refillPeriodSeconds = 60)
     @PostMapping("/verification/request")
     public ResponseEntity<ApiResponse<Void>> requestVerification(
             @Valid @RequestBody VerificationRequestDto req
     ) {
         authService.requestVerificationCode(req.getUsername());
-        return ResponseEntity.ok(ApiResponse.okMessage("Verification code sent through Telegram bot"));
+        return ResponseEntity.ok(
+                ApiResponse.success(null)
+        );
     }
 
     @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
     @PostMapping("/verification/confirm")
-    public ResponseEntity<ApiResponse<Void>> confirm(
+    public ResponseEntity<ApiResponse<Void>> confirmVerification(
             @Valid @RequestBody VerificationConfirmDto req
     ) {
-        boolean ok = authService.verifyCode(req.getUsername(), req.getCode());
-        if (!ok) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Invalid or expired verification code"));
-        }
+        authService.verifyCode(req.getUsername(), req.getCode());
+        return ResponseEntity.ok(
+                ApiResponse.success(null)
+        );
+    }
 
-        return ResponseEntity.ok(ApiResponse.okMessage("Account verified successfully"));
+    // ✅ КРИТИЧЕСКИ ВАЖНЫЙ ENDPOINT
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestBody RefreshTokenRequest req
+    ) {
+        authService.logout(req.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
+

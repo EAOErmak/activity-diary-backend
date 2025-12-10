@@ -6,10 +6,7 @@ import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.repository.DiaryRepository;
 import com.example.activity_diary.service.analytics.AnalyticsService;
 import com.example.activity_diary.service.analytics.ChartValueService;
-import com.example.activity_diary.service.diary.DiaryAccessService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +23,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private final DiaryRepository diaryRepository;
     private final ChartValueService chartValueService;
-    private final DiaryAccessService diaryAccessService;
 
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -37,30 +33,26 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public ChartResponseDto buildByTimeByCategory(
-            UserDetails currentUser,
-            Long whatHappenedId,
+            Long userId,
+            Long categoryId,
             LocalDateTime from,
             LocalDateTime to
     ) {
-        Long userId = diaryAccessService.getUserId(currentUser);
-
         List<DiaryEntry> entries =
-                diaryRepository.findForAnalyticsByCategory(userId, whatHappenedId, from, to);
+                diaryRepository.findForAnalyticsByCategory(userId, categoryId, from, to);
 
         return buildTimeChart(entries);
     }
 
     @Override
-    public ChartResponseDto buildByTimeByWhat(
-            UserDetails currentUser,
-            Long whatId,
+    public ChartResponseDto buildByTimeBySubCategory(
+            Long userId,
+            Long subCategoryId,
             LocalDateTime from,
             LocalDateTime to
     ) {
-        Long userId = diaryAccessService.getUserId(currentUser);
-
         List<DiaryEntry> entries =
-                diaryRepository.findForAnalyticsByWhat(userId, whatId, from, to);
+                diaryRepository.findForAnalyticsBySubCategory(userId, subCategoryId, from, to);
 
         return buildTimeChart(entries);
     }
@@ -71,30 +63,26 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public ChartResponseDto buildBySequenceByCategory(
-            UserDetails currentUser,
-            Long whatHappenedId,
+            Long userId,
+            Long categoryId,
             LocalDateTime from,
             LocalDateTime to
     ) {
-        Long userId = diaryAccessService.getUserId(currentUser);
-
         List<DiaryEntry> entries =
-                diaryRepository.findForAnalyticsByCategory(userId, whatHappenedId, from, to);
+                diaryRepository.findForAnalyticsByCategory(userId, categoryId, from, to);
 
         return buildSequenceChart(entries);
     }
 
     @Override
-    public ChartResponseDto buildBySequenceByWhat(
-            UserDetails currentUser,
-            Long whatId,
+    public ChartResponseDto buildBySequenceBySubCategory(
+            Long userId,
+            Long subCategoryId,
             LocalDateTime from,
             LocalDateTime to
     ) {
-        Long userId = diaryAccessService.getUserId(currentUser);
-
         List<DiaryEntry> entries =
-                diaryRepository.findForAnalyticsByWhat(userId, whatId, from, to);
+                diaryRepository.findForAnalyticsBySubCategory(userId, subCategoryId, from, to);
 
         return buildSequenceChart(entries);
     }
@@ -159,19 +147,20 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         DiaryEntry first = entries.get(0);
 
         response.setTitle(
-                first.getWhat() != null
-                        ? first.getWhat().getLabel()
-                        : first.getWhatHappened().getLabel()
+                first.getSubCategory() != null
+                        ? first.getSubCategory().getLabel()
+                        : first.getCategory().getLabel()
         );
 
-        response.setChartType(first.getWhatHappened().getChartType());
+        response.setChartType(first.getCategory().getChartType());
 
         response.setUnit(
-                first.getWhatDidYouDo().isEmpty()
+                first.getMetrics().isEmpty()
                         ? null
-                        : first.getWhatDidYouDo().get(0).getUnit().getLabel()
+                        : first.getMetrics().get(0).getUnit().getLabel()
         );
 
         return response;
     }
 }
+

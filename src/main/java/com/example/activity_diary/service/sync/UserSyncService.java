@@ -8,9 +8,12 @@ import java.util.Map;
 public interface UserSyncService {
 
     void initUser(Long userId);
+
     void bump(Long userId, SyncEntityType type);
+
+    // ✅ ВНУТРЕННИЙ метод (для сервисов)
     Map<SyncEntityType, Long> getState(Long userId);
-    SyncStateResponseDto getStateByUsername(String username); // ✅ ВАЖНО
+
+    // ✅ ВНЕШНИЙ метод (для контроллеров)
+    SyncStateResponseDto getStateDto(Long userId);
 }
-
-

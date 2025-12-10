@@ -4,7 +4,9 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+
 
 @Service
 @RequiredArgsConstructor
@@ -13,17 +15,19 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User u = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public UserDetails loadUserByUsername(String username)
+            throws UsernameNotFoundException {
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(u.getUsername()) // Important!
-                .password(u.getPassword())
-                .disabled(!u.isEnabled() || u.isAccountLocked())
-                .roles(u.getRole().name())
-                .build();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found: " + username)
+                );
+
+        return new CustomUserDetails(user); // ✅ ВАЖНО!
     }
 }
+
+
+
 
 

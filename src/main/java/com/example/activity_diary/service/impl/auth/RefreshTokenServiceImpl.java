@@ -1,71 +1,116 @@
 package com.example.activity_diary.service.impl.auth;
 
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.RefreshToken;
-import com.example.activity_diary.exception.types.UnauthorizedException;
+import com.example.activity_diary.entity.User;
+import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.repository.RefreshTokenRepository;
 import com.example.activity_diary.service.auth.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository repository;
 
-    private String hash(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return Base64.getEncoder().encodeToString(digest.digest(token.getBytes()));
-        } catch (Exception e) {
-            throw new RuntimeException("Token hashing failed", e);
-        }
-    }
+    // ============================================================
+    // SAVE NEW REFRESH TOKEN
+    // ============================================================
 
     @Override
-    public RefreshToken create(User user) {
-        String rawToken = java.util.UUID.randomUUID().toString();
+    public void save(User user, String rawToken) {
+
+        String hashed = hash(rawToken);
 
         RefreshToken token = RefreshToken.builder()
                 .user(user)
-                .tokenHash(hash(rawToken))
-                .expiresAt(Instant.now().plusSeconds(60L * 60 * 24 * 30)) // 30 days
+                .tokenHash(hashed)
+                .expiresAt(Instant.now().plus(30, ChronoUnit.DAYS))
                 .build();
 
         repository.save(token);
+    }
 
-        token.setTokenHash(rawToken); // возвращаем в чистом виде ВРЕМЕННО
+    // ============================================================
+    // VERIFY (WITHOUT ROTATION)
+    // ============================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public RefreshToken verify(String rawToken) {
+
+        String hashed = hash(rawToken);
+
+        RefreshToken token = repository
+                .findActiveByTokenHash(hashed, Instant.now())
+                .orElseThrow(() ->
+                        new ForbiddenException("Invalid or expired refresh token")
+                );
+
         return token;
     }
 
-    @Override
-    public RefreshToken verifyAndRotate(String rawToken) {
-        String hashed = hash(rawToken);
-
-        RefreshToken rt = repository.findByTokenHash(hashed)
-                .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
-
-        if (rt.isRevoked() || rt.getExpiresAt().isBefore(Instant.now()))
-            throw new UnauthorizedException("Expired or revoked refresh token");
-
-        rt.setRevoked(true);
-        repository.save(rt);
-
-        RefreshToken newRt = create(rt.getUser());
-        rt.setReplacedBy(newRt.getId());
-        repository.save(rt);
-
-        return newRt;
-    }
+    // ============================================================
+    // REVOKE SINGLE TOKEN
+    // ============================================================
 
     @Override
     public void revoke(RefreshToken token) {
-        token.setRevoked(true);
+        token.revoke();
         repository.save(token);
+    }
+
+    // ============================================================
+    // REVOKE BY RAW TOKEN (LOGOUT)
+    // ============================================================
+
+    @Override
+    public void revokeByToken(String rawToken) {
+
+        String hashed = hash(rawToken);
+
+        repository.findActiveByTokenHash(hashed, Instant.now())
+                .ifPresent(token -> {
+                    token.revoke();
+                    repository.save(token);
+                });
+    }
+
+    // ============================================================
+    // REVOKE ALL TOKENS OF USER (GLOBAL LOGOUT)
+    // ============================================================
+
+    @Override
+    public void revokeAllByUser(User user) {
+        repository.revokeAllByUser(user);
+    }
+
+    // ============================================================
+    // INTERNAL
+    // ============================================================
+
+    private String hash(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hashed);
+        } catch (Exception e) {
+            throw new IllegalStateException("Refresh token hashing failed", e);
+        }
+    }
+
+    // ✅ Утилита, если понадобится генерация внутри сервиса
+    private String generateRawToken() {
+        return UUID.randomUUID().toString();
     }
 }

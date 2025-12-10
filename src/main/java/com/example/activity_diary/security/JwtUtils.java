@@ -16,17 +16,25 @@ public class JwtUtils {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration-ms}")
+    @Value("${jwt.access-expiration-ms}")
     private long accessExpirationMs;
+
+    @Value("${jwt.refresh-expiration-ms}")
+    private long refreshExpirationMs;
 
     private Key signingKey;
 
     @PostConstruct
     public void init() {
         if (jwtSecret == null || jwtSecret.length() < 32) {
-            throw new IllegalStateException("JWT secret must be at least 32 bytes (256 bits).");
+            throw new IllegalStateException(
+                    "JWT secret must be at least 32 bytes (256 bits)"
+            );
         }
-        this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+
+        this.signingKey = Keys.hmacShaKeyFor(
+                jwtSecret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     // ============================================================
@@ -34,11 +42,21 @@ public class JwtUtils {
     // ============================================================
 
     public String generateAccessToken(String username) {
+        return generateToken(username, "access", accessExpirationMs);
+    }
+
+    public String generateRefreshToken(String username) {
+        return generateToken(username, "refresh", refreshExpirationMs);
+    }
+
+    private String generateToken(String username, String type, long ttlMs) {
         long now = System.currentTimeMillis();
+
         return Jwts.builder()
                 .setSubject(username)
+                .claim("type", type)
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + accessExpirationMs))
+                .setExpiration(new Date(now + ttlMs))
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -47,28 +65,41 @@ public class JwtUtils {
     // EXTRACTION
     // ============================================================
 
-    public String extractUsername(String accessToken) {
-        return parse(accessToken).getBody().getSubject();
+    public String extractUsername(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+    public String extractTokenType(String token) {
+        Object type = extractAllClaims(token).get("type");
+        return type == null ? null : type.toString();
     }
 
     // ============================================================
     // VALIDATION
     // ============================================================
 
-    public boolean isAccessTokenValid(String accessToken) {
-        try {
-            parse(accessToken);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean isAccessTokenValid(String token) {
+        return isTokenValid(token, "access");
     }
 
-    public boolean isAccessTokenExpired(String accessToken) {
+    public boolean isRefreshTokenValid(String token) {
+        return isTokenValid(token, "refresh");
+    }
+
+    private boolean isTokenValid(String token, String expectedType) {
         try {
-            return parse(accessToken).getBody().getExpiration().before(new Date());
-        } catch (Exception e) {
-            return true;
+            Claims claims = extractAllClaims(token);
+
+            String actualType = claims.get("type", String.class);
+
+            if (!expectedType.equals(actualType)) {
+                return false;
+            }
+
+            return !claims.getExpiration().before(new Date());
+
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
         }
     }
 
@@ -76,10 +107,12 @@ public class JwtUtils {
     // INTERNAL
     // ============================================================
 
-    private Jws<Claims> parse(String token) {
+    private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(signingKey)
                 .build()
-                .parseClaimsJws(token);
+                .parseClaimsJws(token)
+                .getBody();
     }
 }
+

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-02-create-dictionary-item" author="diary">
+
+        <!-- ===================== -->
+        <!-- TABLE: dictionary_item -->
+        <!-- ===================== -->
+        <createTable tableName="dictionary_item">
+
+            <!-- ✅ BaseEntity -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ===================== -->
+            <!-- CORE FIELDS -->
+            <!-- ===================== -->
+
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="label" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="parent_id" type="BIGINT"/>
+
+            <column name="chart_type" type="VARCHAR(50)"/>
+
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="allowed_role" type="VARCHAR(50)"/>
+
+            <column name="entry_field_config_id" type="BIGINT"/>
+
+        </createTable>
+
+        <!-- ===================== -->
+        <!-- UNIQUE -->
+        <!-- ===================== -->
+
+        <addUniqueConstraint
+                tableName="dictionary_item"
+                columnNames="type, label"
+                constraintName="uk_dictionary_type_label"/>
+
+        <!-- ===================== -->
+        <!-- INDEXES (под твои запросы) -->
+        <!-- ===================== -->
+
+        <!-- findAllByType... -->
+        <createIndex indexName="idx_dict_type" tableName="dictionary_item">
+            <column name="type"/>
+        </createIndex>
+
+        <!-- findAllByTypeAndParentId... -->
+        <createIndex indexName="idx_dict_type_parent" tableName="dictionary_item">
+            <column name="type"/>
+            <column name="parent_id"/>
+        </createIndex>
+
+        <!-- active фильтрация -->
+        <createIndex indexName="idx_dict_active" tableName="dictionary_item">
+            <column name="active"/>
+        </createIndex>
+
+        <!-- allowed_role фильтрация -->
+        <createIndex indexName="idx_dict_role" tableName="dictionary_item">
+            <column name="allowed_role"/>
+        </createIndex>
+
+        <!-- search by label -->
+        <createIndex indexName="idx_dict_label" tableName="dictionary_item">
+            <column name="label"/>
+        </createIndex>
+
+        <!-- ===================== -->
+        <!-- FOREIGN KEYS -->
+        <!-- ===================== -->
+
+        <!-- parent -->
+        <addForeignKeyConstraint
+                baseTableName="dictionary_item"
+                baseColumnNames="parent_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"
+                constraintName="fk_dictionary_parent"/>
+
+        <!-- entry_field_config -->
+        <addForeignKeyConstraint
+                baseTableName="dictionary_item"
+                baseColumnNames="entry_field_config_id"
+                referencedTableName="entry_field_config"
+                referencedColumnNames="id"
+                constraintName="fk_dictionary_entry_field_config"/>
+
+    </changeSet>
+
+</databaseChangeLog>

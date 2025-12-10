@@ -14,100 +14,131 @@ import java.util.List;
 
 public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
-    // page-based query (standard)
-    Page<DiaryEntry> findByUserId(Long userId, Pageable pageable);
+    // ============================================================
+    // BASE (ONLY USER DATA)
+    // ============================================================
 
-    // existing list-based API (used by some internal flows) — fetch joins to avoid N+1
+    Page<DiaryEntry> findByUserIdAndStatusNot(
+            Long userId,
+            EntryStatus excludedStatus,
+            Pageable pageable
+    );
+
+    // ============================================================
+    // FULL FETCH (NO N+1)
+    // ============================================================
+
     @Query("""
         select distinct d from DiaryEntry d
-        left join fetch d.what
-        left join fetch d.whatHappened
-        left join fetch d.whatDidYouDo items
-        left join fetch items.name
+        left join fetch d.category
+        left join fetch d.subCategory
+        left join fetch d.metrics items
+        left join fetch items.metricType
         left join fetch items.unit
         where d.user.id = :userId
+          and d.status <> 'DELETED'
     """)
     List<DiaryEntry> findFullByUserId(@Param("userId") Long userId);
 
-    List<DiaryEntry> findByStatus(EntryStatus status);
-
-    List<DiaryEntry> findByUserIdAndStatus(Long userId, EntryStatus status);
-
-    List<DiaryEntry> findAllByUserIdAndWhatHappenedIdAndWhenStartedBetween(Long userId, Long whatHappenedId, LocalDateTime localDateTime, LocalDateTime localDateTime1);
+    // ============================================================
+    // TIME STATES (PLANNED / ACTIVE / FINISHED)
+    // ============================================================
 
     @Query("""
-        select distinct d from DiaryEntry d
-        left join fetch d.what
-        left join fetch d.whatHappened
-        left join fetch d.whatDidYouDo items
-        left join fetch items.name
-        left join fetch items.unit
+        select d from DiaryEntry d
         where d.user.id = :userId
-          and d.whatHappened.id = :whatHappenedId
-          and d.whenStarted between :from and :to
+          and d.whenStarted > :now
+          and d.status <> 'DELETED'
+        order by d.whenStarted asc
     """)
-    List<DiaryEntry> findFullForAnalytics(
-            @Param("userId") Long userId,
-            @Param("whatHappenedId") Long whatHappenedId,
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
-    );
+    List<DiaryEntry> findPlanned(@Param("userId") Long userId,
+                                 @Param("now") LocalDateTime now);
+
+    @Query("""
+        select d from DiaryEntry d
+        where d.user.id = :userId
+          and :now between d.whenStarted and d.whenEnded
+          and d.status <> 'DELETED'
+    """)
+    List<DiaryEntry> findActive(@Param("userId") Long userId,
+                                @Param("now") LocalDateTime now);
+
+    @Query("""
+        select d from DiaryEntry d
+        where d.user.id = :userId
+          and d.whenEnded < :now
+          and d.status = 'FINAL'
+    """)
+    List<DiaryEntry> findFinished(@Param("userId") Long userId,
+                                  @Param("now") LocalDateTime now);
+
+    // ============================================================
+    // ANALYTICS (SAFE + OPTIMIZED)
+    // ============================================================
 
     @Query("""
         select distinct d from DiaryEntry d
-        left join fetch d.what
-        left join fetch d.whatHappened
-        left join fetch d.whatDidYouDo items
-        left join fetch items.name
+        left join fetch d.subCategory
+        left join fetch d.category
+        left join fetch d.metrics items
+        left join fetch items.metricType
         left join fetch items.unit
         where d.user.id = :userId
-          and d.whatHappened.id = :whatHappenedId
+          and d.category.id = :categoryId
           and d.whenStarted between :from and :to
+          and d.status = 'FINAL'
     """)
     List<DiaryEntry> findForAnalyticsByCategory(
             @Param("userId") Long userId,
-            @Param("whatHappenedId") Long whatHappenedId,
+            @Param("categoryId") Long categoryId,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
 
     @Query("""
         select distinct d from DiaryEntry d
-        left join fetch d.what
-        left join fetch d.whatHappened
-        left join fetch d.whatDidYouDo items
-        left join fetch items.name
+        left join fetch d.subCategory
+        left join fetch d.category
+        left join fetch d.metrics items
+        left join fetch items.metricType
         left join fetch items.unit
         where d.user.id = :userId
-          and d.what.id = :whatId
+          and d.subCategory.id = :subCategoryId
           and d.whenStarted between :from and :to
+          and d.status = 'FINAL'
     """)
-
-    List<DiaryEntry> findForAnalyticsByWhat(
+    List<DiaryEntry> findForAnalyticsBySubCategory(
             @Param("userId") Long userId,
-            @Param("whatId") Long whatId,
+            @Param("subCategoryId") Long subCategoryId,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    // ============================================================
+    // ADMIN / STATS (SAFE)
+    // ============================================================
 
     @Query("""
         SELECT COUNT(d)
         FROM DiaryEntry d
-        WHERE d.createdAt >= :start AND d.createdAt < :end
+        WHERE d.createdAt >= :start
+          AND d.createdAt < :end
+          AND d.status <> 'DELETED'
     """)
     long countEntriesBetween(
             @Param("start") Instant start,
             @Param("end") Instant end
     );
 
-
     @Query("""
         SELECT COUNT(DISTINCT d.user.id)
         FROM DiaryEntry d
-        WHERE d.createdAt >= :start AND d.createdAt < :end
+        WHERE d.createdAt >= :start
+          AND d.createdAt < :end
+          AND d.status <> 'DELETED'
     """)
     long countActiveUsersBetween(
             @Param("start") Instant start,
-            @Param("end") Instant  end
+            @Param("end") Instant end
     );
 }

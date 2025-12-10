@@ -17,14 +17,16 @@ import com.example.activity_diary.service.auth.RefreshTokenService;
 import com.example.activity_diary.service.auth.VerificationService;
 import com.example.activity_diary.service.login.LoginEventService;
 import com.example.activity_diary.service.sync.UserSyncService;
+import com.example.activity_diary.util.IpUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -34,10 +36,10 @@ public class AuthServiceImpl implements AuthService {
     private final UserSyncService userSyncService;
     private final LoginEventService loginEventService;
     private final JwtUtils jwtUtils;
-
     private final RegistrationEventRepository registrationEventRepository;
 
     private static final int MAX_ACCOUNTS_PER_IP = 10;
+
     private static final String DUMMY_PASSWORD_HASH =
             "$2a$10$7EqJtq98hPqEX7fNZaFWoO5uG08CqslfQJz8l8bY5v3y5i7x3UXZG";
 
@@ -46,16 +48,16 @@ public class AuthServiceImpl implements AuthService {
     // ============================================================
 
     @Override
-    public AuthResponseDto register(RegisterRequestDto req, String ip) {
+    public AuthResponseDto register(RegisterRequestDto req, HttpServletRequest request) {
 
+        String ip = IpUtils.getClientIp(request);
         String username = req.getUsername().trim().toLowerCase();
 
         if (userRepository.existsByUsername(username)) {
-            fakeDelay(); // одинаковое время
+            fakeDelay();
             throw new BadRequestException("Invalid username or password");
         }
 
-        // Проверка лимита 10 аккаунтов на IP
         long accountsFromIp = registrationEventRepository.countByIp(ip);
         if (accountsFromIp >= MAX_ACCOUNTS_PER_IP) {
             fakeDelay();
@@ -67,46 +69,38 @@ public class AuthServiceImpl implements AuthService {
                 .password(passwordEncoder.encode(req.getPassword()))
                 .fullName(req.getFullName().trim())
                 .enabled(false)
-                .chatId(req.getChatId())
                 .build();
 
         userRepository.save(user);
-
         userSyncService.initUser(user.getId());
 
-        // FIX: сохраняем событие регистрации
-        RegistrationEvent event = RegistrationEvent.builder()
-                .user(user)
-                .ip(ip)
-                .build();
-
-        registrationEventRepository.save(event);
+        registrationEventRepository.save(
+                RegistrationEvent.builder()
+                        .user(user)
+                        .ip(ip)
+                        .build()
+        );
 
         return AuthResponseDto.builder()
-                .username(username)
+                .username(user.getUsername())
                 .userId(user.getId())
                 .role(user.getRole().name())
                 .twoFactorRequired(true)
                 .build();
     }
 
-
     // ============================================================
-    // VERIFICATION
+    // VERIFICATION (ACCOUNT)
     // ============================================================
 
     @Override
     public void requestVerificationCode(String username) {
+
         String normalized = username.trim().toLowerCase();
         User user = userRepository.findByUsername(normalized).orElse(null);
 
-        // Всегда одинаковый ответ
-        if (user == null) {
-            fakeDelay();
-            return;
-        }
-
-        if (!Boolean.TRUE.equals(user.isEnabled())) {
+        // Всегда одинаковое поведение
+        if (user == null || !user.isEnabled()) {
             fakeDelay();
             return;
         }
@@ -114,12 +108,13 @@ public class AuthServiceImpl implements AuthService {
         verificationService.createAndSendCode(user.getUsername(), user.getChatId());
     }
 
-
     @Override
-    public boolean verifyCode(String username, String code) {
+    public void verifyCode(String username, String code) {
 
         boolean ok = verificationService.verify(username.trim().toLowerCase(), code);
-        if (!ok) return false;
+        if (!ok) {
+            throw new BadRequestException("Invalid or expired verification code");
+        }
 
         User user = userRepository.findByUsername(username.trim().toLowerCase())
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -128,10 +123,8 @@ public class AuthServiceImpl implements AuthService {
             throw new ForbiddenException("Telegram verification not completed");
         }
 
-        user.setEnabled(true);
+        user.enable();
         userRepository.save(user);
-
-        return true;
     }
 
     // ============================================================
@@ -139,8 +132,10 @@ public class AuthServiceImpl implements AuthService {
     // ============================================================
 
     @Override
-    public AuthResponseDto login(AuthRequestDto req, String ip, String userAgent) {
+    public AuthResponseDto login(AuthRequestDto req, HttpServletRequest request) {
 
+        String ip = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
         String username = req.getUsername().trim().toLowerCase();
 
         User user = userRepository.findByUsername(username).orElse(null);
@@ -156,28 +151,24 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Invalid username or password");
         }
 
-        if (!passwordMatches) {
+        if (!passwordMatches || !user.isEnabled()) {
             fakeDelay();
             loginEventService.recordFailure(ip, userAgent);
             throw new BadRequestException("Invalid username or password");
         }
 
-        if (!Boolean.TRUE.equals(user.isEnabled())) {
-            fakeDelay();
-            loginEventService.recordFailure(ip, userAgent);
-            throw new BadRequestException("Invalid username or password");
-        }
+        checkForLock(user);
 
-        cheсkForLock(user);
-
-        // SUCCESS
         loginEventService.recordSuccess(user.getId(), ip, userAgent);
 
-        verificationService.createAndSendLoginCode(user.getUsername(), user.getChatId());
+        verificationService.createAndSendLoginCode(
+                user.getUsername(),
+                user.getChatId()
+        );
 
         return AuthResponseDto.builder()
                 .twoFactorRequired(true)
-                .username(username)
+                .username(user.getUsername())
                 .userId(user.getId())
                 .role(user.getRole().name())
                 .build();
@@ -194,20 +185,20 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(username.trim().toLowerCase())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        if (!Boolean.TRUE.equals(user.isEnabled())) {
+        if (!user.isEnabled()) {
             throw new ForbiddenException("User not verified");
         }
 
-        cheсkForLock(user);
-
-        loginEventService.recordSuccess(user.getId(), null, null);
+        checkForLock(user);
 
         String accessToken = jwtUtils.generateAccessToken(user.getUsername());
-        RefreshToken refreshToken = refreshTokenService.create(user);
+        String refreshToken = jwtUtils.generateRefreshToken(user.getUsername());
+
+        refreshTokenService.save(user, refreshToken);
 
         return AuthResponseDto.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken.getTokenHash())
+                .refreshToken(refreshToken)
                 .username(user.getUsername())
                 .userId(user.getId())
                 .role(user.getRole().name())
@@ -215,55 +206,65 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ============================================================
-    // REFRESH (rotate-on-use)
+    // REFRESH (ROTATION)
     // ============================================================
 
     @Override
     public AuthResponseDto refresh(String rawRefreshToken) {
 
-        RefreshToken newToken = refreshTokenService.verifyAndRotate(rawRefreshToken);
+        RefreshToken stored = refreshTokenService.verify(rawRefreshToken);
 
-        User user = newToken.getUser();
+        User user = stored.getUser();
+
         if (!user.isEnabled()) {
             throw new ForbiddenException("User not verified");
         }
 
-        cheсkForLock(user);
+        checkForLock(user);
 
-        String accessToken = jwtUtils.generateAccessToken(user.getUsername());
+        refreshTokenService.revoke(stored);
+
+        String newAccess = jwtUtils.generateAccessToken(user.getUsername());
+        String newRefresh = jwtUtils.generateRefreshToken(user.getUsername());
+
+        refreshTokenService.save(user, newRefresh);
 
         return AuthResponseDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(newToken.getTokenHash())
+                .accessToken(newAccess)
+                .refreshToken(newRefresh)
                 .username(user.getUsername())
                 .userId(user.getId())
                 .role(user.getRole().name())
                 .build();
     }
 
-    private void fakeDelay() {
-        try {
-            // Фиксированная задержка 150–250ms, чтобы скрыть разницу в ответах
-            Thread.sleep(150 + (int)(Math.random() * 100));
-        } catch (InterruptedException ignored) {}
+    // ============================================================
+    // LOGOUT
+    // ============================================================
+
+    @Override
+    public void logout(String refreshToken) {
+        refreshTokenService.revokeByToken(refreshToken);
     }
 
-    private void cheсkForLock(User user){
-        if (Boolean.TRUE.equals(user.isAccountLocked())) {
-            // ✅ если срок блокировки ещё не истёк — не пускаем
-            if (user.getLockUntil() != null
-                    && user.getLockUntil().isAfter(LocalDateTime.now())) {
+    // ============================================================
+    // INTERNAL
+    // ============================================================
 
-                throw new ForbiddenException(
-                        "Account locked until " + user.getLockUntil()
-                );
-            }
+    private void fakeDelay() {
+        try {
+            Thread.sleep(150 + (int) (Math.random() * 100));
+        } catch (InterruptedException ignored) {
+        }
+    }
 
-            // ✅ если срок ИСТЁК — автоматически разблокируем
-            user.setAccountLocked(false);
-            user.setLockUntil(null);
-            user.setFailed2faAttempts(0);
-            userRepository.save(user);
+    private void checkForLock(User user) {
+
+        if (user.isCurrentlyLocked()) {
+            throw new ForbiddenException(
+                    "Account locked until " + user.getLockUntil()
+            );
         }
     }
 }
+

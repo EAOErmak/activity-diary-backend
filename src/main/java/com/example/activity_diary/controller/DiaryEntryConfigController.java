@@ -1,5 +1,6 @@
 package com.example.activity_diary.controller;
 
+import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.diary.EntryFieldConfigDto;
 import com.example.activity_diary.service.diary.EntryFieldConfigService;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +17,9 @@ public class DiaryEntryConfigController {
     private final EntryFieldConfigService service;
 
     @GetMapping("/{whatHappenedId}")
-    public EntryFieldConfigDto get(@PathVariable Long whatHappenedId) {
-        return service.get(whatHappenedId);
+    public ApiResponse<EntryFieldConfigDto> get(@PathVariable Long whatHappenedId) {
+        EntryFieldConfigDto dto = service.get(whatHappenedId);
+        return ApiResponse.success(dto);
     }
 }
 
