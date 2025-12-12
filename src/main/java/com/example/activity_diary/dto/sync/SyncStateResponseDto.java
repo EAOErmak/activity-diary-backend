@@ -9,6 +9,5 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 public class SyncStateResponseDto {
-
     private Map<SyncEntityType, Long> state;
 }
