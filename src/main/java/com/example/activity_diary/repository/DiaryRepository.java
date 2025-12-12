@@ -58,7 +58,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         select d from DiaryEntry d
         where d.user.id = :userId
           and :now between d.whenStarted and d.whenEnded
-          and d.status <> 'DELETED'
     """)
     List<DiaryEntry> findActive(@Param("userId") Long userId,
                                 @Param("now") LocalDateTime now);
@@ -66,8 +65,7 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     @Query("""
         select d from DiaryEntry d
         where d.user.id = :userId
-          and d.whenEnded < :now
-          and d.status = 'FINAL'
+          and d.whenEnded < :now      
     """)
     List<DiaryEntry> findFinished(@Param("userId") Long userId,
                                   @Param("now") LocalDateTime now);
@@ -86,7 +84,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         where d.user.id = :userId
           and d.category.id = :categoryId
           and d.whenStarted between :from and :to
-          and d.status = 'FINAL'
     """)
     List<DiaryEntry> findForAnalyticsByCategory(
             @Param("userId") Long userId,
@@ -105,7 +102,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         where d.user.id = :userId
           and d.subCategory.id = :subCategoryId
           and d.whenStarted between :from and :to
-          and d.status = 'FINAL'
     """)
     List<DiaryEntry> findForAnalyticsBySubCategory(
             @Param("userId") Long userId,
@@ -123,7 +119,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         FROM DiaryEntry d
         WHERE d.createdAt >= :start
           AND d.createdAt < :end
-          AND d.status <> 'DELETED'
     """)
     long countEntriesBetween(
             @Param("start") Instant start,
@@ -135,7 +130,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         FROM DiaryEntry d
         WHERE d.createdAt >= :start
           AND d.createdAt < :end
-          AND d.status <> 'DELETED'
     """)
     long countActiveUsersBetween(
             @Param("start") Instant start,

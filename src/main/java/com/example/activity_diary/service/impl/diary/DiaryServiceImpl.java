@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.activity_diary.entity.enums.SyncEntityType;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -112,8 +114,8 @@ public class DiaryServiceImpl implements DiaryService {
                 .filter(e -> e.getUser().getId().equals(userId))
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
 
-        if (entry.isFinal()) {
-            throw new BadRequestException("Final entry cannot be modified");
+        if (entry.getWhenEnded().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Past entry cannot be modified");
         }
 
         if (dto.getCategoryId() != null) {
@@ -134,6 +136,10 @@ public class DiaryServiceImpl implements DiaryService {
 
         if (dto.getMood() != null) {
             entry.updateMood(dto.getMood());
+        }
+
+        if (dto.getStatus() != null) {
+            entry.changeStatus(dto.getStatus());
         }
 
         itemService.applyOnUpdate(dto.getMetrics(), entry);

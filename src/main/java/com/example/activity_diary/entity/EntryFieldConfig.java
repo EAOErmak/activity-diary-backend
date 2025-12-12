@@ -1,7 +1,6 @@
 package com.example.activity_diary.entity;
 
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.dict.DictionaryItem;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

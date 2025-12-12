@@ -1,5 +1,6 @@
 package com.example.activity_diary.dto.diary;
 
+import com.example.activity_diary.entity.enums.EntryStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -33,6 +34,8 @@ public class DiaryEntryUpdateDto {
     // ✅ Описание (было: anyDescription)
     @Size(max = 1000, message = "description must not exceed 1000 characters")
     private String description;
+
+    private EntryStatus status;
 
     // ✅ Метрики (было: whatDidYouDo + ActivityItemUpdateDto)
     @Valid

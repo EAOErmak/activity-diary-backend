@@ -133,7 +133,7 @@ public class DiaryEntry extends BaseEntity {
                 .between(started, ended)
                 .toMinutes();
 
-        return DiaryEntry.builder()
+        DiaryEntry entry = DiaryEntry.builder()
                 .user(user)
                 .category(category)
                 .subCategory(subCategory)
@@ -142,15 +142,32 @@ public class DiaryEntry extends BaseEntity {
                 .duration(duration)
                 .mood(mood)
                 .description(description)
-                .status(EntryStatus.DRAFT)
+                .status(EntryStatus.LOSE) // ✅ по умолчанию LOSE
                 .build();
+
+        entry.autoUpdateStatusByTime(LocalDateTime.now());
+
+        return entry;
     }
 
     // ============================================================
     // BUSINESS METHODS
     // ============================================================
 
+    public void autoUpdateStatusByTime(LocalDateTime now) {
+        if (this.status == EntryStatus.DELETED) return;
+
+        if (whenEnded.isAfter(now)) {
+            this.status = EntryStatus.LOSE;   // ещё не выполнено
+        } else {
+            this.status = EntryStatus.WIN;    // завершено
+        }
+    }
+
     public void updateTime(LocalDateTime started, LocalDateTime ended) {
+        if (this.whenEnded.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Cannot modify entry after it has ended");
+        }
 
         if (started == null || ended == null || !ended.isAfter(started)) {
             throw new IllegalArgumentException("Invalid time range");
@@ -161,12 +178,20 @@ public class DiaryEntry extends BaseEntity {
         this.duration = (int) java.time.Duration
                 .between(started, ended)
                 .toMinutes();
+
+        autoUpdateStatusByTime(LocalDateTime.now());
     }
 
     public void changeStatus(EntryStatus newStatus) {
 
         if (this.status == EntryStatus.DELETED) {
             throw new IllegalStateException("Deleted entry cannot change status");
+        }
+
+        if (this.status == EntryStatus.LOSE
+                && newStatus == EntryStatus.WIN
+                && this.whenEnded.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Cannot change LOSE to WIN for past entry");
         }
 
         this.status = newStatus;
@@ -176,29 +201,25 @@ public class DiaryEntry extends BaseEntity {
         this.status = EntryStatus.DELETED;
     }
 
-    // ✅ работы с метриками
-
     public void addMetric(EntryMetric item) {
         if (item == null) {
             throw new IllegalArgumentException("Metric cannot be null");
         }
-
         item.attachTo(this);
         this.metrics.add(item);
     }
 
     public void removeMetric(EntryMetric item) {
         if (item == null) return;
-
         this.metrics.remove(item);
         item.detach();
     }
 
-    public boolean isDraft() {
-        return this.status == EntryStatus.DRAFT;
+    public boolean isWin() {
+        return this.status == EntryStatus.WIN;
     }
 
-    public boolean isFinal() {
-        return this.status == EntryStatus.FINAL;
+    public boolean isLose() {
+        return this.status == EntryStatus.LOSE;
     }
 }
