@@ -25,6 +25,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return new CustomUserDetails(user); // ✅ ВАЖНО!
     }
+
+    public UserDetails loadUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + id));
+
+        return new CustomUserDetails(user);
+    }
 }
 
 

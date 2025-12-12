@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,27 +21,37 @@ public class UserSyncServiceImpl implements UserSyncService {
 
     private final UserSyncStateRepository userSyncStateRepository;
 
-    // INIT USER: создать записи, если их нет
     @Override
     public void initUser(Long userId) {
+        // Запрашиваем ВСЁ сразу
+        Map<SyncEntityType, UserSyncState> existing =
+                userSyncStateRepository.findAllByUserId(userId)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserSyncState::getEntityType,
+                                s -> s
+                        ));
+
+        // Создаём только отсутствующие
         for (SyncEntityType type : SyncEntityType.values()) {
-            userSyncStateRepository.findByUserIdAndEntityType(userId, type)
-                    .orElseGet(() -> userSyncStateRepository.save(
-                            new UserSyncState(
-                                    userId,
-                                    type,
-                                    0L,
-                                    LocalDateTime.now()
-                            )
-                    ));
+            if (!existing.containsKey(type)) {
+                userSyncStateRepository.save(
+                        new UserSyncState(
+                                userId,
+                                type,
+                                0L,
+                                LocalDateTime.now()
+                        )
+                );
+            }
         }
     }
 
-    // BUMP VERSION
     @Override
     public void bump(Long userId, SyncEntityType type) {
         int updated = userSyncStateRepository.increment(userId, type);
 
+        // Если записи нет — создаём с версией 1
         if (updated == 0) {
             userSyncStateRepository.save(
                     new UserSyncState(
@@ -53,22 +64,29 @@ public class UserSyncServiceImpl implements UserSyncService {
         }
     }
 
-    // GET SYNC STATE (MAP)
     @Override
     public Map<SyncEntityType, Long> getState(Long userId) {
-        initUser(userId);
 
-        return userSyncStateRepository.findAllByUserId(userId)
-                .stream()
+        // --- 1. Загружаем всё одним запросом
+        List<UserSyncState> states = userSyncStateRepository.findAllByUserId(userId);
+
+        // --- 2. Если пользователь новый → инициализируем один раз
+        if (states.isEmpty()) {
+            initUser(userId);
+            states = userSyncStateRepository.findAllByUserId(userId);
+        }
+
+        // --- 3. Преобразование в Map без лишних запросов
+        return states.stream()
                 .collect(Collectors.toMap(
                         UserSyncState::getEntityType,
                         UserSyncState::getVersion
                 ));
     }
 
-    // GET SYNC STATE (DTO)
     @Override
     public SyncStateResponseDto getStateDto(Long userId) {
         return new SyncStateResponseDto(getState(userId));
     }
 }
+
