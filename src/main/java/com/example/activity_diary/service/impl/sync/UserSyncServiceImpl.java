@@ -66,11 +66,8 @@ public class UserSyncServiceImpl implements UserSyncService {
 
     @Override
     public Map<SyncEntityType, Long> getState(Long userId) {
-
-        // --- 1. Загружаем всё одним запросом
         List<UserSyncState> states = userSyncStateRepository.findAllByUserId(userId);
 
-        // --- 2. Если пользователь новый → инициализируем один раз
         if (states.isEmpty()) {
             initUser(userId);
             states = userSyncStateRepository.findAllByUserId(userId);

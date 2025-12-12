@@ -31,40 +31,42 @@ public class JwtUtils {
                     "JWT secret must be at least 32 bytes (256 bits)"
             );
         }
-
-        this.signingKey = Keys.hmacShaKeyFor(
-                jwtSecret.getBytes(StandardCharsets.UTF_8)
-        );
+        this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ============================================================
-    // GENERATION
-    // ============================================================
+    // === GENERATION ===
+    // NOTE: use the new overloads where you have access to user id and role.
+    // Example usage on login:
+    // String access = jwtUtils.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
+    // String refresh = jwtUtils.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name());
 
-    public String generateAccessToken(String username) {
-        return generateToken(username, "access", accessExpirationMs);
+    public String generateAccessToken(Long userId, String username, String role) {
+        return generateToken(userId, username, role, "access", accessExpirationMs);
     }
 
-    public String generateRefreshToken(String username) {
-        return generateToken(username, "refresh", refreshExpirationMs);
+    public String generateRefreshToken(Long userId, String username, String role) {
+        return generateToken(userId, username, role, "refresh", refreshExpirationMs);
     }
 
-    private String generateToken(String username, String type, long ttlMs) {
+    private String generateToken(Long userId, String username, String role, String type, long ttlMs) {
         long now = System.currentTimeMillis();
-
-        return Jwts.builder()
+        JwtBuilder b = Jwts.builder()
                 .setSubject(username)
                 .claim("type", type)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + ttlMs))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
-                .compact();
+                .signWith(signingKey, SignatureAlgorithm.HS256);
+
+        if (userId != null) {
+            b.claim("id", userId);
+        }
+        if (role != null) {
+            b.claim("role", role);
+        }
+        return b.compact();
     }
 
-    // ============================================================
-    // EXTRACTION
-    // ============================================================
-
+    // === EXTRACTION ===
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
@@ -74,10 +76,27 @@ public class JwtUtils {
         return type == null ? null : type.toString();
     }
 
-    // ============================================================
-    // VALIDATION
-    // ============================================================
+    public Long extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        Object idObj = claims.get("id");
+        if (idObj == null) return null;
+        if (idObj instanceof Number) {
+            return ((Number) idObj).longValue();
+        }
+        try {
+            return Long.parseLong(idObj.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
+    public String extractRole(String token) {
+        Claims claims = extractAllClaims(token);
+        Object r = claims.get("role");
+        return r == null ? null : r.toString();
+    }
+
+    // === VALIDATION ===
     public boolean isAccessTokenValid(String token) {
         return isTokenValid(token, "access");
     }
@@ -89,24 +108,17 @@ public class JwtUtils {
     private boolean isTokenValid(String token, String expectedType) {
         try {
             Claims claims = extractAllClaims(token);
-
             String actualType = claims.get("type", String.class);
-
-            if (!expectedType.equals(actualType)) {
+            if (expectedType != null && actualType != null && !expectedType.equals(actualType)) {
                 return false;
             }
-
             return !claims.getExpiration().before(new Date());
-
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
-    // ============================================================
-    // INTERNAL
-    // ============================================================
-
+    // === INTERNAL ===
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(signingKey)
@@ -115,4 +127,3 @@ public class JwtUtils {
                 .getBody();
     }
 }
-

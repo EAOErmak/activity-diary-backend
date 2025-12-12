@@ -191,8 +191,8 @@ public class AuthServiceImpl implements AuthService {
 
         checkForLock(user);
 
-        String accessToken = jwtUtils.generateAccessToken(user.getUsername());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getUsername());
+        String accessToken = jwtUtils.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name());
 
         refreshTokenService.save(user, refreshToken);
 
@@ -224,8 +224,12 @@ public class AuthServiceImpl implements AuthService {
 
         refreshTokenService.revoke(stored);
 
-        String newAccess = jwtUtils.generateAccessToken(user.getUsername());
-        String newRefresh = jwtUtils.generateRefreshToken(user.getUsername());
+        String newAccess = jwtUtils.generateAccessToken(
+                user.getId(), user.getUsername(), user.getRole().name()
+        );
+        String newRefresh = jwtUtils.generateRefreshToken(
+                user.getId(), user.getUsername(), user.getRole().name()
+        );
 
         refreshTokenService.save(user, newRefresh);
 

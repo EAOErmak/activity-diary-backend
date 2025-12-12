@@ -1,6 +1,7 @@
 package com.example.activity_diary.controller;
 
 import com.example.activity_diary.dto.analytics.ChartResponseDto;
+import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.analytics.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -23,7 +24,7 @@ public class AnalyticsController {
 
     @GetMapping("/time/category/{categoryId}")
     public ChartResponseDto getByTimeByCategory(
-            @AuthenticationPrincipal UserDetails ud,
+            @AuthenticationPrincipal LightUserDetails ud,
             @PathVariable Long categoryId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
@@ -42,7 +43,7 @@ public class AnalyticsController {
 
     @GetMapping("/time/sub-category/{subCategoryId}")
     public ChartResponseDto getByTimeBySubCategory(
-            @AuthenticationPrincipal UserDetails ud,
+            @AuthenticationPrincipal LightUserDetails ud,
             @PathVariable Long subCategoryId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
@@ -65,7 +66,7 @@ public class AnalyticsController {
 
     @GetMapping("/sequence/category/{categoryId}")
     public ChartResponseDto getBySequenceByCategory(
-            @AuthenticationPrincipal UserDetails ud,
+            @AuthenticationPrincipal LightUserDetails ud,
             @PathVariable Long categoryId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,
@@ -84,7 +85,7 @@ public class AnalyticsController {
 
     @GetMapping("/sequence/sub-category/{subCategoryId}")
     public ChartResponseDto getBySequenceBySubCategory(
-            @AuthenticationPrincipal UserDetails ud,
+            @AuthenticationPrincipal LightUserDetails ud,
             @PathVariable Long subCategoryId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime from,

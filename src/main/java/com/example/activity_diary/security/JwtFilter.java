@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,7 +21,8 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
-    private final CustomUserDetailsService userDetailsService;
+    // note: userDetailsService is no longer used here
+    // private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -41,34 +41,31 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            // ✅ Проверка access token
             if (!jwtUtils.isAccessTokenValid(token)) {
                 sendUnauthorized(response, "Invalid or expired token");
                 return;
             }
 
             String username = jwtUtils.extractUsername(token);
+            Long id = jwtUtils.extractUserId(token);
+            String role = jwtUtils.extractRole(token);
+
             if (username == null) {
                 sendUnauthorized(response, "Invalid token payload");
                 return;
             }
 
-            // ✅ Единственный источник пользователя — UserDetailsService
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            // build lightweight UserDetails from token (no DB hit)
+            LightUserDetails userDetails = new LightUserDetails(id, username, role);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-
-                auth.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
+                var auth = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
                 );
 
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
@@ -81,7 +78,6 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // ✅ Правильная обработка 401 на уровне фильтра
     private void sendUnauthorized(HttpServletResponse response, String message)
             throws IOException {
 

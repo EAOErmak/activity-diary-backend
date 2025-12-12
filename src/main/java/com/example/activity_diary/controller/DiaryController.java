@@ -6,6 +6,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.security.CustomUserDetails;
+import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -36,7 +37,7 @@ public class DiaryController {
     @RateLimit(capacity = 30, refillTokens = 30, refillPeriodSeconds = 30)
     @GetMapping("/mine")
     public ResponseEntity<ApiResponse<Page<DiaryEntryDto>>> myEntries(
-            @AuthenticationPrincipal CustomUserDetails user,
+            @AuthenticationPrincipal LightUserDetails user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
@@ -56,7 +57,7 @@ public class DiaryController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<DiaryEntryDto>> getById(
             @PathVariable @Positive Long id,
-            @AuthenticationPrincipal CustomUserDetails user
+            @AuthenticationPrincipal LightUserDetails user
     ) {
         DiaryEntryDto dto =
                 diaryService.getMyEntryById(id, user.getId());
@@ -72,7 +73,7 @@ public class DiaryController {
     @PostMapping
     public ResponseEntity<ApiResponse<DiaryEntryDto>> create(
             @Valid @RequestBody DiaryEntryCreateDto dto,
-            @AuthenticationPrincipal CustomUserDetails user
+            @AuthenticationPrincipal LightUserDetails user
     ) {
         DiaryEntryDto created =
                 diaryService.create(dto, user.getId());
@@ -91,7 +92,7 @@ public class DiaryController {
     public ResponseEntity<ApiResponse<DiaryEntryDto>> update(
             @PathVariable @Positive Long id,
             @Valid @RequestBody DiaryEntryUpdateDto dto,
-            @AuthenticationPrincipal CustomUserDetails user
+            @AuthenticationPrincipal LightUserDetails user
     ) {
         DiaryEntryDto updated =
                 diaryService.update(id, dto, user.getId());
@@ -107,7 +108,7 @@ public class DiaryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable @Positive Long id,
-            @AuthenticationPrincipal CustomUserDetails user
+            @AuthenticationPrincipal LightUserDetails user
     ) {
         diaryService.delete(id, user.getId());
 
