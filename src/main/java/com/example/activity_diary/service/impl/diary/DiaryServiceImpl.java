@@ -1,13 +1,13 @@
 package com.example.activity_diary.service.impl.diary;
 
 import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
+import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.mapper.DiaryEntryMapper;
 import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
-import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DiaryRepository;
@@ -19,9 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.activity_diary.entity.enums.SyncEntityType;
+import com.example.activity_diary.entity.enums.UserSyncEntityType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,12 +41,37 @@ public class DiaryServiceImpl implements DiaryService {
     // ============================================================
     // GET PAGED
     // ============================================================
+    @Override
+    @Transactional(readOnly = true)
+    public List<DiaryEntryViewDto> getAllEntries(Long userId) {
+        return diaryRepository.findAllByUserId(userId);
+    }
 
     @Override
-    public Page<DiaryEntryDto> getMyEntries(Long userId, Pageable pageable) {
+    public Slice<DiaryEntryViewDto> getMyEntries(Long userId, Pageable pageable) {
+        return diaryRepository.findListByUserId(userId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DiaryEntryViewDto> getEntriesByDateRange(
+            Long userId,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        if (from == null || to == null || from.isAfter(to)) {
+            throw new BadRequestException("Invalid date range");
+        }
+
         return diaryRepository
-                .findByUserIdAndStatusNot(userId, EntryStatus.DELETED, pageable)
-                .map(mapper::toDto);
+                .findByUserAndDateRange(
+                        userId,
+                        from,
+                        to
+                )
+                .stream()
+                .map(mapper::toListDto)
+                .toList();
     }
 
     // ============================================================
@@ -98,7 +124,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         DiaryEntry saved = diaryRepository.save(entry);
 
-        userSyncService.bump(userId, SyncEntityType.DIARY);
+        userSyncService.bump(userId, UserSyncEntityType.DIARY);
 
         return mapper.toDto(saved);
     }
@@ -146,7 +172,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         DiaryEntry saved = diaryRepository.save(entry);
 
-        userSyncService.bump(userId, SyncEntityType.DIARY);
+        userSyncService.bump(userId, UserSyncEntityType.DIARY);
 
         return mapper.toDto(saved);
     }
@@ -166,7 +192,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         diaryRepository.save(entry);
 
-        userSyncService.bump(userId, SyncEntityType.DIARY);
+        userSyncService.bump(userId, UserSyncEntityType.DIARY);
     }
 
     // ============================================================

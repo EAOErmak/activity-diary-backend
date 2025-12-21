@@ -27,5 +27,7 @@ public interface DictionaryService {
     List<DictionaryResponseDto> search(String query, Role role);
 
     List<DictionaryResponseDto> searchForAdmin(String query);
+
+    List<DictionaryResponseDto> getAll(Role role);
 }
 

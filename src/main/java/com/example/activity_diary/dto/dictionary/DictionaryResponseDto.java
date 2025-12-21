@@ -15,6 +15,8 @@ public class DictionaryResponseDto {
 
     private String label;
 
+    private Long parentId;
+
     private boolean active;
 
     private String allowedRole;
@@ -22,9 +24,4 @@ public class DictionaryResponseDto {
     private ChartType chartType;
 
     private Long entryFieldConfigId;
-
-
-    private Instant createdAt;
-
-    private Instant updatedAt;
 }

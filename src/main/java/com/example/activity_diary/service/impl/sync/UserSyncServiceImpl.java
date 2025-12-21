@@ -1,8 +1,8 @@
 package com.example.activity_diary.service.impl.sync;
 
-import com.example.activity_diary.dto.sync.SyncStateResponseDto;
+import com.example.activity_diary.dto.sync.UserSyncStateResponseDto;
 import com.example.activity_diary.entity.UserSyncState;
-import com.example.activity_diary.entity.enums.SyncEntityType;
+import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import com.example.activity_diary.repository.UserSyncStateRepository;
 import com.example.activity_diary.service.sync.UserSyncService;
 import jakarta.transaction.Transactional;
@@ -24,7 +24,7 @@ public class UserSyncServiceImpl implements UserSyncService {
     @Override
     public void initUser(Long userId) {
         // Запрашиваем ВСЁ сразу
-        Map<SyncEntityType, UserSyncState> existing =
+        Map<UserSyncEntityType, UserSyncState> existing =
                 userSyncStateRepository.findAllByUserId(userId)
                         .stream()
                         .collect(Collectors.toMap(
@@ -33,7 +33,7 @@ public class UserSyncServiceImpl implements UserSyncService {
                         ));
 
         // Создаём только отсутствующие
-        for (SyncEntityType type : SyncEntityType.values()) {
+        for (UserSyncEntityType type : UserSyncEntityType.values()) {
             if (!existing.containsKey(type)) {
                 userSyncStateRepository.save(
                         new UserSyncState(
@@ -48,7 +48,7 @@ public class UserSyncServiceImpl implements UserSyncService {
     }
 
     @Override
-    public void bump(Long userId, SyncEntityType type) {
+    public void bump(Long userId, UserSyncEntityType type) {
         int updated = userSyncStateRepository.increment(userId, type);
 
         // Если записи нет — создаём с версией 1
@@ -65,7 +65,7 @@ public class UserSyncServiceImpl implements UserSyncService {
     }
 
     @Override
-    public Map<SyncEntityType, Long> getState(Long userId) {
+    public Map<UserSyncEntityType, Long> getState(Long userId) {
         List<UserSyncState> states = userSyncStateRepository.findAllByUserId(userId);
 
         if (states.isEmpty()) {
@@ -82,8 +82,8 @@ public class UserSyncServiceImpl implements UserSyncService {
     }
 
     @Override
-    public SyncStateResponseDto getStateDto(Long userId) {
-        return new SyncStateResponseDto(getState(userId));
+    public UserSyncStateResponseDto getStateDto(Long userId) {
+        return new UserSyncStateResponseDto(getState(userId));
     }
 }
 

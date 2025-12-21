@@ -3,9 +3,11 @@ package com.example.activity_diary.service.impl.admin;
 import com.example.activity_diary.dto.diary.EntryFieldConfigDto;
 import com.example.activity_diary.dto.mapper.EntryFieldConfigMapper;
 import com.example.activity_diary.entity.EntryFieldConfig;
+import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.EntryFieldConfigRepository;
 import com.example.activity_diary.service.admin.AdminEntryFieldConfigService;
+import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
 
     private final EntryFieldConfigRepository repo;
     private final EntryFieldConfigMapper mapper;
+    private final GlobalSyncService globalSyncService;
 
     // ============================
     // CREATE
@@ -30,6 +33,8 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
         }
 
         EntryFieldConfig config = mapper.toEntity(dto);
+
+        globalSyncService.bump(GlobalSyncEntityType.ENTRY_FIELD_CONFIG);
 
         return mapper.toDto(repo.save(config));
     }
@@ -51,6 +56,7 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
         config.setRequiredSubCategory(dto.getRequiredSubCategory());
         config.setRequiredMetrics(dto.getRequiredMetrics());
 
+        globalSyncService.bump(GlobalSyncEntityType.ENTRY_FIELD_CONFIG);
         return mapper.toDto(repo.save(config));
     }
 
@@ -72,6 +78,7 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
 
     @Override
     public void delete(Long id) {
+        globalSyncService.bump(GlobalSyncEntityType.ENTRY_FIELD_CONFIG);
         repo.deleteById(id);
     }
 }

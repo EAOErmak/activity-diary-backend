@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface EntryFieldConfigRepository extends JpaRepository<EntryFieldConfig, Long> {
     boolean existsByNameIgnoreCase(String name);
+
 }

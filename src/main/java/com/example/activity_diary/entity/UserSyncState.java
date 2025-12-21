@@ -1,6 +1,6 @@
 package com.example.activity_diary.entity;
 
-import com.example.activity_diary.entity.enums.SyncEntityType;
+import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,7 +30,7 @@ public class UserSyncState {
     @Id
     @Enumerated(EnumType.STRING) // ВАЖНО: колонка smallint в БД → ORDINAL
     @Column(name = "entity_type", nullable = false)
-    private SyncEntityType entityType;
+    private UserSyncEntityType entityType;
 
     @Column(nullable = false)
     private Long version;

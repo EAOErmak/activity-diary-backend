@@ -25,6 +25,19 @@ public class DictionaryController {
 
     private final DictionaryService dictionaryService;
 
+    @GetMapping("/all")
+    public  ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getAll(
+            @AuthenticationPrincipal LightUserDetails user
+    ) {
+        Role role = user.getRole();
+
+        return  ResponseEntity.ok(
+                ApiResponse.ok(
+                        dictionaryService.getAll(role)
+                )
+        );
+    }
+
     // ============================
     // GET BY TYPE (USER)
     // ============================

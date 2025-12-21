@@ -1,6 +1,6 @@
 package com.example.activity_diary.entity.enums;
 
-public enum SyncEntityType {
+public enum UserSyncEntityType {
     DIARY,
     SETTINGS,
     GOALS,

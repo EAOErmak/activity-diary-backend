@@ -8,12 +8,15 @@ import com.example.activity_diary.dto.mapper.DictionaryMapper;
 import com.example.activity_diary.entity.EntryFieldConfig;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
+import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.Role;
+import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.repository.EntryFieldConfigRepository;
 import com.example.activity_diary.service.dictionary.DictionaryService;
+import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,7 @@ public class DictionaryServiceImpl implements DictionaryService {
     private final DictionaryRepository dictionaryRepository;
     private final EntryFieldConfigRepository entryFieldConfigRepository;
     private final DictionaryMapper mapper;
+    private final GlobalSyncService globalSyncService;
 
     // ============================
     // CREATE
@@ -83,6 +87,8 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .entryFieldConfig(config) // ✅ ВОТ ТУТ ГЛАВНОЕ ИЗМЕНЕНИЕ
                 .build();
 
+        globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
+
         DictionaryItem saved = dictionaryRepository.save(item);
 
         return mapper.toDto(saved);
@@ -104,7 +110,17 @@ public class DictionaryServiceImpl implements DictionaryService {
         }
 
         return dictionaryRepository
-                .findVisibleForUser(type, parentId, role)
+                .findByTypeAndVisibleForUser(type, parentId, role)
+                .stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DictionaryResponseDto> getAll(Role role){
+        return dictionaryRepository
+                .findAllVisibleForUser(role)
                 .stream()
                 .map(mapper::toDto)
                 .toList();
@@ -162,6 +178,8 @@ public class DictionaryServiceImpl implements DictionaryService {
         if (dto.getAllowedRole() != null) {
             item.setAllowedRole(dto.getAllowedRole());
         }
+
+        globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
 
         return mapper.toDto(dictionaryRepository.save(item));
     }

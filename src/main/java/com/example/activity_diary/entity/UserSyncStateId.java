@@ -1,6 +1,6 @@
 package com.example.activity_diary.entity;
 
-import com.example.activity_diary.entity.enums.SyncEntityType;
+import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -17,5 +17,5 @@ import java.io.Serializable;
 public class UserSyncStateId implements Serializable {
 
     private Long userId;
-    private SyncEntityType entityType;
+    private UserSyncEntityType entityType;
 }

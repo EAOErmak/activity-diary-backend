@@ -11,5 +11,6 @@ public interface DictionaryMapper {
 
     // Для пользователя — имена полей совпадают (id, type, label, active, allowedRole, createdAt, updatedAt)
     @Mapping(source = "entryFieldConfig.id", target = "entryFieldConfigId")
+    @Mapping(source = "parent.id", target = "parentId")
     DictionaryResponseDto toDto(DictionaryItem item);
 }

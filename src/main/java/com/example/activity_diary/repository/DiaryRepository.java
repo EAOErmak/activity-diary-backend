@@ -1,9 +1,9 @@
 package com.example.activity_diary.repository;
 
+import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.entity.DiaryEntry;
-import com.example.activity_diary.entity.enums.EntryStatus;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,11 +18,58 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     // BASE (ONLY USER DATA)
     // ============================================================
 
-    Page<DiaryEntry> findByUserIdAndStatusNot(
-            Long userId,
-            EntryStatus excludedStatus,
+    @Query("""
+        select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
+            d.id,
+            d.status,
+            d.whenStarted,
+            d.whenEnded,
+            c.label,
+            sc.label
+        )
+        from DiaryEntry d
+        left join d.category c
+        left join d.subCategory sc
+        where d.user.id = :userId
+          and d.status <> 'DELETED'
+    """)
+    Slice<DiaryEntryViewDto> findListByUserId(
+            @Param("userId") Long userId,
             Pageable pageable
     );
+
+    @Query("""
+        select d
+        from DiaryEntry d
+        left join fetch d.category
+        left join fetch d.subCategory
+        where d.user.id = :userId
+          and d.whenStarted < :to
+          and d.whenEnded   > :from
+        order by d.whenStarted asc
+    """)
+    List<DiaryEntry> findByUserAndDateRange(
+            @Param("userId") Long userId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    @Query("""
+        select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
+            d.id,
+            d.status,
+            d.whenStarted,
+            d.whenEnded,
+            c.label,
+            sc.label
+        )
+        from DiaryEntry d
+        left join d.category c
+        left join d.subCategory sc
+        where d.user.id = :userId
+        order by d.updatedAt desc
+    """)
+    List<DiaryEntryViewDto> findAllByUserId(@Param("userId") Long userId);
 
     // ============================================================
     // FULL FETCH (NO N+1)
@@ -39,36 +86,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
           and d.status <> 'DELETED'
     """)
     List<DiaryEntry> findFullByUserId(@Param("userId") Long userId);
-
-    // ============================================================
-    // TIME STATES (PLANNED / ACTIVE / FINISHED)
-    // ============================================================
-
-    @Query("""
-        select d from DiaryEntry d
-        where d.user.id = :userId
-          and d.whenStarted > :now
-          and d.status <> 'DELETED'
-        order by d.whenStarted asc
-    """)
-    List<DiaryEntry> findPlanned(@Param("userId") Long userId,
-                                 @Param("now") LocalDateTime now);
-
-    @Query("""
-        select d from DiaryEntry d
-        where d.user.id = :userId
-          and :now between d.whenStarted and d.whenEnded
-    """)
-    List<DiaryEntry> findActive(@Param("userId") Long userId,
-                                @Param("now") LocalDateTime now);
-
-    @Query("""
-        select d from DiaryEntry d
-        where d.user.id = :userId
-          and d.whenEnded < :now      
-    """)
-    List<DiaryEntry> findFinished(@Param("userId") Long userId,
-                                  @Param("now") LocalDateTime now);
 
     // ============================================================
     // ANALYTICS (SAFE + OPTIMIZED)

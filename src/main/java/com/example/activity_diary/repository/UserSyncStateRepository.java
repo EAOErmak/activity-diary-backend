@@ -2,7 +2,7 @@ package com.example.activity_diary.repository;
 
 import com.example.activity_diary.entity.UserSyncState;
 import com.example.activity_diary.entity.UserSyncStateId;
-import com.example.activity_diary.entity.enums.SyncEntityType;
+import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,10 +23,10 @@ public interface UserSyncStateRepository extends JpaRepository<UserSyncState, Us
     """)
     int increment(
             @Param("userId") Long userId,
-            @Param("type") SyncEntityType type
+            @Param("type") UserSyncEntityType type
     );
 
     List<UserSyncState> findAllByUserId(Long userId);
 
-    Optional<UserSyncState> findByUserIdAndEntityType(Long userId, SyncEntityType type);
+    Optional<UserSyncState> findByUserIdAndEntityType(Long userId, UserSyncEntityType type);
 }

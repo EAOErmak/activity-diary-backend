@@ -3,9 +3,9 @@ package com.example.activity_diary.controller;
 import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
+import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.rate.RateLimit;
-import com.example.activity_diary.security.CustomUserDetails;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
@@ -13,14 +13,17 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/diary")
@@ -36,17 +39,37 @@ public class DiaryController {
 
     @RateLimit(capacity = 30, refillTokens = 30, refillPeriodSeconds = 30)
     @GetMapping("/mine")
-    public ResponseEntity<ApiResponse<Page<DiaryEntryDto>>> myEntries(
+    public ResponseEntity<ApiResponse<Slice<DiaryEntryViewDto>>> myEntries(
             @AuthenticationPrincipal LightUserDetails user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.success(diaryService.getMyEntries(user.getId(), pageable)));
+    }
 
-        Page<DiaryEntryDto> result =
-                diaryService.getMyEntries(user.getId(), pageable);
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<DiaryEntryViewDto>>> getAll(
+            @AuthenticationPrincipal LightUserDetails user
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        diaryService.getAllEntries(user.getId())
+                )
+        );
+    }
 
-        return ResponseEntity.ok(ApiResponse.success(result));
+    @GetMapping("/range")
+    public ResponseEntity<ApiResponse<List<DiaryEntryViewDto>>> getByRange(
+            @AuthenticationPrincipal LightUserDetails user,
+            @RequestParam LocalDateTime from,
+            @RequestParam LocalDateTime to
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        diaryService.getEntriesByDateRange(user.getId(), from, to)
+                )
+        );
     }
 
     // ============================================================

@@ -107,12 +107,6 @@ public class AnalyticsController {
     // =========================================================
 
     private Long extractUserId(UserDetails ud) {
-        // ❗ ТОЛЬКО ОДИН ВАРИАНТ ДОЛЖЕН ОСТАТЬСЯ
-
-        // ✅ ЕСЛИ username = это ID:
-        // return Long.parseLong(ud.getUsername());
-
-        // ✅ ЕСЛИ используешь кастомный CustomUserDetails:
-        return ((com.example.activity_diary.security.CustomUserDetails) ud).getId();
+        return ((com.example.activity_diary.security.LightUserDetails) ud).getId();
     }
 }

@@ -56,17 +56,26 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
     );
 
     @Query("""
-    SELECT d FROM DictionaryItem d
-    WHERE d.type = :type
-    AND d.active = true
-    AND (d.allowedRole IS NULL OR d.allowedRole = :role)
-    AND (:parentId IS NULL OR d.parent.id = :parentId)
-    ORDER BY d.label ASC
-""")
-    List<DictionaryItem> findVisibleForUser(
+        SELECT d FROM DictionaryItem d
+        WHERE d.type = :type
+        AND d.active = true
+        AND (d.allowedRole IS NULL OR d.allowedRole = :role)
+        AND (:parentId IS NULL OR d.parent.id = :parentId)
+        ORDER BY d.label ASC
+    """)
+    List<DictionaryItem> findByTypeAndVisibleForUser(
             DictionaryType type,
             Long parentId,
             Role role   // ✅ теперь совпадает по типу
+    );
+
+    @Query("""
+        SELECT d FROM DictionaryItem d
+        WHERE d.allowedRole IS NULL OR d.allowedRole = :role
+        ORDER BY d.label ASC
+    """)
+    List<DictionaryItem> findAllVisibleForUser(
+            Role role
     );
 
     @Query("""

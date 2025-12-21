@@ -4,6 +4,7 @@ import com.example.activity_diary.dto.diary.*;
 import com.example.activity_diary.entity.EntryMetric;
 import com.example.activity_diary.entity.DiaryEntry;
 import org.mapstruct.*;
+import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
@@ -80,4 +81,14 @@ public interface DiaryEntryMapper {
     EntryMetricResponseDto toMetricResponseDto(EntryMetric item);
 
     List<EntryMetricResponseDto> toMetricResponseDtoList(List<EntryMetric> list);
+
+    @Mapping(source = "category.label", target = "categoryName")
+    @Mapping(source = "subCategory.label", target = "subCategoryName")
+    DiaryEntryViewDto toListDto(DiaryEntry entity);
+
+    List<DiaryEntryViewDto> toListDtoList(List<DiaryEntry> entities);
+
+    default Slice<DiaryEntryViewDto> toListDtoSlice(Slice<DiaryEntry> slice) {
+        return slice.map(this::toListDto);
+    }
 }

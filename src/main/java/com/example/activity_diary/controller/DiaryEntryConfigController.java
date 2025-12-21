@@ -9,12 +9,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/diary/entry-config")
+@RequestMapping("/api/entry-config")
 @RequiredArgsConstructor
 public class DiaryEntryConfigController {
 
     private final EntryFieldConfigService service;
+
+    @GetMapping("/all")
+    public ApiResponse<List<EntryFieldConfigDto>> getAll() {
+        return ApiResponse.success(service.getAll());
+    }
 
     @GetMapping("/{whatHappenedId}")
     public ApiResponse<EntryFieldConfigDto> get(@PathVariable Long whatHappenedId) {
