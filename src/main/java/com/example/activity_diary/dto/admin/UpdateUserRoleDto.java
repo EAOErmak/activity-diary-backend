@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 public class UpdateUserRoleDto {
     @NotBlank
-    private String role; // "ADMIN" | "USER"
+    private String role;
 }

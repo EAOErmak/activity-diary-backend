@@ -7,13 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-02-create-dictionary-item" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: dictionary_item -->
-        <!-- ===================== -->
         <createTable tableName="dictionary_item">
-
-            <!-- ✅ BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -25,10 +19,6 @@
             <column name="updated_at" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-
-            <!-- ===================== -->
-            <!-- CORE FIELDS -->
-            <!-- ===================== -->
 
             <column name="type" type="VARCHAR(50)">
                 <constraints nullable="false"/>
@@ -52,50 +42,32 @@
 
         </createTable>
 
-        <!-- ===================== -->
-        <!-- UNIQUE -->
-        <!-- ===================== -->
-
         <addUniqueConstraint
                 tableName="dictionary_item"
                 columnNames="type, label"
                 constraintName="uk_dictionary_type_label"/>
 
-        <!-- ===================== -->
-        <!-- INDEXES (под твои запросы) -->
-        <!-- ===================== -->
-
-        <!-- findAllByType... -->
         <createIndex indexName="idx_dict_type" tableName="dictionary_item">
             <column name="type"/>
         </createIndex>
 
-        <!-- findAllByTypeAndParentId... -->
         <createIndex indexName="idx_dict_type_parent" tableName="dictionary_item">
             <column name="type"/>
             <column name="parent_id"/>
         </createIndex>
 
-        <!-- active фильтрация -->
         <createIndex indexName="idx_dict_active" tableName="dictionary_item">
             <column name="active"/>
         </createIndex>
 
-        <!-- allowed_role фильтрация -->
         <createIndex indexName="idx_dict_role" tableName="dictionary_item">
             <column name="allowed_role"/>
         </createIndex>
 
-        <!-- search by label -->
         <createIndex indexName="idx_dict_label" tableName="dictionary_item">
             <column name="label"/>
         </createIndex>
 
-        <!-- ===================== -->
-        <!-- FOREIGN KEYS -->
-        <!-- ===================== -->
-
-        <!-- parent -->
         <addForeignKeyConstraint
                 baseTableName="dictionary_item"
                 baseColumnNames="parent_id"
@@ -103,7 +75,6 @@
                 referencedColumnNames="id"
                 constraintName="fk_dictionary_parent"/>
 
-        <!-- entry_field_config -->
         <addForeignKeyConstraint
                 baseTableName="dictionary_item"
                 baseColumnNames="entry_field_config_id"
@@ -112,5 +83,4 @@
                 constraintName="fk_dictionary_entry_field_config"/>
 
     </changeSet>
-
 </databaseChangeLog>

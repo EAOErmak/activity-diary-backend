@@ -7,13 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-04-create-entry-field-config" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: entry_field_config -->
-        <!-- ===================== -->
         <createTable tableName="entry_field_config">
-
-            <!-- ✅ BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -26,43 +20,23 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- ===================== -->
-            <!-- CORE -->
-            <!-- ===================== -->
-
             <column name="name" type="VARCHAR(255)">
                 <constraints nullable="false" unique="true"/>
             </column>
-
-            <!-- ===================== -->
-            <!-- DISPLAY LOGIC -->
-            <!-- ===================== -->
 
             <column name="show_sub_category" type="BOOLEAN"/>
             <column name="show_metrics" type="BOOLEAN"/>
             <column name="show_mood" type="BOOLEAN"/>
             <column name="show_description" type="BOOLEAN"/>
-
-            <!-- ===================== -->
-            <!-- REQUIRED LOGIC -->
-            <!-- ===================== -->
-
             <column name="required_sub_category" type="BOOLEAN"/>
             <column name="required_metrics" type="BOOLEAN"/>
 
         </createTable>
 
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
-
-        <!-- уникальность имени шаблона -->
         <createIndex indexName="idx_entry_field_config_name"
                      tableName="entry_field_config"
                      unique="true">
             <column name="name"/>
         </createIndex>
-
     </changeSet>
-
 </databaseChangeLog>

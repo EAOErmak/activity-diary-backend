@@ -14,7 +14,7 @@ public class CreateUserByAdminDto {
 
     @NotBlank
     @Email
-    private String username; // email / login
+    private String username;
 
     @NotBlank
     @Size(min = 8, max = 64)
@@ -27,5 +27,5 @@ public class CreateUserByAdminDto {
     private String email;
 
     @NotNull
-    private Role role; // USER / PREMIUM / ADMIN
+    private Role role;
 }

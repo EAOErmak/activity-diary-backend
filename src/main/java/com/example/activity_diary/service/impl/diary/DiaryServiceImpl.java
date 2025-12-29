@@ -38,9 +38,6 @@ public class DiaryServiceImpl implements DiaryService {
     private final UserSyncService userSyncService;
     private final DiaryEntryMapper mapper;
 
-    // ============================================================
-    // GET PAGED
-    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public List<DiaryEntryViewDto> getAllEntries(Long userId) {
@@ -74,10 +71,6 @@ public class DiaryServiceImpl implements DiaryService {
                 .toList();
     }
 
-    // ============================================================
-    // GET ONE
-    // ============================================================
-
     @Override
     public DiaryEntryDto getMyEntryById(Long id, Long userId) {
 
@@ -87,10 +80,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         return mapper.toDto(entry);
     }
-
-    // ============================================================
-    // CREATE
-    // ============================================================
 
     @Override
     public DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId) {
@@ -128,10 +117,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         return mapper.toDto(saved);
     }
-
-    // ============================================================
-    // UPDATE
-    // ============================================================
 
     @Override
     public DiaryEntryDto update(Long id, DiaryEntryUpdateDto dto, Long userId) {
@@ -177,10 +162,6 @@ public class DiaryServiceImpl implements DiaryService {
         return mapper.toDto(saved);
     }
 
-    // ============================================================
-    // DELETE (LOGICAL)
-    // ============================================================
-
     @Override
     public void delete(Long id, Long userId) {
 
@@ -194,10 +175,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
     }
-
-    // ============================================================
-    // INTERNAL HELPERS
-    // ============================================================
 
     private DictionaryItem resolveDictionary(Long id, DictionaryType type) {
 

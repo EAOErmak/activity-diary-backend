@@ -45,7 +45,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Email verified"));
     }
 
-
     @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponseDto>> refresh(
@@ -55,7 +54,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    // ✅ КРИТИЧЕСКИ ВАЖНЫЙ ENDPOINT
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestBody RefreshTokenRequest req

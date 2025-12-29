@@ -23,10 +23,6 @@ public class DiaryItemServiceImpl implements DiaryItemService {
 
     private final DictionaryRepository dictionaryRepository;
 
-    // ============================================================
-    // CREATE
-    // ============================================================
-
     @Override
     public void applyOnCreate(List<EntryMetricCreateDto> dtos, DiaryEntry entry) {
 
@@ -45,24 +41,18 @@ public class DiaryItemServiceImpl implements DiaryItemService {
         }
     }
 
-    // ============================================================
-    // UPDATE (REPLACE STRATEGY)
-    // ============================================================
-
     @Override
     public void applyOnUpdate(List<EntryMetricUpdateDto> dtos, DiaryEntry entry) {
 
         if (dtos == null) {
-            return; // null → не трогаем вообще
+            return;
         }
 
-        // 1. Удаляем все текущие (orphanRemoval сделает своё)
         List<EntryMetric> existing = new ArrayList<>(entry.getMetrics());
         for (EntryMetric item : existing) {
             entry.removeMetric(item);
         }
 
-        // 2. Добавляем новые из запроса
         if (dtos.isEmpty()) {
             return;
         }
@@ -77,10 +67,6 @@ public class DiaryItemServiceImpl implements DiaryItemService {
             entry.addMetric(item);
         }
     }
-
-    // ============================================================
-    // INTERNAL
-    // ============================================================
 
     private EntryMetric createItem(
             DiaryEntry entry,

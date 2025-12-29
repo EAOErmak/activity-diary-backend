@@ -11,9 +11,7 @@ public interface UserSyncService {
 
     void bump(Long userId, UserSyncEntityType type);
 
-    // ✅ ВНУТРЕННИЙ метод (для сервисов)
     Map<UserSyncEntityType, Long> getState(Long userId);
 
-    // ✅ ВНЕШНИЙ метод (для контроллеров)
     UserSyncStateResponseDto getStateDto(Long userId);
 }

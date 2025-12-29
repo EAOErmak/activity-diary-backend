@@ -25,7 +25,6 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
     private final AdminUserMapper adminUserMapper;
 
-    // ✅ Список пользователей
     @GetMapping
     @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<AdminUserDto>>> getAll() {
@@ -39,7 +38,6 @@ public class AdminUserController {
         );
     }
 
-    // ✅ Создание пользователя админом
     @PostMapping
     @RateLimit(capacity = 5, refillTokens = 5, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<Void>> create(
@@ -51,21 +49,18 @@ public class AdminUserController {
         );
     }
 
-    // ✅ Блокировка
     @PostMapping("/{id}/block")
     public ResponseEntity<ApiResponse<Void>> block(@PathVariable @Positive Long id) {
         adminUserService.blockUser(id);
         return ResponseEntity.ok(ApiResponse.okMessage("User blocked"));
     }
 
-    // ✅ Разблокировка
     @PostMapping("/{id}/unblock")
     public ResponseEntity<ApiResponse<Void>> unblock(@PathVariable @Positive Long id) {
         adminUserService.unblockUser(id);
         return ResponseEntity.ok(ApiResponse.okMessage("User unblocked"));
     }
 
-    // ✅ Смена роли
     @PostMapping("/{id}/role")
     public ResponseEntity<ApiResponse<Void>> changeRole(
             @PathVariable @Positive Long id,

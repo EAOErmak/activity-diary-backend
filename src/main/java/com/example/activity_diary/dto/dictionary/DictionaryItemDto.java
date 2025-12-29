@@ -1,4 +1,3 @@
-// src/main/java/com/example/activity_diary/dto/dictionary/DictionaryItemDto.java
 package com.example.activity_diary.dto.dictionary;
 
 import com.example.activity_diary.entity.enums.DictionaryType;

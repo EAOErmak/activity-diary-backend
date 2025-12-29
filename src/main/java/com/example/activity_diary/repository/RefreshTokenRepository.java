@@ -12,7 +12,6 @@ import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
-    // ✅ Только активный токен (не revoked и не просрочен)
     @Query("""
         SELECT t FROM RefreshToken t
         WHERE t.tokenHash = :tokenHash
@@ -21,10 +20,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     """)
     Optional<RefreshToken> findActiveByTokenHash(String tokenHash, Instant now);
 
-    // ✅ Все токены пользователя (для logout-all или аудита)
     List<RefreshToken> findAllByUser(User user);
 
-    // ✅ Массовый logout (все токены пользователя)
     @Modifying
     @Query("""
         UPDATE RefreshToken t
@@ -33,7 +30,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     """)
     void revokeAllByUser(User user);
 
-    // ✅ Очистка мусора (expired)
     @Modifying
     @Query("""
         DELETE FROM RefreshToken t

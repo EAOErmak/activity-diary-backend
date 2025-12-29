@@ -1,6 +1,5 @@
 package com.example.activity_diary.entity;
 
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,10 +40,6 @@ public class RefreshToken extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "replaced_by_id")
     private RefreshToken replacedBy;
-
-    // ============================================================
-    // БИЗНЕС-МЕТОДЫ
-    // ============================================================
 
     public boolean isExpired() {
         return expiresAt.isBefore(Instant.now());

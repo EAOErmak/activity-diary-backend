@@ -51,7 +51,6 @@ public class AuthServiceImpl implements AuthService {
     private static final String DUMMY_PASSWORD_HASH =
             "$2a$10$7EqJtq98hPqEX7fNZaFWoO5uG08CqslfQJz8l8bY5v3y5i7x3UXZG";
 
-    //Регистрация
     @Override
     @Transactional
     public RegisterResponseDto register(RegisterRequestDto req, HttpServletRequest request) {
@@ -60,10 +59,6 @@ public class AuthServiceImpl implements AuthService {
 
         String email = req.getEmail().trim().toLowerCase();
         String username = req.getUsername().trim().toLowerCase();
-
-        // ============================
-        // 1. Проверки
-        // ============================
 
         if (userRepository.existsByUsername(username)) {
             fakeDelay();
@@ -82,10 +77,6 @@ public class AuthServiceImpl implements AuthService {
             throw new ForbiddenException("Too many accounts created from your IP");
         }
 
-        // ============================
-        // 2. Создаём User (НЕ активен)
-        // ============================
-
         User user = User.builder()
                 .username(username)
                 .fullName(req.getFullName())
@@ -94,10 +85,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
-
-        // ============================
-        // 3. Создаём UserAccount (LOCAL)
-        // ============================
 
         UserAccount account = UserAccount.builder()
                 .user(user)
@@ -108,15 +95,7 @@ public class AuthServiceImpl implements AuthService {
 
         userAccountRepository.save(account);
 
-        // ============================
-        // 4. Email verification LINK
-        // ============================
-
         verificationService.createAndSendEmailVerification(user, email);
-
-        // ============================
-        // 5. Аудит + sync
-        // ============================
 
         registrationEventRepository.save(
                 RegistrationEvent.builder()
@@ -126,10 +105,6 @@ public class AuthServiceImpl implements AuthService {
         );
 
         userSyncService.initUser(user.getId());
-
-        // ============================
-        // 6. Ответ
-        // ============================
 
         return RegisterResponseDto.builder()
                 .message("Registration successful. Please verify your email.")
@@ -141,19 +116,15 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponseDto login(AuthRequestDto req, HttpServletRequest request) {
         String email = req.getEmail().trim().toLowerCase();
 
-        // 1. Ищем локальный аккаунт по email
         UserAccount account = userAccountRepository
                 .findByProviderAndProviderId(ProviderType.LOCAL, email)
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         User user = account.getUser();
 
-        // 2. Проверяем, не заблокирован ли аккаунт (твоя логика из User.java)
         checkForLock(user);
 
-        // 3. Проверяем пароль
         if (!passwordEncoder.matches(req.getPassword(), account.getPasswordHash())) {
-            // Здесь можно добавить логику увеличения счетчика неудачных попыток (failed2faAttempts)
             user.increaseFailed2faAttempts();
             if (user.getFailed2faAttempts() >= 5) {
                 user.lockUntil(LocalDateTime.now().plusMinutes(15));
@@ -164,22 +135,18 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        // 4. ПРОВЕРКА ВЕРИФИКАЦИИ (Самое важное!)
         if (!user.isEnabled()) {
             throw new ForbiddenException("EMAIL_NOT_VERIFIED");
         }
 
-        // 5. Если всё ок — сбрасываем попытки и генерируем токены
         user.unlock();
         userRepository.save(user);
 
         String accessToken = jwtUtils.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
         String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name());
 
-        // Сохраняем Refresh Token в базу
         refreshTokenService.save(user, refreshToken);
 
-        // Логируем вход (твоя существующая логика)
         loginEventService.recordSuccess(user.getId(), IpUtils.getClientIp(request), request.getHeader("User-Agent"));
 
         return AuthResponseDto.builder()
@@ -224,18 +191,10 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    // ============================================================
-    // LOGOUT
-    // ============================================================
-
     @Override
     public void logout(String refreshToken) {
         refreshTokenService.revokeByToken(refreshToken);
     }
-
-    // ============================================================
-    // INTERNAL
-    // ============================================================
 
     private void fakeDelay() {
         try {

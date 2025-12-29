@@ -11,10 +11,6 @@ import java.util.List;
 
 public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long> {
 
-    // =========================
-    // ✅ УНИКАЛЬНОСТЬ
-    // =========================
-
     boolean existsByTypeAndLabelIgnoreCase(
             DictionaryType type,
             String label
@@ -25,10 +21,6 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
             String label,
             Long id
     );
-
-    // =========================
-    // ✅ ПОЛУЧЕНИЕ ПО ТИПУ
-    // =========================
 
     List<DictionaryItem> findAllByTypeAndActiveTrueOrderByLabelAsc(
             DictionaryType type
@@ -42,10 +34,6 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
     List<DictionaryItem> findAllByTypeOrderByLabelAsc(
             DictionaryType type
     );
-
-    // =========================
-    // ✅ ПОИСК
-    // =========================
 
     List<DictionaryItem> findAllByLabelContainingIgnoreCaseAndActiveTrueOrderByTypeAscLabelAsc(
             String label
@@ -66,7 +54,7 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
     List<DictionaryItem> findByTypeAndVisibleForUser(
             DictionaryType type,
             Long parentId,
-            Role role   // ✅ теперь совпадает по типу
+            Role role
     );
 
     @Query("""

@@ -8,9 +8,6 @@ import java.util.List;
 
 public interface DiaryItemService {
 
-    // ✅ используется ТОЛЬКО при создании DiaryEntry
     void applyOnCreate(List<EntryMetricCreateDto> dtos, DiaryEntry entry);
-
-    // ✅ используется ТОЛЬКО при обновлении DiaryEntry
     void applyOnUpdate(List<EntryMetricUpdateDto> dtos, DiaryEntry entry);
 }

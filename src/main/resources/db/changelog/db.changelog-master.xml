@@ -7,20 +7,13 @@
         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
     <include file="db/changelog/changes/v1_create_users.xml"/>
-
-    <!-- ✅ СНАЧАЛА entry_field_config -->
     <include file="db/changelog/changes/v1_create_entry_field_config.xml"/>
-
-    <!-- ✅ ПОТОМ dictionary -->
     <include file="db/changelog/changes/v1_create_dictionary_item.xml"/>
     <include file="db/changelog/changes/v1_create_dictionary_suggestion.xml"/>
-
     <include file="db/changelog/changes/v1_create_diary_entry.xml"/>
     <include file="db/changelog/changes/v1_create_entry_metric.xml"/>
-
     <include file="db/changelog/changes/v1_create_login_event.xml"/>
     <include file="db/changelog/changes/v1_create_registration_event.xml"/>
-
     <include file="db/changelog/changes/v1_create_refresh_token.xml"/>
     <include file="db/changelog/changes/v1_create_user_sync_state.xml"/>
     <include file="db/changelog/changes/v1_create_verification_codes.xml"/>

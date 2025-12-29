@@ -20,10 +20,6 @@ public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
 
-    // =========================================================
-    // ====================== BY TIME ==========================
-    // =========================================================
-
     @GetMapping("/time/category/{categoryId}")
     public ChartResponseDto getByTimeByCategory(
             @AuthenticationPrincipal LightUserDetails ud,
@@ -62,10 +58,6 @@ public class AnalyticsController {
         );
     }
 
-    // =========================================================
-    // ==================== BY SEQUENCE ========================
-    // =========================================================
-
     @GetMapping("/sequence/category/{categoryId}")
     public ChartResponseDto getBySequenceByCategory(
             @AuthenticationPrincipal LightUserDetails ud,
@@ -103,10 +95,6 @@ public class AnalyticsController {
                 to
         );
     }
-
-    // =========================================================
-    // =============== USER ID EXTRACTION ======================
-    // =========================================================
 
     private Long extractUserId(UserDetails ud) {
         return ((com.example.activity_diary.security.LightUserDetails) ud).getId();

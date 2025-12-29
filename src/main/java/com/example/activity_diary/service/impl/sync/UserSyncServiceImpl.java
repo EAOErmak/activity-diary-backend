@@ -23,7 +23,6 @@ public class UserSyncServiceImpl implements UserSyncService {
 
     @Override
     public void initUser(Long userId) {
-        // Запрашиваем ВСЁ сразу
         Map<UserSyncEntityType, UserSyncState> existing =
                 userSyncStateRepository.findAllByUserId(userId)
                         .stream()
@@ -32,7 +31,6 @@ public class UserSyncServiceImpl implements UserSyncService {
                                 s -> s
                         ));
 
-        // Создаём только отсутствующие
         for (UserSyncEntityType type : UserSyncEntityType.values()) {
             if (!existing.containsKey(type)) {
                 userSyncStateRepository.save(
@@ -51,7 +49,6 @@ public class UserSyncServiceImpl implements UserSyncService {
     public void bump(Long userId, UserSyncEntityType type) {
         int updated = userSyncStateRepository.increment(userId, type);
 
-        // Если записи нет — создаём с версией 1
         if (updated == 0) {
             userSyncStateRepository.save(
                     new UserSyncState(

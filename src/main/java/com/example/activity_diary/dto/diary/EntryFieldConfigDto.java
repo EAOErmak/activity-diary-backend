@@ -8,16 +8,13 @@ public class EntryFieldConfigDto {
     private Long id;
     private String name;
 
-    // ✅ Категория (было: whatHappenedId)
-    private Long categoryId; // nullable
+    private Long categoryId;
 
-    // ✅ Что показывать
-    private Boolean showSubCategory;   // было: showWhat
-    private Boolean showMetrics;       // было: showActivities
-    private Boolean showMood;          // было: showFeeling
-    private Boolean showDescription;  // ✅ оставили как есть
+    private Boolean showSubCategory;
+    private Boolean showMetrics;
+    private Boolean showMood;
+    private Boolean showDescription;
 
-    // ✅ Что обязательно
-    private Boolean requiredSubCategory; // было: requiredWhat
-    private Boolean requiredMetrics;     // было: requiredActivities
+    private Boolean requiredSubCategory;
+    private Boolean requiredMetrics;
 }

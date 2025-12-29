@@ -33,10 +33,6 @@ public class DictionaryServiceImpl implements DictionaryService {
     private final DictionaryMapper mapper;
     private final GlobalSyncService globalSyncService;
 
-    // ============================
-    // CREATE
-    // ============================
-
     @Override
     public DictionaryResponseDto create(DictionaryCreateDto dto) {
 
@@ -84,7 +80,7 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .chartType(dto.getChartType())
                 .active(true)
                 .parent(parent)
-                .entryFieldConfig(config) // ✅ ВОТ ТУТ ГЛАВНОЕ ИЗМЕНЕНИЕ
+                .entryFieldConfig(config)
                 .build();
 
         globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
@@ -93,10 +89,6 @@ public class DictionaryServiceImpl implements DictionaryService {
 
         return mapper.toDto(saved);
     }
-
-    // ============================
-    // READ (USER)
-    // ============================
 
     @Override
     @Transactional(readOnly = true)
@@ -126,10 +118,6 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .toList();
     }
 
-    // ============================
-    // READ (ADMIN)
-    // ============================
-
     @Override
     @Transactional(readOnly = true)
     public List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type) {
@@ -139,10 +127,6 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .map(mapper::toDto)
                 .toList();
     }
-
-    // ============================
-    // UPDATE
-    // ============================
 
     @Override
     public DictionaryResponseDto update(Long id, DictionaryUpdateDto dto) {
@@ -184,10 +168,6 @@ public class DictionaryServiceImpl implements DictionaryService {
         return mapper.toDto(dictionaryRepository.save(item));
     }
 
-    // ============================
-    // SEARCH (USER)
-    // ============================
-
     @Override
     @Transactional(readOnly = true)
     public List<DictionaryResponseDto> search(String query, Role role) {
@@ -202,10 +182,6 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .map(mapper::toDto)
                 .toList();
     }
-
-    // ============================
-    // SEARCH (ADMIN)
-    // ============================
 
     @Override
     @Transactional(readOnly = true)

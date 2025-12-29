@@ -7,14 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-07-create-refresh-token" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: refresh_token -->
-        <!-- ===================== -->
-
         <createTable tableName="refresh_token">
-
-            <!-- ✅ BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -27,40 +20,26 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- ===================== -->
-            <!-- ENTITY FIELDS -->
-            <!-- ===================== -->
-
-            <!-- ✅ владелец токена -->
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
 
-            <!-- ✅ хэш токена -->
             <column name="token_hash" type="VARCHAR(128)">
                 <constraints nullable="false" unique="true"/>
             </column>
 
-            <!-- ✅ срок жизни -->
             <column name="expires_at" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
 
-            <!-- ✅ отозван ли -->
             <column name="revoked" type="BOOLEAN">
                 <constraints nullable="false"/>
             </column>
 
-            <!-- ✅ ссылка на новый токен при ротации -->
             <column name="replaced_by_id" type="BIGINT"/>
 
         </createTable>
 
-        <!-- ===================== -->
-        <!-- FOREIGN KEYS -->
-        <!-- ===================== -->
-
-        <!-- ✅ refresh_token → user -->
         <addForeignKeyConstraint
                 baseTableName="refresh_token"
                 baseColumnNames="user_id"
@@ -68,7 +47,6 @@
                 referencedColumnNames="id"
                 constraintName="fk_refresh_token_user"/>
 
-        <!-- ✅ refresh_token → refresh_token (replaced_by) -->
         <addForeignKeyConstraint
                 baseTableName="refresh_token"
                 baseColumnNames="replaced_by_id"
@@ -76,29 +54,21 @@
                 referencedColumnNames="id"
                 constraintName="fk_refresh_token_replaced"/>
 
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
-
-        <!-- ✅ быстрый поиск активного токена по хэшу -->
         <createIndex indexName="idx_refresh_token_hash"
                      tableName="refresh_token">
             <column name="token_hash"/>
         </createIndex>
 
-        <!-- ✅ все токены пользователя -->
         <createIndex indexName="idx_refresh_token_user"
                      tableName="refresh_token">
             <column name="user_id"/>
         </createIndex>
 
-        <!-- ✅ быстрая очистка протухших -->
         <createIndex indexName="idx_refresh_token_expires"
                      tableName="refresh_token">
             <column name="expires_at"/>
         </createIndex>
 
-        <!-- ✅ фильтрация активных / отозванных -->
         <createIndex indexName="idx_refresh_token_revoked"
                      tableName="refresh_token">
             <column name="revoked"/>

@@ -20,11 +20,9 @@ public class ChartValueServiceImpl implements ChartValueService {
 
     private final List<ChartCalculationStrategy> strategies;
 
-    // ✅ O(1) lookup вместо стрима
     private final Map<ChartType, ChartCalculationStrategy> strategyMap =
             new EnumMap<>(ChartType.class);
 
-    // ✅ fail-fast проверка при старте приложения
     @PostConstruct
     public void init() {
         for (ChartCalculationStrategy strategy : strategies) {

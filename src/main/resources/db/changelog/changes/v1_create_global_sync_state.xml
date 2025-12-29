@@ -19,10 +19,6 @@
             </column>
         </createTable>
 
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
-
         <createIndex indexName="idx_sync_global_type"
                      tableName="global_sync_state">
             <column name="entity_type"/>

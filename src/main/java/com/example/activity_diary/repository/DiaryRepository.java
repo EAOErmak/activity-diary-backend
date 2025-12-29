@@ -14,10 +14,6 @@ import java.util.List;
 
 public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
-    // ============================================================
-    // BASE (ONLY USER DATA)
-    // ============================================================
-
     @Query("""
         select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
             d.id,
@@ -71,10 +67,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     """)
     List<DiaryEntryViewDto> findAllByUserId(@Param("userId") Long userId);
 
-    // ============================================================
-    // FULL FETCH (NO N+1)
-    // ============================================================
-
     @Query("""
         select distinct d from DiaryEntry d
         left join fetch d.category
@@ -86,10 +78,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
           and d.status <> 'DELETED'
     """)
     List<DiaryEntry> findFullByUserId(@Param("userId") Long userId);
-
-    // ============================================================
-    // ANALYTICS (SAFE + OPTIMIZED)
-    // ============================================================
 
     @Query("""
         select distinct d from DiaryEntry d
@@ -126,10 +114,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
-
-    // ============================================================
-    // ADMIN / STATS (SAFE)
-    // ============================================================
 
     @Query("""
         SELECT COUNT(d)

@@ -7,13 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-03-create-dictionary-suggestion" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: dictionary_suggestion -->
-        <!-- ===================== -->
         <createTable tableName="dictionary_suggestion">
-
-            <!-- ✅ BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -25,10 +19,6 @@
             <column name="updated_at" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-
-            <!-- ===================== -->
-            <!-- CORE FIELDS -->
-            <!-- ===================== -->
 
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>
@@ -56,33 +46,21 @@
 
         </createTable>
 
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
-
-        <!-- фильтрация по статусу -->
         <createIndex indexName="idx_dict_suggestion_status" tableName="dictionary_suggestion">
             <column name="status"/>
         </createIndex>
 
-        <!-- фильтрация по типу словаря -->
         <createIndex indexName="idx_dict_suggestion_type" tableName="dictionary_suggestion">
             <column name="dict_type"/>
         </createIndex>
 
-        <!-- фильтрация по пользователю -->
         <createIndex indexName="idx_dict_suggestion_user" tableName="dictionary_suggestion">
             <column name="user_id"/>
         </createIndex>
 
-        <!-- подкатегории -->
         <createIndex indexName="idx_dict_suggestion_parent" tableName="dictionary_suggestion">
             <column name="parent_id"/>
         </createIndex>
-
-        <!-- ===================== -->
-        <!-- FOREIGN KEYS -->
-        <!-- ===================== -->
 
         <addForeignKeyConstraint
                 baseTableName="dictionary_suggestion"
@@ -93,5 +71,4 @@
                 onDelete="CASCADE"/>
 
     </changeSet>
-
 </databaseChangeLog>

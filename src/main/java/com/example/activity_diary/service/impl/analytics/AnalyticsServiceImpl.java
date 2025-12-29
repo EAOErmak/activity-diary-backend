@@ -27,10 +27,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    // =========================================================
-    // ====================== BY TIME ==========================
-    // =========================================================
-
     @Override
     public ChartResponseDto buildByTimeByCategory(
             Long userId,
@@ -57,10 +53,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return buildTimeChart(entries);
     }
 
-    // =========================================================
-    // ==================== BY SEQUENCE ========================
-    // =========================================================
-
     @Override
     public ChartResponseDto buildBySequenceByCategory(
             Long userId,
@@ -86,10 +78,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         return buildSequenceChart(entries);
     }
-
-    // =========================================================
-    // =================== COMMON BUILDERS =====================
-    // =========================================================
 
     private ChartResponseDto buildTimeChart(List<DiaryEntry> entries) {
         ChartResponseDto response = baseResponse(entries);

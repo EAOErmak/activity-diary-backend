@@ -69,8 +69,6 @@ public class User extends BaseEntity {
     @Builder.Default
     private List<DiaryEntry> diaryEntries = new ArrayList<>();
 
-    /* ===== Бизнес-методы ===== */
-
     @JsonIgnore
     public String getDisplayName() {
         if (fullName != null && !fullName.isBlank()) {

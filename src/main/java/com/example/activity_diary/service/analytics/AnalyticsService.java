@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public interface AnalyticsService {
 
-    // по времени, сгруппировано по категории (whatHappened)
+    // по времени, сгруппировано по категории
     ChartResponseDto buildByTimeByCategory(
             Long userId,
             Long categoryId,
@@ -14,7 +14,7 @@ public interface AnalyticsService {
             LocalDateTime to
     );
 
-    // по времени, по what
+    // по времени, подкатегории
     ChartResponseDto buildByTimeBySubCategory(
             Long userId,
             Long subCategoryId,

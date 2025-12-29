@@ -11,31 +11,24 @@ public class DiaryEntryDto {
 
     private Long id;
 
-    // ✅ Категория
     private Long categoryId;
     private String categoryName;
 
-    // ✅ Подкатегория
     private Long subCategoryId;
     private String subCategoryName;
 
-    // ✅ Время
     private LocalDateTime whenStarted;
     private LocalDateTime whenEnded;
     private Integer duration;
 
-    // ✅ Состояние
     private Short mood;
     private String description;
     private String status;
 
-    // ✅ Пользователь
     private Long userId;
 
-    // ✅ Метрики
     private List<EntryMetricResponseDto> metrics;
 
-    // ✅ Auditing
     private Instant createdAt;
     private Instant updatedAt;
 }

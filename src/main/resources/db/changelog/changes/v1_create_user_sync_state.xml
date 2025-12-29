@@ -7,15 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-09-create-user-sync-state" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: user_sync_state -->
-        <!-- ===================== -->
-
         <createTable tableName="user_sync_state">
-
-            <!-- ✅ COMPOSITE PRIMARY KEY -->
-
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
@@ -23,8 +15,6 @@
             <column name="entity_type" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
-
-            <!-- ✅ FIELDS -->
 
             <column name="version" type="BIGINT">
                 <constraints nullable="false"/>
@@ -36,18 +26,10 @@
 
         </createTable>
 
-        <!-- ===================== -->
-        <!-- PRIMARY KEY -->
-        <!-- ===================== -->
-
         <addPrimaryKey
                 tableName="user_sync_state"
                 columnNames="user_id, entity_type"
                 constraintName="pk_user_sync_state"/>
-
-        <!-- ===================== -->
-        <!-- FOREIGN KEY -->
-        <!-- ===================== -->
 
         <addForeignKeyConstraint
                 baseTableName="user_sync_state"
@@ -57,35 +39,25 @@
                 constraintName="fk_user_sync_state_user"
                 onDelete="CASCADE"/>
 
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
-
-        <!-- ✅ ускоряет findAllByUserId -->
         <createIndex indexName="idx_sync_user"
                      tableName="user_sync_state">
             <column name="user_id"/>
         </createIndex>
 
-        <!-- ✅ ускоряет increment + findByUserIdAndEntityType -->
         <createIndex indexName="idx_sync_user_type"
                      tableName="user_sync_state">
             <column name="user_id"/>
             <column name="entity_type"/>
         </createIndex>
 
-        <!-- ✅ если будешь делать аналитику по типу -->
         <createIndex indexName="idx_sync_entity_type"
                      tableName="user_sync_state">
             <column name="entity_type"/>
         </createIndex>
 
-        <!-- ✅ аналитика по времени -->
         <createIndex indexName="idx_sync_last_updated"
                      tableName="user_sync_state">
             <column name="last_updated"/>
         </createIndex>
-
     </changeSet>
-
 </databaseChangeLog>

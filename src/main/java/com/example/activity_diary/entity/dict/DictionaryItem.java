@@ -23,10 +23,10 @@ import lombok.*;
 public class DictionaryItem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private DictionaryType type;   // WHAT, WHAT_HAPPENED, UNIT, ITEM_NAME
+    private DictionaryType type;
 
     @Column(nullable = false)
-    private String label;          // текст, который видит пользователь
+    private String label;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -42,7 +42,7 @@ public class DictionaryItem extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "allowed_role", length = 50)
-    private Role allowedRole;    // USER / ADMIN / PREMIUM и т.п.
+    private Role allowedRole;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entry_field_config_id")

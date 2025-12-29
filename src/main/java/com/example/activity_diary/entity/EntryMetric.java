@@ -22,29 +22,21 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class EntryMetric extends BaseEntity {
 
-    // ✅ ЧТО измеряем (подход, гречка, бег и т.п.)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "metric_type_id", nullable = false)
     private DictionaryItem metricType;
 
-    // ✅ В ЧЁМ измеряем (повторы, граммы, км, минуты)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "unit_id", nullable = false)
     private DictionaryItem unit;
 
-    // ✅ ЗНАЧЕНИЕ (10 повторов, 200 грамм, 5 км)
     @Column(name = "value", nullable = false)
     private Integer value;
 
-    // ✅ К какой записи относится
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "diary_entry_id", nullable = false)
     @JsonIgnore
     private DiaryEntry diaryEntry;
-
-    // ============================================================
-    // FACTORY
-    // ============================================================
 
     public static EntryMetric create(
             DiaryEntry entry,
@@ -67,10 +59,6 @@ public class EntryMetric extends BaseEntity {
         metric.attachTo(entry);
         return metric;
     }
-
-    // ============================================================
-    // BUSINESS METHODS
-    // ============================================================
 
     public void changeValue(Integer newValue) {
         if (newValue == null || newValue <= 0)

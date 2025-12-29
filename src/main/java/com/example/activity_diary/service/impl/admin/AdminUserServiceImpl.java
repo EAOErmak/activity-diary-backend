@@ -39,7 +39,7 @@ public class AdminUserServiceImpl implements AdminUserService {
                 .username(dto.getUsername())
                 .fullName(dto.getFullName())
                 .role(dto.getRole())
-                .enabled(true) // админ создаёт сразу активного
+                .enabled(true)
                 .build();
 
         UserAccount account = UserAccount.builder()
@@ -65,7 +65,7 @@ public class AdminUserServiceImpl implements AdminUserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
 
-        user.lockUntil(LocalDateTime.now().plusYears(100)); // жёсткая блокировка
+        user.lockUntil(LocalDateTime.now().plusYears(100));
         userRepository.save(user);
     }
 

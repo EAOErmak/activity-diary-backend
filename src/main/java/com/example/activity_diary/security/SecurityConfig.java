@@ -55,7 +55,6 @@ public class SecurityConfig {
                         })
                 )
 
-                // ✅ Доступы
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/analytics/**")
@@ -73,7 +72,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ Явная CORS-политика
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -87,13 +85,11 @@ public class SecurityConfig {
         return source;
     }
 
-    // ✅ Безопасный хэш
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
 
-    // ✅ Для логина
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration

@@ -33,10 +33,6 @@ public class DiaryController {
 
     private final DiaryService diaryService;
 
-    // ============================================================
-    // GET MY ENTRIES (PAGED)
-    // ============================================================
-
     @RateLimit(capacity = 30, refillTokens = 30, refillPeriodSeconds = 30)
     @GetMapping("/mine")
     public ResponseEntity<ApiResponse<Slice<DiaryEntryViewDto>>> myEntries(
@@ -72,10 +68,6 @@ public class DiaryController {
         );
     }
 
-    // ============================================================
-    // GET ONE
-    // ============================================================
-
     @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 30)
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<DiaryEntryDto>> getById(
@@ -87,10 +79,6 @@ public class DiaryController {
 
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
-
-    // ============================================================
-    // CREATE
-    // ============================================================
 
     @RateLimit(capacity = 30, refillTokens = 30, refillPeriodSeconds = 60)
     @PostMapping
@@ -106,10 +94,6 @@ public class DiaryController {
                 .body(ApiResponse.success(created));
     }
 
-    // ============================================================
-    // UPDATE
-    // ============================================================
-
     @RateLimit(capacity = 15, refillTokens = 15, refillPeriodSeconds = 60)
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DiaryEntryDto>> update(
@@ -122,10 +106,6 @@ public class DiaryController {
 
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
-
-    // ============================================================
-    // DELETE (LOGICAL)
-    // ============================================================
 
     @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
     @DeleteMapping("/{id}")

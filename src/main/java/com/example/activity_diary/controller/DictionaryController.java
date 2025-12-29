@@ -37,10 +37,6 @@ public class DictionaryController {
         );
     }
 
-    // ============================
-    // GET BY TYPE (USER)
-    // ============================
-
     @GetMapping("/{type}")
     @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getForUser(
@@ -56,10 +52,6 @@ public class DictionaryController {
                 )
         );
     }
-
-    // ============================
-    // SEARCH (USER)
-    // ============================
 
     @GetMapping("/search")
     @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)

@@ -7,14 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-10-create-users" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: users -->
-        <!-- ===================== -->
-
         <createTable tableName="users">
-
-            <!-- BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -26,10 +19,6 @@
             <column name="updated_at" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-
-            <!-- ===================== -->
-            <!-- CORE FIELDS -->
-            <!-- ===================== -->
 
             <column name="username" type="VARCHAR(64)">
                 <constraints nullable="false" unique="true"/>
@@ -56,10 +45,6 @@
             </column>
 
         </createTable>
-
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
 
         <createIndex indexName="idx_user_username" tableName="users">
             <column name="username"/>

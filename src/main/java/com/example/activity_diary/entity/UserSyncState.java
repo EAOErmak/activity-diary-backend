@@ -28,7 +28,7 @@ public class UserSyncState {
     private Long userId;
 
     @Id
-    @Enumerated(EnumType.STRING) // ВАЖНО: колонка smallint в БД → ORDINAL
+    @Enumerated(EnumType.STRING)
     @Column(name = "entity_type", nullable = false)
     private UserSyncEntityType entityType;
 

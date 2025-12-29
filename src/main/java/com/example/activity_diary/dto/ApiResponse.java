@@ -15,22 +15,18 @@ public class ApiResponse<T> {
         return ok(data);
     }
 
-    // Success with payload
     public static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>(true, null, data);
     }
 
-    // success without payload, but with message
     public static <T> ApiResponse<T> successMessage(String message) {
         return new ApiResponse<>(true, message, null);
     }
 
-    // Success with message only
     public static ApiResponse<Void> okMessage(String message) {
         return new ApiResponse<>(true, message, null);
     }
 
-    // Failure
     public static <T> ApiResponse<T> error(String message) {
         return new ApiResponse<>(false, message, null);
     }

@@ -23,10 +23,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository repository;
 
-    // ============================================================
-    // SAVE NEW REFRESH TOKEN
-    // ============================================================
-
     @Override
     public void save(User user, String rawToken) {
 
@@ -40,10 +36,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         repository.save(token);
     }
-
-    // ============================================================
-    // VERIFY (WITHOUT ROTATION)
-    // ============================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -60,19 +52,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return token;
     }
 
-    // ============================================================
-    // REVOKE SINGLE TOKEN
-    // ============================================================
-
     @Override
     public void revoke(RefreshToken token) {
         token.revoke();
         repository.save(token);
     }
-
-    // ============================================================
-    // REVOKE BY RAW TOKEN (LOGOUT)
-    // ============================================================
 
     @Override
     public void revokeByToken(String rawToken) {
@@ -86,18 +70,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 });
     }
 
-    // ============================================================
-    // REVOKE ALL TOKENS OF USER (GLOBAL LOGOUT)
-    // ============================================================
-
     @Override
     public void revokeAllByUser(User user) {
         repository.revokeAllByUser(user);
     }
-
-    // ============================================================
-    // INTERNAL
-    // ============================================================
 
     private String hash(String token) {
         try {
@@ -109,7 +85,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         }
     }
 
-    // ✅ Утилита, если понадобится генерация внутри сервиса
     private String generateRawToken() {
         return UUID.randomUUID().toString();
     }

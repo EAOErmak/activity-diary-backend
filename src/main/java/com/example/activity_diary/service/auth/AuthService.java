@@ -18,7 +18,6 @@ public interface AuthService {
     // Обновление access по refresh
     AuthResponseDto refresh(String refreshToken);
 
-    // ✅ КРИТИЧНО: logout с инвалидцией refresh-токена
     void logout(String refreshToken);
 }
 

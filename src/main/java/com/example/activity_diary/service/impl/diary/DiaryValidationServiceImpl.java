@@ -46,10 +46,6 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
         validateDescription(dto.getDescription());
     }
 
-    // ============================================================
-    // INTERNAL
-    // ============================================================
-
     private void validateTime(LocalDateTime start, LocalDateTime end) {
 
         if (start == null || end == null) {

@@ -21,10 +21,6 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
     private final EntryFieldConfigMapper mapper;
     private final GlobalSyncService globalSyncService;
 
-    // ============================
-    // CREATE
-    // ============================
-
     @Override
     public EntryFieldConfigDto create(EntryFieldConfigDto dto) {
 
@@ -38,10 +34,6 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
 
         return mapper.toDto(repo.save(config));
     }
-
-    // ============================
-    // UPDATE
-    // ============================
 
     @Override
     public EntryFieldConfigDto update(Long id, EntryFieldConfigDto dto) {
@@ -60,10 +52,6 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
         return mapper.toDto(repo.save(config));
     }
 
-    // ============================
-    // GET ALL
-    // ============================
-
     @Override
     public List<EntryFieldConfigDto> getAll() {
         return repo.findAll()
@@ -71,10 +59,6 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
                 .map(mapper::toDto)
                 .toList();
     }
-
-    // ============================
-    // DELETE
-    // ============================
 
     @Override
     public void delete(Long id) {

@@ -7,14 +7,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-06-create-login-event" author="diary">
-
-        <!-- ===================== -->
-        <!-- TABLE: login_event -->
-        <!-- ===================== -->
-
         <createTable tableName="login_event">
-
-            <!-- ✅ BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -26,10 +19,6 @@
             <column name="updated_at" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-
-            <!-- ===================== -->
-            <!-- ENTITY FIELDS -->
-            <!-- ===================== -->
 
             <column name="user_id" type="BIGINT"/>
 
@@ -47,34 +36,24 @@
 
         </createTable>
 
-        <!-- ===================== -->
-        <!-- INDEXES -->
-        <!-- ===================== -->
-
-        <!-- ✅ Быстро получать историю входов пользователя -->
         <createIndex indexName="idx_login_event_user"
                      tableName="login_event">
             <column name="user_id"/>
         </createIndex>
 
-        <!-- ✅ Аналитика по IP (брутфорс, атаки) -->
         <createIndex indexName="idx_login_event_ip"
                      tableName="login_event">
             <column name="ip"/>
         </createIndex>
 
-        <!-- ✅ Фильтрация успешных / неуспешных входов -->
         <createIndex indexName="idx_login_event_success"
                      tableName="login_event">
             <column name="success"/>
         </createIndex>
 
-        <!-- ✅ Для временных выборок -->
         <createIndex indexName="idx_login_event_created"
                      tableName="login_event">
             <column name="created_at"/>
         </createIndex>
-
     </changeSet>
-
 </databaseChangeLog>

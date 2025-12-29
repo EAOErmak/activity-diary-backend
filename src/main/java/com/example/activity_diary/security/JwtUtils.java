@@ -90,7 +90,6 @@ public class JwtUtils {
         return r == null ? null : r.toString();
     }
 
-    // === VALIDATION ===
     public boolean isAccessTokenValid(String token) {
         return isTokenValid(token, "access");
     }

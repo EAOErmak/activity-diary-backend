@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
                 passwordEncoder.encode(request.getNewPassword())
         );
 
-        user.unlock(); // опционально
+        user.unlock();
     }
 
     @Transactional

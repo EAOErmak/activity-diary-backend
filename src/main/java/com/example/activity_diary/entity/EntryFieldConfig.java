@@ -14,13 +14,11 @@ public class EntryFieldConfig extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name; // имя шаблона конфига
 
-    // ✅ ЛОГИКА ОТОБРАЖЕНИЯ
     private Boolean showSubCategory;
     private Boolean showMetrics;
     private Boolean showMood;
     private Boolean showDescription;
 
-    // ✅ ЛОГИКА ОБЯЗАТЕЛЬНОСТИ
     private Boolean requiredSubCategory;
     private Boolean requiredMetrics;
 }

@@ -14,10 +14,6 @@ import java.util.List;
 )
 public interface DiaryEntryMapper {
 
-    // ===========================
-    //      ENTITY → RESPONSE DTO
-    // ===========================
-
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "category.label", target = "categoryName")
 
@@ -31,10 +27,6 @@ public interface DiaryEntryMapper {
     @Mapping(source = "description", target = "description")
     DiaryEntryDto toDto(DiaryEntry entry);
 
-    // ===========================
-    //      CREATE DTO → ENTITY
-    // ===========================
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
 
@@ -47,10 +39,6 @@ public interface DiaryEntryMapper {
 
     @Mapping(target = "metrics", ignore = true)
     DiaryEntry toEntity(DiaryEntryCreateDto dto);
-
-    // ========================================
-    //      UPDATE DTO → ENTITY (partial)
-    // ========================================
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 
@@ -66,10 +54,6 @@ public interface DiaryEntryMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget DiaryEntry entry, DiaryEntryUpdateDto dto);
-
-    // ========================================
-    //   ENTRY METRIC → RESPONSE DTO
-    // ========================================
 
     @Mapping(source = "metricType.id", target = "metricTypeId")
     @Mapping(source = "metricType.label", target = "metricTypeName")

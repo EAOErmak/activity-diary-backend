@@ -27,10 +27,6 @@ public class AdminDictionaryController {
 
     private final DictionaryService dictionaryService;
 
-    // ============================
-    // GET BY TYPE (ADMIN)
-    // ============================
-
     @GetMapping("/{type}")
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getByType(
             @PathVariable DictionaryType type
@@ -39,10 +35,6 @@ public class AdminDictionaryController {
                 ApiResponse.ok(dictionaryService.getByTypeForAdmin(type))
         );
     }
-
-    // ============================
-    // CREATE
-    // ============================
 
     @PostMapping
     @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
@@ -54,10 +46,6 @@ public class AdminDictionaryController {
         );
     }
 
-    // ============================
-    // UPDATE
-    // ============================
-
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DictionaryResponseDto>> update(
             @PathVariable @Positive Long id,
@@ -67,10 +55,6 @@ public class AdminDictionaryController {
                 ApiResponse.ok(dictionaryService.update(id, dto))
         );
     }
-
-    // ============================
-    // SEARCH (ADMIN)
-    // ============================
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> search(
