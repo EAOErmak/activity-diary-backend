@@ -11,17 +11,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 @Entity
 @Table(
         name = "users",
         indexes = {
                 @Index(name = "idx_user_username", columnList = "username"),
-                @Index(name = "idx_user_chat_id", columnList = "chat_id"),
                 @Index(name = "idx_user_locked", columnList = "account_locked"),
                 @Index(name = "idx_user_created", columnList = "created_at")
         }
 )
-@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -32,19 +31,17 @@ public class User extends BaseEntity {
     @Column(unique = true, nullable = false, length = 64)
     private String username;
 
-    @JsonIgnore
-    @Column(nullable = false, length = 255)
-    private String password;
-
-    @Column(nullable = false, length = 128)
+    @Column(length = 128)
     private String fullName;
 
     @Builder.Default
     @Column(nullable = false)
     private boolean enabled = false;
 
-    @Column(name = "chat_id", unique = true)
-    private Long chatId;
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<UserAccount> accounts = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -74,18 +71,27 @@ public class User extends BaseEntity {
 
     /* ===== Бизнес-методы ===== */
 
+    @JsonIgnore
+    public String getDisplayName() {
+        if (fullName != null && !fullName.isBlank()) {
+            return fullName;
+        }
+        return username;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public void changeRole(Role newRole) {
         if (newRole == null) {
             throw new IllegalArgumentException("Role cannot be null");
         }
         this.role = newRole;
-    }
-
-    public void bindChatId(Long chatId) {
-        if (chatId == null) {
-            throw new IllegalArgumentException("ChatId cannot be null");
-        }
-        this.chatId = chatId;
     }
 
     public void enable() {

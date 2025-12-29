@@ -26,13 +26,6 @@ public class TelegramWebhookController {
             consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE}
     )
     public ResponseEntity<Void> onUpdate(@RequestBody String rawBody) {
-        try {
-            Map<String, Object> update = objectMapper.readValue(rawBody, Map.class);
-            telegramWebhookService.processUpdate(update);
-        } catch (Exception e) {
-            log.error("Failed to parse webhook update", e);
-        }
-
         return ResponseEntity.ok().build();
     }
 }

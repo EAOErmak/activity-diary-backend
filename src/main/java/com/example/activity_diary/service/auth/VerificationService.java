@@ -1,8 +1,8 @@
 package com.example.activity_diary.service.auth;
 
+import com.example.activity_diary.entity.User;
+
 public interface VerificationService {
-    void createAndSendCode(String username, Long chatId);
-    boolean verify(String username, String inputCode);
-    void createAndSendLoginCode(String username, Long chatId);
-    boolean verifyLoginCode(String username, String code);
+    void createAndSendEmailVerification(User user, String email);
+    void verifyEmailByToken(String token);
 }

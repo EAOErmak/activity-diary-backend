@@ -6,13 +6,13 @@
             http://www.liquibase.org/xml/ns/dbchangelog
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <changeSet id="v1-12-create-verification-codes" author="diary">
+    <changeSet id="v1-11-create-user-accounts" author="diary">
 
         <!-- ===================== -->
-        <!-- TABLE: verification_codes -->
+        <!-- TABLE: user_accounts -->
         <!-- ===================== -->
 
-        <createTable tableName="verification_codes">
+        <createTable tableName="user_accounts">
 
             <!-- BaseEntity -->
             <column name="id" type="BIGSERIAL">
@@ -32,24 +32,22 @@
             <!-- ===================== -->
 
             <column name="user_id" type="BIGINT">
-                <constraints nullable="false" unique="true"/>
-            </column>
-
-            <!-- ===================== -->
-            <!-- VERIFICATION DATA -->
-            <!-- ===================== -->
-
-            <column name="verification_code" type="VARCHAR(64)">
-                <constraints nullable="false" unique="true"/>
-            </column>
-
-            <column name="expires_at" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="attempts" type="INT">
+            <!-- ===================== -->
+            <!-- PROVIDER INFO -->
+            <!-- ===================== -->
+
+            <column name="provider" type="VARCHAR(16)">
                 <constraints nullable="false"/>
             </column>
+
+            <column name="provider_id" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="password_hash" type="VARCHAR(255)"/>
 
         </createTable>
 
@@ -57,25 +55,31 @@
         <!-- CONSTRAINTS -->
         <!-- ===================== -->
 
-        <!-- FK: verification_codes.user_id → users.id -->
+        <!-- FK → users -->
         <addForeignKeyConstraint
-                baseTableName="verification_codes"
+                baseTableName="user_accounts"
                 baseColumnNames="user_id"
                 referencedTableName="users"
                 referencedColumnNames="id"
-                constraintName="fk_verification_codes_user"
+                constraintName="fk_user_accounts_user"
                 onDelete="CASCADE"/>
+
+        <!-- UNIQUE (provider, provider_id) -->
+        <addUniqueConstraint
+                tableName="user_accounts"
+                columnNames="provider, provider_id"
+                constraintName="uk_user_accounts_provider_provider_id"/>
 
         <!-- ===================== -->
         <!-- INDEXES -->
         <!-- ===================== -->
 
-        <createIndex indexName="idx_verification_codes_user_id" tableName="verification_codes">
+        <createIndex indexName="idx_user_accounts_user_id" tableName="user_accounts">
             <column name="user_id"/>
         </createIndex>
 
-        <createIndex indexName="idx_verification_codes_expires_at" tableName="verification_codes">
-            <column name="expires_at"/>
+        <createIndex indexName="idx_user_accounts_provider" tableName="user_accounts">
+            <column name="provider"/>
         </createIndex>
 
     </changeSet>

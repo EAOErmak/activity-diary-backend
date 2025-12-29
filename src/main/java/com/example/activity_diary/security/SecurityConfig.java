@@ -32,18 +32,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ✅ JWT → CSRF не нужен
                 .csrf(csrf -> csrf.disable())
-
-                // ✅ Явная CORS-конфигурация
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // ✅ Без сессий
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // ✅ Обработка ошибок безопасности
+                
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
                             res.setStatus(401);
@@ -66,13 +60,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") // ✅ ВАЖНО
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/api/auth/verify/**",
                                 "/api/telegram/**",
                                 "/api/health/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-
-                // ✅ JWT фильтр
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -81,23 +74,15 @@ public class SecurityConfig {
     // ✅ Явная CORS-политика
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cfg = new CorsConfiguration();
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(allowedOrigin));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowCredentials(true);
 
-        cfg.setAllowedOrigins(List.of(allowedOrigin));
-
-        cfg.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
-        ));
-
-        cfg.setAllowedHeaders(List.of(
-                "Authorization", "Content-Type"
-        ));
-
-        cfg.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
-        src.registerCorsConfiguration("/**", cfg);
-        return src;
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     // ✅ Безопасный хэш

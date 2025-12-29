@@ -3,173 +3,130 @@ package com.example.activity_diary.service.impl.auth;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.VerificationCode;
 import com.example.activity_diary.exception.types.BadRequestException;
-import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.VerificationCodeRepository;
-import com.example.activity_diary.service.telegram.TelegramService;
 import com.example.activity_diary.service.auth.VerificationService;
+import com.example.activity_diary.service.mail.GmailApiService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
-import java.security.SecureRandom;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class VerificationServiceImpl implements VerificationService {
 
     private final VerificationCodeRepository verificationCodeRepository;
     private final UserRepository userRepository;
-    private final TelegramService telegramService;
+    private final GmailApiService gmailApiService;
 
-    private static final int CODE_TTL_MINUTES = 2;
-    private static final int MAX_ATTEMPTS = 5;
-    private static final SecureRandom RANDOM = new SecureRandom();
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     @Override
     @Transactional
-    public void createAndSendCode(String username, Long chatId) {
-        User user = userRepository.findByUsername(username.toLowerCase().trim())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+    public void createAndSendEmailVerification(User user, String email) {
 
-        if (chatId == null) {
-            throw new BadRequestException("chatId must not be null");
-        }
+        String token = UUID.randomUUID().toString();
 
-        User existing = userRepository.findByChatId(chatId).orElse(null);
-
-        if (existing != null && !existing.getId().equals(user.getId())) {
-            throw new BadRequestException("Этот Telegram аккаунт уже привязан к другому профилю: " + existing.getUsername());
-        }
-
-        if (user.getChatId() == null || !user.getChatId().equals(chatId)) {
-            user.bindChatId(chatId);
-            userRepository.save(user);
-        }
-
-        // Удаляем предыдущий код и гарантируем выполнение перед insert
-        verificationCodeRepository.deleteByUserId(user.getId());
-        verificationCodeRepository.flush();
-
-        // Генерация кода
-        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
-
-        VerificationCode vc = VerificationCode.builder()
+        VerificationCode verificationCode = VerificationCode.builder()
+                .verificationCode(token)
                 .user(user)
-                .verificationCode(code)
-                .expiresAt(LocalDateTime.now().plusMinutes(CODE_TTL_MINUTES))
-                .attempts(MAX_ATTEMPTS)
+                .expiresAt(LocalDateTime.now().plusHours(24))
                 .build();
 
-        verificationCodeRepository.save(vc);
+        verificationCodeRepository.save(verificationCode);
 
-        // ОТПРАВКА ПОСЛЕ КОММИТА ТРАНЗАКЦИИ
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try {
-                    telegramService.sendVerificationCode(chatId, code);
-                } catch (Exception e) {
-                    System.err.println("Failed to send Telegram message after commit: " + e.getMessage());
-                }
-            }
-        });
-    }
-
-    @Override
-    public void createAndSendLoginCode(String username, Long chatId) {
-
-        if (chatId == null) {
-            throw new BadRequestException("Telegram not linked");
-        }
-
-        User user = userRepository.findByUsername(username.toLowerCase().trim())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        verificationCodeRepository.deleteByUserId(user.getId());
-        verificationCodeRepository.flush();
-
-        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
-
-        VerificationCode vc = VerificationCode.builder()
-                .user(user)
-                .verificationCode(code)
-                .expiresAt(LocalDateTime.now().plusMinutes(2))
-                .attempts(5)
-                .build();
-
-        verificationCodeRepository.save(vc);
+        String verificationLink =
+                baseUrl + "/api/auth/verify?token=" + token;
 
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
-                        telegramService.sendVerificationCode(chatId, code);
+                        try {
+                            gmailApiService.sendEmail(
+                                    email,
+                                    "Подтверждение регистрации",
+                                    buildEmailBody(user, verificationLink)
+                            );
+                        } catch (Exception e) {
+                            log.error("Failed to send verification email to {}", email, e);
+                        }
                     }
                 }
         );
     }
 
     @Override
-    public boolean verifyLoginCode(String username, String inputCode) {
+    public void verifyEmailByToken(String token) {
 
-        User user = userRepository.findByUsername(username.toLowerCase().trim())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        VerificationCode code = verificationCodeRepository
+                .findByVerificationCode(token)
+                .orElseThrow(() -> new BadRequestException("Invalid token"));
 
-        VerificationCode vc = verificationCodeRepository.findByUserId(user.getId())
-                .orElse(null);
-
-        if (vc == null) return false;
-
-        if (vc.getAttempts() <= 0 || vc.getExpiresAt().isBefore(LocalDateTime.now())) {
-            verificationCodeRepository.delete(vc);
-            return false;
+        if (code.getExpiresAt().isBefore(LocalDateTime.now())) {
+            verificationCodeRepository.delete(code);
+            throw new BadRequestException("Token expired");
         }
 
-        if (!vc.getVerificationCode().equals(inputCode)) {
-            vc.setAttempts(vc.getAttempts() - 1);
-            verificationCodeRepository.save(vc);
-            return false;
+        User user = code.getUser();
+
+        if (user.isEnabled()) {
+            verificationCodeRepository.delete(code);
+            throw new BadRequestException(
+                    "EMAIL_ALREADY_VERIFIED"
+            );
         }
 
-        verificationCodeRepository.delete(vc);
-        return true;
+        user.enable();
+        userRepository.save(user);
+
+        verificationCodeRepository.delete(code);
     }
 
-    @Override
-    public boolean verify(String username, String inputCode) {
-        User user = userRepository.findByUsername(username.toLowerCase().trim())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        VerificationCode vc = verificationCodeRepository.findByUserId(user.getId())
-                .orElse(null);
-
-        if (vc == null) {
-            return false;
-        }
-
-        // Проверка срока действия и попыток
-        if (vc.getAttempts() <= 0 || vc.getExpiresAt().isBefore(LocalDateTime.now())) {
-            verificationCodeRepository.delete(vc);
-            return false;
-        }
-
-        // Неверный код
-        if (!vc.getVerificationCode().equals(inputCode)) {
-            vc.setAttempts(vc.getAttempts() - 1);
-            verificationCodeRepository.save(vc);
-            return false;
-        }
-
-        // Успешная верификация — просто удаляем код.
-        // Включение пользователя (enabled = true) делает AuthServiceImpl.verifyCode.
-        verificationCodeRepository.delete(vc);
-
-        return true;
+    private String buildEmailBody(User user, String link) {
+        return """
+        <html>
+          <body style="font-family:Arial,sans-serif;background:#f4f5f7;padding:40px">
+            <table width="100%%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <table width="600" style="background:#fff;padding:40px;border-radius:8px">
+                    <tr>
+                      <td>
+                        <h2>Подтвердите email</h2>
+                        <p>Здравствуйте, %s</p>
+                        <p>Для активации аккаунта нажмите кнопку:</p>
+                        <p style="text-align:center">
+                          <a href="%s"
+                             style="background:#4f46e5;color:#fff;
+                                    padding:12px 20px;border-radius:6px;
+                                    text-decoration:none;">
+                            Подтвердить email
+                          </a>
+                        </p>
+                        <p style="font-size:12px;color:#6b7280">
+                          Ссылка действует 24 часа
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+        """.formatted(user.getDisplayName(), link);
     }
 }
+

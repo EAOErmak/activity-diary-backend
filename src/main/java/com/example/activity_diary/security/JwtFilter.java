@@ -21,8 +21,6 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
-    // note: userDetailsService is no longer used here
-    // private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -55,7 +53,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // build lightweight UserDetails from token (no DB hit)
             LightUserDetails userDetails = new LightUserDetails(id, username, role);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {

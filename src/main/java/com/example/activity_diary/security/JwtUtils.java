@@ -34,12 +34,6 @@ public class JwtUtils {
         this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // === GENERATION ===
-    // NOTE: use the new overloads where you have access to user id and role.
-    // Example usage on login:
-    // String access = jwtUtils.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
-    // String refresh = jwtUtils.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name());
-
     public String generateAccessToken(Long userId, String username, String role) {
         return generateToken(userId, username, role, "access", accessExpirationMs);
     }

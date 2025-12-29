@@ -6,7 +6,6 @@ import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.rate.RateLimit;
-import com.example.activity_diary.security.CustomUserDetails;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import lombok.RequiredArgsConstructor;

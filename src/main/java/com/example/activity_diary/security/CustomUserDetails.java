@@ -13,7 +13,6 @@ public class CustomUserDetails implements UserDetails {
 
     private final Long id;
     private final String username;
-    private final String password;
     private final boolean enabled;
     private final boolean accountLocked;
     private final Role role;
@@ -22,7 +21,6 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
-        this.password = user.getPassword();
         this.enabled = user.isEnabled();
         this.accountLocked = user.isAccountLocked();
         this.role = user.getRole();
@@ -40,7 +38,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
-    @Override public String getPassword() { return password; }
+    @Override public String getPassword() { return null; }
     @Override public String getUsername() { return username; }
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return !accountLocked; }

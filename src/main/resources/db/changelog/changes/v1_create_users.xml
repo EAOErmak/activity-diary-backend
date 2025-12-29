@@ -14,8 +14,7 @@
 
         <createTable tableName="users">
 
-            <!-- ✅ BaseEntity -->
-
+            <!-- BaseEntity -->
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -36,20 +35,10 @@
                 <constraints nullable="false" unique="true"/>
             </column>
 
-            <column name="password" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-
-            <column name="full_name" type="VARCHAR(128)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="full_name" type="VARCHAR(128)"/>
 
             <column name="enabled" type="BOOLEAN" defaultValueBoolean="false">
                 <constraints nullable="false"/>
-            </column>
-
-            <column name="chat_id" type="BIGINT">
-                <constraints unique="true"/>
             </column>
 
             <column name="role" type="VARCHAR(50)">
@@ -74,10 +63,6 @@
 
         <createIndex indexName="idx_user_username" tableName="users">
             <column name="username"/>
-        </createIndex>
-
-        <createIndex indexName="idx_user_chat_id" tableName="users">
-            <column name="chat_id"/>
         </createIndex>
 
         <createIndex indexName="idx_user_locked" tableName="users">

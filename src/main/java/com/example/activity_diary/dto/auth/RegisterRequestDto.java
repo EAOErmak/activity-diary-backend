@@ -1,11 +1,17 @@
 package com.example.activity_diary.dto.auth;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class RegisterRequestDto {
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
+    @Size(max = 254, message = "Email is too long")
+    private String email;
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 32, message = "Username must be between 3 and 32 characters")
@@ -18,6 +24,4 @@ public class RegisterRequestDto {
     @NotBlank(message = "Full name is required")
     @Size(min = 2, max = 64, message = "Full name must be between 2 and 64 characters")
     private String fullName;
-
-    private Long chatId;
 }

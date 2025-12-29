@@ -1,12 +1,19 @@
 package com.example.activity_diary.service.impl.user;
 
+import com.example.activity_diary.dto.mapper.UserMapper;
+import com.example.activity_diary.dto.user.UpdateProfileRequest;
+import com.example.activity_diary.dto.user.UserDto;
 import com.example.activity_diary.entity.User;
-import com.example.activity_diary.exception.types.ForbiddenException;
-import com.example.activity_diary.exception.types.UnauthorizedException;
+import com.example.activity_diary.dto.user.ChangePasswordRequest;
+import com.example.activity_diary.dto.user.ChangeUsernameRequest;
+import com.example.activity_diary.entity.UserAccount;
+import com.example.activity_diary.entity.enums.ProviderType;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.user.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,47 +25,81 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    @Override
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Transactional
-    public User save(User user) {
-        return userRepository.save(user);
-    }
-
     @Override
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
+    public void changePassword(ChangePasswordRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-    @Override
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
-    }
+        UserAccount account = user.getAccounts().stream()
+                .filter(a -> a.getProvider() == ProviderType.LOCAL)
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException("Password change allowed only for LOCAL accounts")
+                );
 
-    @Override
-    public User getCurrentUser() {
-
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthorizedException("User is not authenticated");
+        if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+            throw new IllegalArgumentException("Current password is empty");
         }
 
-        var username = authentication.getName();
-
-        var user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
-
-        if (!user.isEnabled()) {
-            throw new ForbiddenException("User account is not activated");
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new IllegalArgumentException("New password is empty");
         }
 
-        if (user.isCurrentlyLocked()) {
-            throw new ForbiddenException(
-                    "User account is locked until " + user.getLockUntil()
-            );
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                account.getPasswordHash())
+        ) {
+            throw new IllegalArgumentException("Current password is incorrect");
         }
 
-        return user;
+        if (passwordEncoder.matches(
+                request.getNewPassword(),
+                account.getPasswordHash())
+        ) {
+            throw new IllegalArgumentException("New password must be different from current password");
+        }
+
+        account.setPasswordHash(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
+        user.unlock(); // опционально
+    }
+
+    @Transactional
+    @Override
+    public void updateProfile(UpdateProfileRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setFullName(request.getFullName());
+    }
+
+    @Transactional
+    @Override
+    public void changeUsername(ChangeUsernameRequest request, Long userId) {
+        if (userRepository.existsByUsername(request.getNewUsername())) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setUsername(request.getNewUsername());
+    }
+
+
+    @Override
+    public UserDto getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return userMapper.toDto(user);
     }
 }

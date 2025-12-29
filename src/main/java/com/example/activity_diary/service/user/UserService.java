@@ -1,17 +1,26 @@
 package com.example.activity_diary.service.user;
 
+import com.example.activity_diary.dto.user.ChangePasswordRequest;
+import com.example.activity_diary.dto.user.ChangeUsernameRequest;
+import com.example.activity_diary.dto.user.UpdateProfileRequest;
+import com.example.activity_diary.dto.user.UserDto;
 import com.example.activity_diary.entity.User;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 public interface UserService {
 
-    User getCurrentUser();
+    UserDto getProfile(Long userId);
 
-    User save(User user);
+    @Transactional
+    void updateProfile(UpdateProfileRequest request, Long userId);
 
-    Optional<User> findByUsername(String username);
+    @Transactional
+    void changePassword(ChangePasswordRequest request, Long userId);
 
-    Optional<User> findById(Long id);
+    @Transactional
+    void changeUsername(ChangeUsernameRequest request, Long userId);
+
 }
 

@@ -3,14 +3,19 @@ package com.example.activity_diary.service.impl.auth;
 import com.example.activity_diary.dto.auth.AuthRequestDto;
 import com.example.activity_diary.dto.auth.AuthResponseDto;
 import com.example.activity_diary.dto.auth.RegisterRequestDto;
+import com.example.activity_diary.dto.auth.RegisterResponseDto;
+import com.example.activity_diary.entity.UserAccount;
+import com.example.activity_diary.entity.enums.ProviderType;
+import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.log.RegistrationEvent;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.RefreshToken;
+import com.example.activity_diary.exception.types.UnauthorizedException;
 import com.example.activity_diary.repository.RegistrationEventRepository;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.ForbiddenException;
-import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
+import com.example.activity_diary.repository.UserAccountRepository;
 import com.example.activity_diary.security.JwtUtils;
 import com.example.activity_diary.service.auth.AuthService;
 import com.example.activity_diary.service.auth.RefreshTokenService;
@@ -23,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -37,25 +44,36 @@ public class AuthServiceImpl implements AuthService {
     private final LoginEventService loginEventService;
     private final JwtUtils jwtUtils;
     private final RegistrationEventRepository registrationEventRepository;
+    private final UserAccountRepository userAccountRepository;
 
     private static final int MAX_ACCOUNTS_PER_IP = 10;
 
     private static final String DUMMY_PASSWORD_HASH =
             "$2a$10$7EqJtq98hPqEX7fNZaFWoO5uG08CqslfQJz8l8bY5v3y5i7x3UXZG";
 
-    // ============================================================
-    // REGISTER
-    // ============================================================
-
+    //Регистрация
     @Override
-    public AuthResponseDto register(RegisterRequestDto req, HttpServletRequest request) {
+    @Transactional
+    public RegisterResponseDto register(RegisterRequestDto req, HttpServletRequest request) {
 
         String ip = IpUtils.getClientIp(request);
+
+        String email = req.getEmail().trim().toLowerCase();
         String username = req.getUsername().trim().toLowerCase();
+
+        // ============================
+        // 1. Проверки
+        // ============================
 
         if (userRepository.existsByUsername(username)) {
             fakeDelay();
-            throw new BadRequestException("Invalid username or password");
+            throw new BadRequestException("Username already taken");
+        }
+
+        if (userAccountRepository.existsByProviderAndProviderId(
+                ProviderType.LOCAL, email)) {
+            fakeDelay();
+            throw new BadRequestException("Email already registered");
         }
 
         long accountsFromIp = registrationEventRepository.countByIp(ip);
@@ -64,15 +82,41 @@ public class AuthServiceImpl implements AuthService {
             throw new ForbiddenException("Too many accounts created from your IP");
         }
 
+        // ============================
+        // 2. Создаём User (НЕ активен)
+        // ============================
+
         User user = User.builder()
                 .username(username)
-                .password(passwordEncoder.encode(req.getPassword()))
-                .fullName(req.getFullName().trim())
+                .fullName(req.getFullName())
                 .enabled(false)
+                .role(Role.USER)
                 .build();
 
         userRepository.save(user);
-        userSyncService.initUser(user.getId());
+
+        // ============================
+        // 3. Создаём UserAccount (LOCAL)
+        // ============================
+
+        UserAccount account = UserAccount.builder()
+                .user(user)
+                .provider(ProviderType.LOCAL)
+                .providerId(email) // email = логин
+                .passwordHash(passwordEncoder.encode(req.getPassword()))
+                .build();
+
+        userAccountRepository.save(account);
+
+        // ============================
+        // 4. Email verification LINK
+        // ============================
+
+        verificationService.createAndSendEmailVerification(user, email);
+
+        // ============================
+        // 5. Аудит + sync
+        // ============================
 
         registrationEventRepository.save(
                 RegistrationEvent.builder()
@@ -81,120 +125,62 @@ public class AuthServiceImpl implements AuthService {
                         .build()
         );
 
-        return AuthResponseDto.builder()
-                .username(user.getUsername())
-                .userId(user.getId())
-                .role(user.getRole().name())
-                .twoFactorRequired(true)
+        userSyncService.initUser(user.getId());
+
+        // ============================
+        // 6. Ответ
+        // ============================
+
+        return RegisterResponseDto.builder()
+                .message("Registration successful. Please verify your email.")
                 .build();
     }
 
-    // ============================================================
-    // VERIFICATION (ACCOUNT)
-    // ============================================================
-
-    @Override
-    public void requestVerificationCode(String username) {
-
-        String normalized = username.trim().toLowerCase();
-        User user = userRepository.findByUsername(normalized).orElse(null);
-
-        // Всегда одинаковое поведение
-        if (user == null || !user.isEnabled()) {
-            fakeDelay();
-            return;
-        }
-
-        verificationService.createAndSendCode(user.getUsername(), user.getChatId());
-    }
-
-    @Override
-    public void verifyCode(String username, String code) {
-
-        boolean ok = verificationService.verify(username.trim().toLowerCase(), code);
-        if (!ok) {
-            throw new BadRequestException("Invalid or expired verification code");
-        }
-
-        User user = userRepository.findByUsername(username.trim().toLowerCase())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        if (user.getChatId() == null) {
-            throw new ForbiddenException("Telegram verification not completed");
-        }
-
-        user.enable();
-        userRepository.save(user);
-    }
-
-    // ============================================================
-    // LOGIN
-    // ============================================================
-
+    @Transactional
     @Override
     public AuthResponseDto login(AuthRequestDto req, HttpServletRequest request) {
+        String email = req.getEmail().trim().toLowerCase();
 
-        String ip = request.getRemoteAddr();
-        String userAgent = request.getHeader("User-Agent");
-        String username = req.getUsername().trim().toLowerCase();
+        // 1. Ищем локальный аккаунт по email
+        UserAccount account = userAccountRepository
+                .findByProviderAndProviderId(ProviderType.LOCAL, email)
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
-        User user = userRepository.findByUsername(username).orElse(null);
+        User user = account.getUser();
 
-        boolean passwordMatches;
-
-        if (user != null) {
-            passwordMatches = passwordEncoder.matches(req.getPassword(), user.getPassword());
-        } else {
-            passwordEncoder.matches(req.getPassword(), DUMMY_PASSWORD_HASH);
-            fakeDelay();
-            loginEventService.recordFailure(ip, userAgent);
-            throw new BadRequestException("Invalid username or password");
-        }
-
-        if (!passwordMatches || !user.isEnabled()) {
-            fakeDelay();
-            loginEventService.recordFailure(ip, userAgent);
-            throw new BadRequestException("Invalid username or password");
-        }
-
+        // 2. Проверяем, не заблокирован ли аккаунт (твоя логика из User.java)
         checkForLock(user);
 
-        loginEventService.recordSuccess(user.getId(), ip, userAgent);
+        // 3. Проверяем пароль
+        if (!passwordEncoder.matches(req.getPassword(), account.getPasswordHash())) {
+            // Здесь можно добавить логику увеличения счетчика неудачных попыток (failed2faAttempts)
+            user.increaseFailed2faAttempts();
+            if (user.getFailed2faAttempts() >= 5) {
+                user.lockUntil(LocalDateTime.now().plusMinutes(15));
+            }
+            userRepository.save(user);
 
-        verificationService.createAndSendLoginCode(
-                user.getUsername(),
-                user.getChatId()
-        );
-
-        return AuthResponseDto.builder()
-                .twoFactorRequired(true)
-                .username(user.getUsername())
-                .userId(user.getId())
-                .role(user.getRole().name())
-                .build();
-    }
-
-    @Override
-    public AuthResponseDto confirmLogin(String username, String code) {
-
-        boolean ok = verificationService.verifyLoginCode(username, code);
-        if (!ok) {
-            throw new BadRequestException("Invalid or expired 2FA code");
+            fakeDelay();
+            throw new UnauthorizedException("Invalid email or password");
         }
 
-        User user = userRepository.findByUsername(username.trim().toLowerCase())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
+        // 4. ПРОВЕРКА ВЕРИФИКАЦИИ (Самое важное!)
         if (!user.isEnabled()) {
-            throw new ForbiddenException("User not verified");
+            throw new ForbiddenException("EMAIL_NOT_VERIFIED");
         }
 
-        checkForLock(user);
+        // 5. Если всё ок — сбрасываем попытки и генерируем токены
+        user.unlock();
+        userRepository.save(user);
 
         String accessToken = jwtUtils.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name());
         String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name());
 
+        // Сохраняем Refresh Token в базу
         refreshTokenService.save(user, refreshToken);
+
+        // Логируем вход (твоя существующая логика)
+        loginEventService.recordSuccess(user.getId(), IpUtils.getClientIp(request), request.getHeader("User-Agent"));
 
         return AuthResponseDto.builder()
                 .accessToken(accessToken)
@@ -204,10 +190,6 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole().name())
                 .build();
     }
-
-    // ============================================================
-    // REFRESH (ROTATION)
-    // ============================================================
 
     @Override
     public AuthResponseDto refresh(String rawRefreshToken) {

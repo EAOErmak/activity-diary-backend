@@ -19,4 +19,3 @@ public class UserDto {
 
     private boolean enabled;
 }
-

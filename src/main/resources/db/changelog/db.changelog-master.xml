@@ -25,5 +25,6 @@
     <include file="db/changelog/changes/v1_create_user_sync_state.xml"/>
     <include file="db/changelog/changes/v1_create_verification_codes.xml"/>
     <include file="db/changelog/changes/v1_create_global_sync_state.xml"/>
+    <include file="db/changelog/changes/v1_create_user_accounts.xml"/>
 
 </databaseChangeLog>
