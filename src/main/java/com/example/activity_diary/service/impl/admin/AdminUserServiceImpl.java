@@ -1,13 +1,19 @@
 package com.example.activity_diary.service.impl.admin;
 
+import com.example.activity_diary.dto.admin.CreateUserByAdminDto;
 import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.UserAccount;
+import com.example.activity_diary.entity.enums.ProviderType;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.admin.AdminUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +23,36 @@ import java.util.List;
 public class AdminUserServiceImpl implements AdminUserService {
 
     private final UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Transactional
+    @Override
+    public void createUser(CreateUserByAdminDto dto) {
+
+        if (userRepository.existsByUsername(dto.getUsername())) {
+            throw new IllegalArgumentException("User already exists");
+        }
+
+        User user = User.builder()
+                .username(dto.getUsername())
+                .fullName(dto.getFullName())
+                .role(dto.getRole())
+                .enabled(true) // админ создаёт сразу активного
+                .build();
+
+        UserAccount account = UserAccount.builder()
+                .user(user)
+                .provider(ProviderType.LOCAL)
+                .passwordHash(passwordEncoder.encode(dto.getPassword()))
+                .providerId(dto.getEmail())
+                .build();
+
+        user.getAccounts().add(account);
+
+        userRepository.save(user);
+    }
 
     @Override
     public List<User> getAllUsers() {

@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                
+
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
                             res.setStatus(401);
@@ -57,7 +57,9 @@ public class SecurityConfig {
 
                 // ✅ Доступы
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // ✅ ВАЖНО
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/analytics/**")
+                        .hasAnyRole("PREMIUM", "ADMIN")
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/auth/verify/**",

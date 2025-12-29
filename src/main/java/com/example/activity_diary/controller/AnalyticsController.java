@@ -5,6 +5,7 @@ import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.analytics.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/analytics")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('PREMIUM')")
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
