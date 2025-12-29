@@ -29,16 +29,10 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 public class DiaryEntry extends BaseEntity {
 
-    // ============================================================
-    // RELATIONS
-    // ============================================================
-
-    // ✅ Category
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private DictionaryItem category;
 
-    // ✅ Subcategory
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "sub_category_id", nullable = true)
     private DictionaryItem subCategory;
@@ -48,7 +42,6 @@ public class DiaryEntry extends BaseEntity {
     @JsonIgnore
     private User user;
 
-    // ✅ Metrics (бывший whatDidYouDo)
     @OneToMany(
             mappedBy = "diaryEntry",
             cascade = CascadeType.ALL,
@@ -56,10 +49,6 @@ public class DiaryEntry extends BaseEntity {
     )
     @Builder.Default
     private List<EntryMetric> metrics = new ArrayList<>();
-
-    // ============================================================
-    // TIME
-    // ============================================================
 
     @Column(name = "when_started", nullable = false)
     private LocalDateTime whenStarted;
@@ -70,24 +59,14 @@ public class DiaryEntry extends BaseEntity {
     @Column(nullable = false)
     private Integer duration;
 
-    // ============================================================
-    // META
-    // ============================================================
-
-    // ✅ Mood
     private Short mood;
 
-    // ✅ Description
     @Column(length = 1000)
     private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EntryStatus status;
-
-    // ============================================================
-    // UPDATE METHODS
-    // ============================================================
 
     public void updateDescription(String description) {
         this.description = description == null ? null : description.trim();
@@ -110,10 +89,6 @@ public class DiaryEntry extends BaseEntity {
         }
         this.subCategory = newSubCategory;
     }
-
-    // ============================================================
-    // FACTORY
-    // ============================================================
 
     public static DiaryEntry create(
             User user,
@@ -142,7 +117,7 @@ public class DiaryEntry extends BaseEntity {
                 .duration(duration)
                 .mood(mood)
                 .description(description)
-                .status(EntryStatus.LOSE) // ✅ по умолчанию LOSE
+                .status(EntryStatus.LOSE)
                 .build();
 
         entry.autoUpdateStatusByTime(LocalDateTime.now());
@@ -150,17 +125,13 @@ public class DiaryEntry extends BaseEntity {
         return entry;
     }
 
-    // ============================================================
-    // BUSINESS METHODS
-    // ============================================================
-
     public void autoUpdateStatusByTime(LocalDateTime now) {
         if (this.status == EntryStatus.DELETED) return;
 
         if (whenEnded.isAfter(now)) {
-            this.status = EntryStatus.LOSE;   // ещё не выполнено
+            this.status = EntryStatus.LOSE;
         } else {
-            this.status = EntryStatus.WIN;    // завершено
+            this.status = EntryStatus.WIN;
         }
     }
 
