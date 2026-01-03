@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.activity_diary.entity.enums.UserSyncEntityType;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -125,7 +126,7 @@ public class DiaryServiceImpl implements DiaryService {
                 .filter(e -> e.getUser().getId().equals(userId))
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
 
-        if (entry.getWhenEnded().isBefore(LocalDateTime.now())) {
+        if (entry.getWhenEnded().isBefore(Instant.now())) {
             throw new BadRequestException("Past entry cannot be modified");
         }
 

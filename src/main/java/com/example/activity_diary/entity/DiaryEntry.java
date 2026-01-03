@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,10 +52,10 @@ public class DiaryEntry extends BaseEntity {
     private List<EntryMetric> metrics = new ArrayList<>();
 
     @Column(name = "when_started", nullable = false)
-    private LocalDateTime whenStarted;
+    private Instant whenStarted;
 
     @Column(name = "when_ended", nullable = false)
-    private LocalDateTime whenEnded;
+    private Instant whenEnded;
 
     @Column(nullable = false)
     private Integer duration;
@@ -94,8 +95,8 @@ public class DiaryEntry extends BaseEntity {
             User user,
             DictionaryItem category,
             DictionaryItem subCategory,
-            LocalDateTime started,
-            LocalDateTime ended,
+            Instant started,
+            Instant ended,
             Short mood,
             String description
     ) {
@@ -120,12 +121,12 @@ public class DiaryEntry extends BaseEntity {
                 .status(EntryStatus.LOSE)
                 .build();
 
-        entry.autoUpdateStatusByTime(LocalDateTime.now());
+        entry.autoUpdateStatusByTime(Instant.now());
 
         return entry;
     }
 
-    public void autoUpdateStatusByTime(LocalDateTime now) {
+    public void autoUpdateStatusByTime(Instant now) {
         if (this.status == EntryStatus.DELETED) return;
 
         if (whenEnded.isAfter(now)) {
@@ -135,8 +136,8 @@ public class DiaryEntry extends BaseEntity {
         }
     }
 
-    public void updateTime(LocalDateTime started, LocalDateTime ended) {
-        if (this.whenEnded.isBefore(LocalDateTime.now())) {
+    public void updateTime(Instant started, Instant ended) {
+        if (this.whenEnded.isBefore(Instant.now())) {
             throw new IllegalStateException("Cannot modify entry after it has ended");
         }
 
@@ -150,7 +151,7 @@ public class DiaryEntry extends BaseEntity {
                 .between(started, ended)
                 .toMinutes();
 
-        autoUpdateStatusByTime(LocalDateTime.now());
+        autoUpdateStatusByTime(Instant.now());
     }
 
     public void changeStatus(EntryStatus newStatus) {
@@ -161,7 +162,7 @@ public class DiaryEntry extends BaseEntity {
 
         if (this.status == EntryStatus.LOSE
                 && newStatus == EntryStatus.WIN
-                && this.whenEnded.isBefore(LocalDateTime.now())) {
+                && this.whenEnded.isBefore(Instant.now())) {
             throw new IllegalStateException("Cannot change LOSE to WIN for past entry");
         }
 

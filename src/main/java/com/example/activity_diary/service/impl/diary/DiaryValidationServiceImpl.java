@@ -7,6 +7,7 @@ import com.example.activity_diary.service.diary.DiaryValidationService;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Service
@@ -46,7 +47,7 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
         validateDescription(dto.getDescription());
     }
 
-    private void validateTime(LocalDateTime start, LocalDateTime end) {
+    private void validateTime(Instant start, Instant end) {
 
         if (start == null || end == null) {
             throw new BadRequestException("whenStarted and whenEnded are required");

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Getter
@@ -20,10 +20,10 @@ public class DiaryEntryCreateDto {
     private Long subCategoryId;
 
     @NotNull(message = "whenStarted is required")
-    private LocalDateTime whenStarted;
+    private Instant whenStarted;
 
     @NotNull(message = "whenEnded is required")
-    private LocalDateTime whenEnded;
+    private Instant whenEnded;
 
     @PositiveOrZero(message = "mood must be between 0 and 10")
     @Max(value = 10, message = "mood must be between 0 and 10")

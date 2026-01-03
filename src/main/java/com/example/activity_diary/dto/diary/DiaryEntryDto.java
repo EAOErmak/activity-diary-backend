@@ -17,8 +17,8 @@ public class DiaryEntryDto {
     private Long subCategoryId;
     private String subCategoryName;
 
-    private LocalDateTime whenStarted;
-    private LocalDateTime whenEnded;
+    private Instant whenStarted;
+    private Instant whenEnded;
     private Integer duration;
 
     private Short mood;

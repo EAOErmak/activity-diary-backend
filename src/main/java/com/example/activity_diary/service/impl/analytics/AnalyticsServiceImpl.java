@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -90,7 +91,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         List<ChartPointDto> points = entries.stream()
                 .sorted(Comparator.comparing(DiaryEntry::getWhenStarted))
                 .map(entry -> new ChartPointDto(
-                        entry.getWhenStarted().format(TIME_FORMAT),
+                        entry.getWhenStarted()
+                                .atZone(ZoneOffset.UTC)
+                                .format(TIME_FORMAT),
                         chartValueService.calculateY(entry)
                 ))
                 .toList();

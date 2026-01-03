@@ -4,6 +4,7 @@ import com.example.activity_diary.entity.enums.EntryStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -11,8 +12,8 @@ import java.time.LocalDateTime;
 public class DiaryEntryViewDto {
     private Long id;
     private EntryStatus status;
-    private LocalDateTime whenStarted;
-    private LocalDateTime whenEnded;
+    private Instant whenStarted;
+    private Instant whenEnded;
     private String categoryName;
     private String subCategoryName;
 }
