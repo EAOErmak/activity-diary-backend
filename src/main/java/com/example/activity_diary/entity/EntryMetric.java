@@ -7,6 +7,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(
         name = "entry_metric",
@@ -18,7 +21,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @EntityListeners(AuditingEntityListener.class)
 public class EntryMetric extends BaseEntity {
 
@@ -27,44 +29,49 @@ public class EntryMetric extends BaseEntity {
     private DictionaryItem metricType;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "unit_id", nullable = false)
-    private DictionaryItem unit;
-
-    @Column(name = "value", nullable = false)
-    private Integer value;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "diary_entry_id", nullable = false)
     @JsonIgnore
     private DiaryEntry diaryEntry;
 
+    @OneToMany(
+            mappedBy = "entryMetric",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private final List<EntryMetricValue> values = new ArrayList<>();
+
+    /* ---------- FACTORY ---------- */
+
     public static EntryMetric create(
             DiaryEntry entry,
-            DictionaryItem metricType,
-            DictionaryItem unit,
-            Integer value
+            DictionaryItem metricType
     ) {
         if (entry == null) throw new IllegalArgumentException("DiaryEntry is required");
         if (metricType == null) throw new IllegalArgumentException("Metric type is required");
-        if (unit == null) throw new IllegalArgumentException("Unit is required");
-        if (value == null || value <= 0)
-            throw new IllegalArgumentException("Value must be positive");
 
-        EntryMetric metric = EntryMetric.builder()
-                .metricType(metricType)
-                .unit(unit)
-                .value(value)
-                .build();
-
+        EntryMetric metric = new EntryMetric();
+        metric.metricType = metricType;
         metric.attachTo(entry);
         return metric;
     }
 
-    public void changeValue(Integer newValue) {
-        if (newValue == null || newValue <= 0)
+    /* ---------- DOMAIN LOGIC ---------- */
+
+    public void addValue(DictionaryItem unit, Integer value) {
+        if (unit == null)
+            throw new IllegalArgumentException("Unit is required");
+
+        if (value == null || value <= 0)
             throw new IllegalArgumentException("Value must be positive");
 
-        this.value = newValue;
+        boolean exists = values.stream()
+                .anyMatch(v -> v.getUnit().equals(unit));
+
+        if (exists)
+            throw new IllegalStateException("Unit already exists for this metric");
+
+        EntryMetricValue metricValue = EntryMetricValue.create(this, unit, value);
+        values.add(metricValue);
     }
 
     public void changeMetricType(DictionaryItem newType) {
@@ -74,18 +81,11 @@ public class EntryMetric extends BaseEntity {
         this.metricType = newType;
     }
 
-    public void changeUnit(DictionaryItem newUnit) {
-        if (newUnit == null)
-            throw new IllegalArgumentException("Unit is required");
-
-        this.unit = newUnit;
-    }
-
-    public void attachTo(DiaryEntry entry) {
+    void attachTo(DiaryEntry entry) {
         this.diaryEntry = entry;
     }
 
-    public void detach() {
+    void detach() {
         this.diaryEntry = null;
     }
 }

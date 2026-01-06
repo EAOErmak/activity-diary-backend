@@ -1,9 +1,9 @@
 package com.example.activity_diary.dto.diary;
 
+import com.example.activity_diary.dto.diary.metric.EntryMetricResponseDto;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data

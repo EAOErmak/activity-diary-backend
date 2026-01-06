@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v2-02-create-entry-metric-value" author="activity-diary">
+        <createTable tableName="entry_metric_value">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="entry_metric_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="unit_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="value" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="entry_metric_value"
+                baseColumnNames="entry_metric_id"
+                referencedTableName="entry_metric"
+                referencedColumnNames="id"
+                constraintName="fk_metric_value_metric"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="entry_metric_value"
+                baseColumnNames="unit_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"
+                constraintName="fk_metric_value_unit"/>
+
+        <addUniqueConstraint
+                tableName="entry_metric_value"
+                columnNames="entry_metric_id, unit_id"
+                constraintName="uk_metric_value_unit"/>
+
+        <createIndex tableName="entry_metric_value" indexName="idx_metric_value_metric">
+            <column name="entry_metric_id"/>
+        </createIndex>
+
+        <createIndex tableName="entry_metric_value" indexName="idx_metric_value_unit">
+            <column name="unit_id"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

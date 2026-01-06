@@ -67,53 +67,53 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     """)
     List<DiaryEntryViewDto> findAllByUserId(@Param("userId") Long userId);
 
-    @Query("""
-        select distinct d from DiaryEntry d
-        left join fetch d.category
-        left join fetch d.subCategory
-        left join fetch d.metrics items
-        left join fetch items.metricType
-        left join fetch items.unit
-        where d.user.id = :userId
-          and d.status <> 'DELETED'
-    """)
-    List<DiaryEntry> findFullByUserId(@Param("userId") Long userId);
+//    @Query("""
+//        select distinct d from DiaryEntry d
+//        left join fetch d.category
+//        left join fetch d.subCategory
+//        left join fetch d.metrics items
+//        left join fetch items.metricType
+//        left join fetch items.unit
+//        where d.user.id = :userId
+//          and d.status <> 'DELETED'
+//    """)
+//    List<DiaryEntry> findFullByUserId(@Param("userId") Long userId);
 
-    @Query("""
-        select distinct d from DiaryEntry d
-        left join fetch d.subCategory
-        left join fetch d.category
-        left join fetch d.metrics items
-        left join fetch items.metricType
-        left join fetch items.unit
-        where d.user.id = :userId
-          and d.category.id = :categoryId
-          and d.whenStarted between :from and :to
-    """)
-    List<DiaryEntry> findForAnalyticsByCategory(
-            @Param("userId") Long userId,
-            @Param("categoryId") Long categoryId,
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
-    );
+//    @Query("""
+//        select distinct d from DiaryEntry d
+//        left join fetch d.subCategory
+//        left join fetch d.category
+//        left join fetch d.metrics items
+//        left join fetch items.metricType
+//        left join fetch items.unit
+//        where d.user.id = :userId
+//          and d.category.id = :categoryId
+//          and d.whenStarted between :from and :to
+//    """)
+//    List<DiaryEntry> findForAnalyticsByCategory(
+//            @Param("userId") Long userId,
+//            @Param("categoryId") Long categoryId,
+//            @Param("from") LocalDateTime from,
+//            @Param("to") LocalDateTime to
+//    );
 
-    @Query("""
-        select distinct d from DiaryEntry d
-        left join fetch d.subCategory
-        left join fetch d.category
-        left join fetch d.metrics items
-        left join fetch items.metricType
-        left join fetch items.unit
-        where d.user.id = :userId
-          and d.subCategory.id = :subCategoryId
-          and d.whenStarted between :from and :to
-    """)
-    List<DiaryEntry> findForAnalyticsBySubCategory(
-            @Param("userId") Long userId,
-            @Param("subCategoryId") Long subCategoryId,
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
-    );
+//    @Query("""
+//        select distinct d from DiaryEntry d
+//        left join fetch d.subCategory
+//        left join fetch d.category
+//        left join fetch d.metrics items
+//        left join fetch items.metricType
+//        left join fetch items.unit
+//        where d.user.id = :userId
+//          and d.subCategory.id = :subCategoryId
+//          and d.whenStarted between :from and :to
+//    """)
+//    List<DiaryEntry> findForAnalyticsBySubCategory(
+//            @Param("userId") Long userId,
+//            @Param("subCategoryId") Long subCategoryId,
+//            @Param("from") LocalDateTime from,
+//            @Param("to") LocalDateTime to
+//    );
 
     @Query("""
         SELECT COUNT(d)

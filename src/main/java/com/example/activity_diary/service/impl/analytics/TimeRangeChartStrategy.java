@@ -3,12 +3,14 @@ package com.example.activity_diary.service.impl.analytics;
 import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.service.analytics.ChartCalculationStrategy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Component
+@Profile("analytics")
 public class TimeRangeChartStrategy implements ChartCalculationStrategy {
 
     private static final BigDecimal MINUTES_IN_HOUR = BigDecimal.valueOf(60);

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+    <changeSet id="v1-21-create-diary-entry-tag" author="diary">
+        <createTable tableName="diary_entry_tag">
+            <column name="entry_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="tag_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- composite PK -->
+        <addPrimaryKey
+                tableName="diary_entry_tag"
+                columnNames="entry_id, tag_id"
+                constraintName="pk_diary_entry_tag"/>
+
+        <!-- FK → diary_entry -->
+        <addForeignKeyConstraint
+                baseTableName="diary_entry_tag"
+                baseColumnNames="entry_id"
+                referencedTableName="diary_entry"
+                referencedColumnNames="id"
+                constraintName="fk_entry_tag_entry"
+                onDelete="CASCADE"/>
+
+        <!-- FK → tag -->
+        <addForeignKeyConstraint
+                baseTableName="diary_entry_tag"
+                baseColumnNames="tag_id"
+                referencedTableName="tag"
+                referencedColumnNames="id"
+                constraintName="fk_entry_tag_tag"
+                onDelete="RESTRICT"/>
+
+        <!-- индексы -->
+        <createIndex
+                tableName="diary_entry_tag"
+                indexName="idx_entry_tag_entry">
+            <column name="entry_id"/>
+        </createIndex>
+
+        <createIndex
+                tableName="diary_entry_tag"
+                indexName="idx_entry_tag_tag">
+            <column name="tag_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

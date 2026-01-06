@@ -1,5 +1,6 @@
 package com.example.activity_diary.dto.diary;
 
+import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -35,4 +36,7 @@ public class DiaryEntryCreateDto {
     @Valid
     @Size(max = 30, message = "You cannot add more than 30 metrics at once")
     private List<EntryMetricCreateDto> metrics;
+
+    @Size(max = 100, message = "tags must not exceed 1000 characters")
+    List<String> tags;
 }

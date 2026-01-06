@@ -1,4 +1,4 @@
-package com.example.activity_diary.dto.diary;
+package com.example.activity_diary.dto.diary.metric;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

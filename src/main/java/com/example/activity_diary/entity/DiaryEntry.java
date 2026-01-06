@@ -11,7 +11,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -64,6 +66,14 @@ public class DiaryEntry extends BaseEntity {
 
     @Column(length = 1000)
     private String description;
+
+    @ManyToMany
+    @JoinTable(
+            name = "diary_entry_tag",
+            joinColumns = @JoinColumn(name = "entry_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -171,6 +181,13 @@ public class DiaryEntry extends BaseEntity {
 
     public void markDeleted() {
         this.status = EntryStatus.DELETED;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags.clear();
+        if (tags != null) {
+            this.tags.addAll(tags);
+        }
     }
 
     public void addMetric(EntryMetric item) {

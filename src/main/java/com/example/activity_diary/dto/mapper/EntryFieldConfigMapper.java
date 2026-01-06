@@ -5,9 +5,7 @@ import com.example.activity_diary.entity.EntryFieldConfig;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
-public abstract class EntryFieldConfigMapper {
-
-    public abstract EntryFieldConfigDto toDto(EntryFieldConfig entity);
-
-    public abstract EntryFieldConfig toEntity(EntryFieldConfigDto dto);
+public interface EntryFieldConfigMapper {
+    EntryFieldConfigDto toDto(EntryFieldConfig entity);
+    EntryFieldConfig toEntity(EntryFieldConfigDto dto);
 }

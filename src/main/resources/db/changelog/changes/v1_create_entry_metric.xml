@@ -7,7 +7,9 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
     <changeSet id="v1-05-create-entry-metric" author="diary">
+
         <createTable tableName="entry_metric">
+
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -22,39 +24,30 @@
 
             <column name="metric_type_id" type="BIGINT">
                 <constraints nullable="false"
-                             foreignKeyName="fk_metric_type"
-                             referencedTableName="dictionary_item"
-                             referencedColumnNames="id"/>
-            </column>
-
-            <column name="unit_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_metric_unit"
+                             foreignKeyName="fk_entry_metric_type"
                              referencedTableName="dictionary_item"
                              referencedColumnNames="id"/>
             </column>
 
             <column name="diary_entry_id" type="BIGINT">
                 <constraints nullable="false"
-                             foreignKeyName="fk_metric_entry"
+                             foreignKeyName="fk_entry_metric_entry"
                              referencedTableName="diary_entry"
                              referencedColumnNames="id"/>
             </column>
 
-            <column name="value" type="INTEGER">
-                <constraints nullable="false"/>
-            </column>
-
         </createTable>
 
-        <createIndex indexName="idx_metric_entry"
+        <createIndex indexName="idx_entry_metric_entry"
                      tableName="entry_metric">
             <column name="diary_entry_id"/>
         </createIndex>
 
-        <createIndex indexName="idx_metric_type"
+        <createIndex indexName="idx_entry_metric_type"
                      tableName="entry_metric">
             <column name="metric_type_id"/>
         </createIndex>
+
     </changeSet>
+
 </databaseChangeLog>

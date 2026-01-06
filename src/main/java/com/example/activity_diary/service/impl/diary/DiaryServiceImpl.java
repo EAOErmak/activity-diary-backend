@@ -5,7 +5,12 @@ import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.mapper.DiaryEntryMapper;
+import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.entity.DiaryEntry;
+import com.example.activity_diary.entity.EntryMetric;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.exception.types.BadRequestException;
@@ -25,6 +30,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -35,7 +41,6 @@ public class DiaryServiceImpl implements DiaryService {
     private final DictionaryRepository dictionaryRepository;
 
     private final DiaryValidationService validationService;
-    private final DiaryItemService itemService;
     private final UserSyncService userSyncService;
     private final DiaryEntryMapper mapper;
 
@@ -110,7 +115,7 @@ public class DiaryServiceImpl implements DiaryService {
                 dto.getDescription()
         );
 
-        itemService.applyOnCreate(dto.getMetrics(), entry);
+        applyMetricsOnCreate(dto.getMetrics(), entry);
 
         DiaryEntry saved = diaryRepository.save(entry);
 
@@ -131,11 +136,11 @@ public class DiaryServiceImpl implements DiaryService {
         }
 
         if (dto.getCategoryId() != null) {
-            entry = updateCategory(entry, dto.getCategoryId());
+            entry.changeCategory(resolveDictionary(dto.getCategoryId(), DictionaryType.CATEGORY));
         }
 
         if (dto.getSubCategoryId() != null) {
-            entry = updateSubCategory(entry, dto.getSubCategoryId());
+            entry.changeSubCategory(resolveDictionary(dto.getSubCategoryId(), DictionaryType.SUB_CATEGORY));
         }
 
         if (dto.getWhenStarted() != null && dto.getWhenEnded() != null) {
@@ -154,7 +159,9 @@ public class DiaryServiceImpl implements DiaryService {
             entry.changeStatus(dto.getStatus());
         }
 
-        itemService.applyOnUpdate(dto.getMetrics(), entry);
+        if (dto.getMetrics() != null) {
+            replaceMetrics(entry, dto.getMetrics());
+        }
 
         DiaryEntry saved = diaryRepository.save(entry);
 
@@ -175,6 +182,64 @@ public class DiaryServiceImpl implements DiaryService {
         diaryRepository.save(entry);
 
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
+    }
+
+    private void applyMetricsOnCreate(
+            List<EntryMetricCreateDto> metrics,
+            DiaryEntry entry
+    ) {
+        if (metrics == null || metrics.isEmpty()) return;
+
+        for (EntryMetricCreateDto dto : metrics) {
+
+            DictionaryItem metricType = resolveDictionary(
+                    dto.getMetricTypeId(),
+                    DictionaryType.METRIC_NAME
+            );
+
+            EntryMetric metric = EntryMetric.create(entry, metricType);
+
+            for (EntryMetricValueCreateDto valueDto : dto.getValues()) {
+
+                DictionaryItem unit = resolveDictionary(
+                        valueDto.getUnitId(),
+                        DictionaryType.METRIC_UNIT
+                );
+
+                metric.addValue(unit, valueDto.getValue());
+            }
+
+            entry.addMetric(metric);
+        }
+    }
+
+    private void replaceMetrics(
+            DiaryEntry entry,
+            List<EntryMetricUpdateDto> metrics
+    ) {
+        entry.getMetrics().clear();
+
+        for (EntryMetricUpdateDto dto : metrics) {
+
+            DictionaryItem metricType = resolveDictionary(
+                    dto.getMetricTypeId(),
+                    DictionaryType.METRIC_NAME
+            );
+
+            EntryMetric metric = EntryMetric.create(entry, metricType);
+
+            for (EntryMetricValueUpdateDto valueDto : dto.getValues()) {
+
+                DictionaryItem unit = resolveDictionary(
+                        valueDto.getUnitId(),
+                        DictionaryType.METRIC_UNIT
+                );
+
+                metric.addValue(unit, valueDto.getValue());
+            }
+
+            entry.addMetric(metric);
+        }
     }
 
     private DictionaryItem resolveDictionary(Long id, DictionaryType type) {

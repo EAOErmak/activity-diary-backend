@@ -1,5 +1,6 @@
 package com.example.activity_diary.dto.diary;
 
+import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -7,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -36,4 +36,7 @@ public class DiaryEntryUpdateDto {
     @Valid
     @Size(max = 30, message = "You cannot add more than 30 metrics at once")
     private List<EntryMetricUpdateDto> metrics;
+
+    @Size(max = 100, message = "tags must not exceed 1000 characters")
+    List<String> tags;
 }
