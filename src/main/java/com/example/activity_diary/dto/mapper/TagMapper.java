@@ -1,0 +1,14 @@
+package com.example.activity_diary.dto.mapper;
+
+import com.example.activity_diary.dto.diary.TagDto;
+import com.example.activity_diary.entity.Tag;
+import org.mapstruct.*;
+
+import java.util.List;
+
+@Mapper(componentModel = "spring")
+public interface TagMapper {
+    TagDto toDto(Tag tag);
+    Tag toEntity(TagDto tagDto);
+    List<TagDto> toDtoList(List<Tag> tags);
+}

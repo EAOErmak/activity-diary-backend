@@ -29,6 +29,8 @@ public class DiaryEntryDto {
 
     private List<EntryMetricResponseDto> metrics;
 
+    private List<String> tags;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

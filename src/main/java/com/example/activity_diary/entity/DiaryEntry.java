@@ -73,6 +73,7 @@ public class DiaryEntry extends BaseEntity {
             joinColumns = @JoinColumn(name = "entry_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
     @Enumerated(EnumType.STRING)

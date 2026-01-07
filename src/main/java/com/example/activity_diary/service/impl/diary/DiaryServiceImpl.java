@@ -42,6 +42,7 @@ public class DiaryServiceImpl implements DiaryService {
 
     private final DiaryValidationService validationService;
     private final UserSyncService userSyncService;
+    private final TagService tagService;
     private final DiaryEntryMapper mapper;
 
     @Override
@@ -117,6 +118,8 @@ public class DiaryServiceImpl implements DiaryService {
 
         applyMetricsOnCreate(dto.getMetrics(), entry);
 
+        entry.setTags(tagService.resolveTags(dto.getTags()));
+
         DiaryEntry saved = diaryRepository.save(entry);
 
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
@@ -161,6 +164,10 @@ public class DiaryServiceImpl implements DiaryService {
 
         if (dto.getMetrics() != null) {
             replaceMetrics(entry, dto.getMetrics());
+        }
+
+        if (dto.getTags() != null) {
+            entry.setTags(tagService.resolveTags(dto.getTags()));
         }
 
         DiaryEntry saved = diaryRepository.save(entry);

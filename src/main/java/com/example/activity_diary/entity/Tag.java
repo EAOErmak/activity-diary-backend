@@ -3,10 +3,7 @@ package com.example.activity_diary.entity;
 import com.example.activity_diary.entity.base.BaseEntity;
 import com.example.activity_diary.entity.enums.TagStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(
@@ -19,6 +16,7 @@ import lombok.NoArgsConstructor;
         }
 )
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

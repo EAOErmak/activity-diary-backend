@@ -6,10 +6,12 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricValueResponseDto;
 import com.example.activity_diary.entity.EntryMetric;
 import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.EntryMetricValue;
+import com.example.activity_diary.entity.Tag;
 import org.mapstruct.*;
 import org.springframework.data.domain.Slice;
 
 import java.util.List;
+import java.util.Set;
 
 @Mapper(
         componentModel = "spring",
@@ -29,7 +31,7 @@ public interface DiaryEntryMapper {
 
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "metrics", target = "metrics")
-
+    @Mapping(source = "tags", target = "tags")
     DiaryEntryDto toDto(DiaryEntry entry);
 
     /* ======================================================
@@ -42,6 +44,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "subCategory", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "metrics", ignore = true)
+    @Mapping(target = "tags", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     DiaryEntry toEntity(DiaryEntryCreateDto dto);
@@ -53,6 +56,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "subCategory", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "metrics", ignore = true)
+    @Mapping(target = "tags", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget DiaryEntry entry, DiaryEntryUpdateDto dto);
@@ -94,4 +98,12 @@ public interface DiaryEntryMapper {
     default Slice<DiaryEntryViewDto> toListDtoSlice(Slice<DiaryEntry> slice) {
         return slice.map(this::toListDto);
     }
+
+    default List<String> map(Set<Tag> tags) {
+        if (tags == null) return List.of();
+        return tags.stream()
+                .map(Tag::getName)
+                .toList();
+    }
+
 }
