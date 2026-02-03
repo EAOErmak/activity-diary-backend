@@ -6,7 +6,8 @@
             http://www.liquibase.org/xml/ns/dbchangelog
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <changeSet id="create-diary-entry" author="diary">
+    <changeSet id="v1-create-diary-entry" author="diary">
+
         <createTable tableName="diary_entry">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
@@ -20,23 +21,15 @@
                 <constraints nullable="false"/>
             </column>
 
-            <column name="category_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-
-            <column name="sub_category_id" type="BIGINT">
-                <constraints nullable="true"/>
-            </column>
-
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="when_started" type="TIMESTAMP">
+            <column name="when_started" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="when_ended" type="TIMESTAMP">
+            <column name="when_ended" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>
             </column>
 
@@ -51,7 +44,6 @@
             <column name="status" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
-
         </createTable>
 
         <createIndex indexName="idx_diary_user" tableName="diary_entry">
@@ -66,24 +58,6 @@
             <column name="status"/>
         </createIndex>
 
-        <createIndex indexName="idx_diary_category" tableName="diary_entry">
-            <column name="category_id"/>
-        </createIndex>
-
-        <addForeignKeyConstraint
-                baseTableName="diary_entry"
-                baseColumnNames="category_id"
-                referencedTableName="dictionary_item"
-                referencedColumnNames="id"
-                constraintName="fk_diary_category"/>
-
-        <addForeignKeyConstraint
-                baseTableName="diary_entry"
-                baseColumnNames="sub_category_id"
-                referencedTableName="dictionary_item"
-                referencedColumnNames="id"
-                constraintName="fk_diary_sub_category"/>
-
         <addForeignKeyConstraint
                 baseTableName="diary_entry"
                 baseColumnNames="user_id"
@@ -91,5 +65,6 @@
                 referencedColumnNames="id"
                 constraintName="fk_diary_user"
                 onDelete="CASCADE"/>
+
     </changeSet>
 </databaseChangeLog>

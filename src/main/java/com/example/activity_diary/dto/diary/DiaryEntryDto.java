@@ -11,12 +11,6 @@ public class DiaryEntryDto {
 
     private Long id;
 
-    private Long categoryId;
-    private String categoryName;
-
-    private Long subCategoryId;
-    private String subCategoryName;
-
     private Instant whenStarted;
     private Instant whenEnded;
     private Integer duration;
@@ -28,8 +22,6 @@ public class DiaryEntryDto {
     private Long userId;
 
     private List<EntryMetricResponseDto> metrics;
-
-    private List<String> tags;
 
     private Instant createdAt;
     private Instant updatedAt;

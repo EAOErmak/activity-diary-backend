@@ -4,6 +4,7 @@ public enum TagStatus {
     PROPOSED,    // создан пользователем
     APPROVED,    // подтверждён разработчиком
     DEPRECATED,  // устарел
+    PENDING,
     REJECTED     // мусор / опечатка
 }
 

@@ -14,7 +14,5 @@ public class DiaryEntryViewDto {
     private EntryStatus status;
     private Instant whenStarted;
     private Instant whenEnded;
-    private String categoryName;
-    private String subCategoryName;
 }
 

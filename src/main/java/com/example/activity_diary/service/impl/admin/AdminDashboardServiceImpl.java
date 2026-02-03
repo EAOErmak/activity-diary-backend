@@ -1,3 +1,4 @@
+/*
 package com.example.activity_diary.service.impl.admin;
 
 import com.example.activity_diary.repository.UserRepository;
@@ -69,3 +70,4 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         );
     }
 }
+*/

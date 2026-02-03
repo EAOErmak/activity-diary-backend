@@ -41,7 +41,6 @@ public class AdminEntryFieldConfigServiceImpl implements AdminEntryFieldConfigSe
                 .orElseThrow(() -> new NotFoundException("Config not found"));
 
         config.setName(dto.getName());
-        config.setShowSubCategory(dto.getShowSubCategory());
         config.setShowMetrics(dto.getShowMetrics());
         config.setShowMood(dto.getShowMood());
         config.setShowDescription(dto.getShowDescription());

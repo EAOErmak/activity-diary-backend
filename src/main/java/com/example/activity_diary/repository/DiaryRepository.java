@@ -19,13 +19,9 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
             d.id,
             d.status,
             d.whenStarted,
-            d.whenEnded,
-            c.label,
-            sc.label
+            d.whenEnded
         )
         from DiaryEntry d
-        left join d.category c
-        left join d.subCategory sc
         where d.user.id = :userId
           and d.status <> 'DELETED'
     """)
@@ -37,8 +33,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     @Query("""
         select d
         from DiaryEntry d
-        left join fetch d.category
-        left join fetch d.subCategory
         where d.user.id = :userId
           and d.whenStarted < :to
           and d.whenEnded   > :from
@@ -55,13 +49,9 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
             d.id,
             d.status,
             d.whenStarted,
-            d.whenEnded,
-            c.label,
-            sc.label
+            d.whenEnded
         )
         from DiaryEntry d
-        left join d.category c
-        left join d.subCategory sc
         where d.user.id = :userId
         order by d.updatedAt desc
     """)

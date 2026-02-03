@@ -1,7 +1,6 @@
 package com.example.activity_diary.entity;
 
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -9,9 +8,7 @@ import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +19,6 @@ import java.util.Set;
                 @Index(name = "idx_diary_user", columnList = "user_id"),
                 @Index(name = "idx_diary_started", columnList = "when_started"),
                 @Index(name = "idx_diary_status", columnList = "status"),
-                @Index(name = "idx_diary_category", columnList = "category_id")
         }
 )
 @Getter
@@ -31,14 +27,6 @@ import java.util.Set;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class DiaryEntry extends BaseEntity {
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "category_id", nullable = false)
-    private DictionaryItem category;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "sub_category_id", nullable = true)
-    private DictionaryItem subCategory;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -74,7 +62,7 @@ public class DiaryEntry extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     @Builder.Default
-    private Set<Tag> tags = new HashSet<>();
+    private Set<Tag> tags = new java.util.HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -91,21 +79,8 @@ public class DiaryEntry extends BaseEntity {
         this.mood = mood;
     }
 
-    public void changeCategory(DictionaryItem newCategory) {
-        this.category = newCategory;
-    }
-
-    public void changeSubCategory(DictionaryItem newSubCategory) {
-        if (newSubCategory == null) {
-            throw new IllegalArgumentException("SubCategory cannot be null");
-        }
-        this.subCategory = newSubCategory;
-    }
-
     public static DiaryEntry create(
             User user,
-            DictionaryItem category,
-            DictionaryItem subCategory,
             Instant started,
             Instant ended,
             Short mood,
@@ -122,8 +97,6 @@ public class DiaryEntry extends BaseEntity {
 
         DiaryEntry entry = DiaryEntry.builder()
                 .user(user)
-                .category(category)
-                .subCategory(subCategory)
                 .whenStarted(started)
                 .whenEnded(ended)
                 .duration(duration)
@@ -185,10 +158,9 @@ public class DiaryEntry extends BaseEntity {
     }
 
     public void setTags(Set<Tag> tags) {
+        if (this.tags == null) this.tags = new java.util.HashSet<>();
         this.tags.clear();
-        if (tags != null) {
-            this.tags.addAll(tags);
-        }
+        if (tags != null) this.tags.addAll(tags);
     }
 
     public void addMetric(EntryMetric item) {

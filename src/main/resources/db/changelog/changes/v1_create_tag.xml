@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-create-tag" author="diary">
+
+        <createTable tableName="tag">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_by_user_id" type="BIGINT"/>
+        </createTable>
+
+        <!-- Индексы -->
+        <createIndex indexName="idx_tag_name" tableName="tag">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tag_status" tableName="tag">
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Уникальность имени -->
+        <addUniqueConstraint
+                tableName="tag"
+                columnNames="name"
+                constraintName="uq_tag_name"/>
+
+        <!-- FK на users (опциональный, created_by может быть NULL) -->
+        <addForeignKeyConstraint
+                baseTableName="tag"
+                baseColumnNames="created_by_user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_tag_created_by_user"
+                onDelete="SET NULL"/>
+
+    </changeSet>
+
+</databaseChangeLog>

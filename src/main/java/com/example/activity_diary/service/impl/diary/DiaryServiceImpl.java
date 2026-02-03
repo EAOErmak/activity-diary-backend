@@ -18,6 +18,7 @@ import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DiaryRepository;
 import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.repository.UserRepository;
+import com.example.activity_diary.service.analytics.TagUsageAggService;
 import com.example.activity_diary.service.diary.*;
 import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +43,9 @@ public class DiaryServiceImpl implements DiaryService {
 
     private final DiaryValidationService validationService;
     private final UserSyncService userSyncService;
-    private final TagService tagService;
+    private final TagResolverService tagResolverService;
     private final DiaryEntryMapper mapper;
+    private final TagUsageAggService tagUsageAggService;
 
     @Override
     @Transactional(readOnly = true)
@@ -96,20 +98,8 @@ public class DiaryServiceImpl implements DiaryService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
-        DictionaryItem category = resolveDictionary(
-                dto.getCategoryId(),
-                DictionaryType.CATEGORY
-        );
-
-        DictionaryItem subCategory = resolveDictionary(
-                dto.getSubCategoryId(),
-                DictionaryType.SUB_CATEGORY
-        );
-
         DiaryEntry entry = DiaryEntry.create(
                 user,
-                category,
-                subCategory,
                 dto.getWhenStarted(),
                 dto.getWhenEnded(),
                 dto.getMood(),
@@ -118,9 +108,11 @@ public class DiaryServiceImpl implements DiaryService {
 
         applyMetricsOnCreate(dto.getMetrics(), entry);
 
-        entry.setTags(tagService.resolveTags(dto.getTags()));
+        entry.setTags(tagResolverService.resolveFromDescription(userId, dto.getDescription()));
 
         DiaryEntry saved = diaryRepository.save(entry);
+
+        tagUsageAggService.onEntryCreated(saved);
 
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
 
@@ -136,14 +128,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         if (entry.getWhenEnded().isBefore(Instant.now())) {
             throw new BadRequestException("Past entry cannot be modified");
-        }
-
-        if (dto.getCategoryId() != null) {
-            entry.changeCategory(resolveDictionary(dto.getCategoryId(), DictionaryType.CATEGORY));
-        }
-
-        if (dto.getSubCategoryId() != null) {
-            entry.changeSubCategory(resolveDictionary(dto.getSubCategoryId(), DictionaryType.SUB_CATEGORY));
         }
 
         if (dto.getWhenStarted() != null && dto.getWhenEnded() != null) {
@@ -166,8 +150,8 @@ public class DiaryServiceImpl implements DiaryService {
             replaceMetrics(entry, dto.getMetrics());
         }
 
-        if (dto.getTags() != null) {
-            entry.setTags(tagService.resolveTags(dto.getTags()));
+        if (dto.getDescription() != null) {
+            entry.setTags(tagResolverService.resolveFromDescription(userId, dto.getDescription()));
         }
 
         DiaryEntry saved = diaryRepository.save(entry);
@@ -259,15 +243,5 @@ public class DiaryServiceImpl implements DiaryService {
         }
 
         return item;
-    }
-
-    private DiaryEntry updateCategory(DiaryEntry entry, Long id) {
-        entry.changeCategory(resolveDictionary(id, DictionaryType.CATEGORY));
-        return entry;
-    }
-
-    private DiaryEntry updateSubCategory(DiaryEntry entry, Long id) {
-        entry.changeSubCategory(resolveDictionary(id, DictionaryType.SUB_CATEGORY));
-        return entry;
     }
 }

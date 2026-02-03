@@ -1,3 +1,4 @@
+/*
 package com.example.activity_diary.controller.admin;
 
 import com.example.activity_diary.dto.ApiResponse;
@@ -25,3 +26,4 @@ public class AdminDashboardController {
         );
     }
 }
+*/

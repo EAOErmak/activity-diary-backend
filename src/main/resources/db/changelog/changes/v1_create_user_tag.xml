@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-create-user-tag" author="diary">
+        <createTable tableName="user_tag">
+
+            <!-- Составной первичный ключ -->
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="tag_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- PK (user_id, tag_id) -->
+        <addPrimaryKey
+                tableName="user_tag"
+                columnNames="user_id, tag_id"
+                constraintName="pk_user_tag"/>
+
+        <!-- Индексы -->
+        <createIndex indexName="idx_user_tag_user" tableName="user_tag">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_tag_tag" tableName="user_tag">
+            <column name="tag_id"/>
+        </createIndex>
+
+        <!-- Внешние ключи -->
+        <addForeignKeyConstraint
+                baseTableName="user_tag"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_user_tag_user"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="user_tag"
+                baseColumnNames="tag_id"
+                referencedTableName="tag"
+                referencedColumnNames="id"
+                constraintName="fk_user_tag_tag"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>

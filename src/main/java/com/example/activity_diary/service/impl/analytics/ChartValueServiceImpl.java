@@ -1,3 +1,4 @@
+/*
 package com.example.activity_diary.service.impl.analytics;
 
 import com.example.activity_diary.entity.DiaryEntry;
@@ -74,3 +75,4 @@ public class ChartValueServiceImpl implements ChartValueService {
         return value == null ? 0.0 : value.doubleValue();
     }
 }
+*/

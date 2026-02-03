@@ -48,7 +48,6 @@ public class EntryFieldConfigServiceImpl implements EntryFieldConfigService {
     private EntryFieldConfigDto buildDefaultConfig() {
         EntryFieldConfigDto dto = new EntryFieldConfigDto();
 
-        dto.setShowSubCategory(true);
         dto.setShowMetrics(true);
         dto.setShowMood(true);
         dto.setShowDescription(true);

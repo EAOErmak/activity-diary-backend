@@ -10,7 +10,6 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.Role;
-import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DictionaryRepository;
@@ -42,12 +41,6 @@ public class DictionaryServiceImpl implements DictionaryService {
         if (dto.getLabel() == null || dto.getLabel().trim().isEmpty())
             throw new BadRequestException("Label is required");
 
-        if (dto.getType() == DictionaryType.CATEGORY && dto.getChartType() == null)
-            throw new BadRequestException("chartType is required for CATEGORY");
-
-        if (dto.getType() == DictionaryType.CATEGORY && dto.getEntryFieldConfigId() == null)
-            throw new BadRequestException("EntryFieldConfig is required for CATEGORY");
-
         String cleanLabel = dto.getLabel().trim();
 
         if (dictionaryRepository.existsByTypeAndLabelIgnoreCase(dto.getType(), cleanLabel))
@@ -55,23 +48,7 @@ public class DictionaryServiceImpl implements DictionaryService {
 
         DictionaryItem parent = null;
 
-        if (dto.getType() == DictionaryType.SUB_CATEGORY) {
-            if (dto.getParentId() == null)
-                throw new BadRequestException("parentId is required for SUB_CATEGORY");
-
-            parent = dictionaryRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new NotFoundException("Parent not found"));
-
-            if (parent.getType() != DictionaryType.CATEGORY)
-                throw new BadRequestException("SUB_CATEGORY can be linked only to CATEGORY");
-        }
-
         EntryFieldConfig config = null;
-
-        if (dto.getType() == DictionaryType.CATEGORY) {
-            config = entryFieldConfigRepository.findById(dto.getEntryFieldConfigId())
-                    .orElseThrow(() -> new NotFoundException("EntryFieldConfig not found"));
-        }
 
         DictionaryItem item = DictionaryItem.builder()
                 .type(dto.getType())
@@ -97,10 +74,6 @@ public class DictionaryServiceImpl implements DictionaryService {
             Long parentId,
             Role role
     ) {
-        if (type == DictionaryType.SUB_CATEGORY && parentId == null) {
-            throw new BadRequestException("parentId is required for type WHAT");
-        }
-
         return dictionaryRepository
                 .findByTypeAndVisibleForUser(type, parentId, role)
                 .stream()

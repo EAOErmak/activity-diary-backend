@@ -1,0 +1,48 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="v1_create_tag_usage_agg" author="you">
+        <createTable tableName="tag_usage_agg">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bucket" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bucket_start" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="usage_count" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_duration_minutes" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="tag_usage_agg"
+                columnNames="user_id, tag_id, bucket, bucket_start"
+                constraintName="uk_tag_usage_agg"/>
+
+        <createIndex tableName="tag_usage_agg" indexName="idx_tag_usage_user_bucket_start">
+            <column name="user_id"/>
+            <column name="bucket"/>
+            <column name="bucket_start"/>
+        </createIndex>
+
+        <createIndex tableName="tag_usage_agg" indexName="idx_tag_usage_user_tag_bucket_start">
+            <column name="user_id"/>
+            <column name="tag_id"/>
+            <column name="bucket"/>
+            <column name="bucket_start"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

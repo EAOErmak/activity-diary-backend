@@ -19,32 +19,16 @@ import java.util.Set;
 )
 public interface DiaryEntryMapper {
 
-    /* ======================================================
-       DiaryEntry → DiaryEntryDto
-       ====================================================== */
-
-    @Mapping(source = "category.id", target = "categoryId")
-    @Mapping(source = "category.label", target = "categoryName")
-
-    @Mapping(source = "subCategory.id", target = "subCategoryId")
-    @Mapping(source = "subCategory.label", target = "subCategoryName")
-
+    //DiaryEntry → DiaryEntryDto
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "metrics", target = "metrics")
-    @Mapping(source = "tags", target = "tags")
     DiaryEntryDto toDto(DiaryEntry entry);
 
-    /* ======================================================
-       Create / Update
-       ====================================================== */
-
+    //Create / Update
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "subCategory", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "metrics", ignore = true)
-    @Mapping(target = "tags", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     DiaryEntry toEntity(DiaryEntryCreateDto dto);
@@ -52,19 +36,13 @@ public interface DiaryEntryMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "subCategory", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "metrics", ignore = true)
-    @Mapping(target = "tags", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget DiaryEntry entry, DiaryEntryUpdateDto dto);
 
-    /* ======================================================
-       EntryMetric → EntryMetricResponseDto
-       ====================================================== */
-
+    //EntryMetric → EntryMetricResponseDto
     @Mapping(source = "metricType.id", target = "metricTypeId")
     @Mapping(source = "metricType.label", target = "metricTypeName")
     @Mapping(source = "values", target = "values")
@@ -72,10 +50,7 @@ public interface DiaryEntryMapper {
 
     List<EntryMetricResponseDto> toMetricResponseDtoList(List<EntryMetric> metrics);
 
-    /* ======================================================
-       EntryMetricValue → EntryMetricValueResponseDto
-       ====================================================== */
-
+    //EntryMetricValue → EntryMetricValueResponseDto
     @Mapping(source = "unit.id", target = "unitId")
     @Mapping(source = "unit.label", target = "unitName")
     @Mapping(source = "value", target = "value")
@@ -85,12 +60,7 @@ public interface DiaryEntryMapper {
             List<EntryMetricValue> values
     );
 
-    /* ======================================================
-       Lightweight View DTO
-       ====================================================== */
-
-    @Mapping(source = "category.label", target = "categoryName")
-    @Mapping(source = "subCategory.label", target = "subCategoryName")
+    //Lightweight View DTO
     DiaryEntryViewDto toListDto(DiaryEntry entity);
 
     List<DiaryEntryViewDto> toListDtoList(List<DiaryEntry> entities);

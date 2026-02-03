@@ -8,9 +8,6 @@ public class EntryFieldConfigDto {
     private Long id;
     private String name;
 
-    private Long categoryId;
-
-    private Boolean showSubCategory;
     private Boolean showMetrics;
     private Boolean showMood;
     private Boolean showDescription;

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Service
 public class DiaryValidationServiceImpl implements DiaryValidationService {
@@ -19,14 +18,6 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
 
     @Override
     public void validateCreate(DiaryEntryCreateDto dto) {
-
-        if (dto.getCategoryId() == null) {
-            throw new BadRequestException("whatHappenedId is required");
-        }
-
-        if (dto.getSubCategoryId() == null) {
-            throw new BadRequestException("whatId is required");
-        }
 
         validateTime(dto.getWhenStarted(), dto.getWhenEnded());
 

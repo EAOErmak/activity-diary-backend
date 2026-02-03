@@ -14,12 +14,6 @@ import java.util.List;
 @Setter
 public class DiaryEntryUpdateDto {
 
-    @Positive(message = "categoryId must be a positive ID")
-    private Long categoryId;
-
-    @Positive(message = "subCategoryId must be a positive ID")
-    private Long subCategoryId;
-
     private Instant whenStarted;
 
     private Instant whenEnded;
@@ -36,7 +30,4 @@ public class DiaryEntryUpdateDto {
     @Valid
     @Size(max = 30, message = "You cannot add more than 30 metrics at once")
     private List<EntryMetricUpdateDto> metrics;
-
-    @Size(max = 20, message = "You cannot add more than 20 tags")
-    private List<@NotBlank @Size(max = 64, message = "Tag length must not exceed 64 characters") String> tags;
 }
