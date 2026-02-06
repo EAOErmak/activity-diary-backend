@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="v1_create_template_day_item" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="template_day_item"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="template_day_item">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="day_template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="position" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_template_day_item_week_template"
+                baseTableName="template_day_item"
+                baseColumnNames="template_id"
+                referencedTableName="template"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_template_day_item_day_template"
+                baseTableName="template_day_item"
+                baseColumnNames="day_template_id"
+                referencedTableName="template"
+                referencedColumnNames="id"
+                onDelete="RESTRICT"/>
+
+        <addUniqueConstraint
+                tableName="template_day_item"
+                columnNames="template_id,position"
+                constraintName="uk_template_day_item_pos"/>
+
+        <createIndex indexName="idx_template_day_item_template" tableName="template_day_item">
+            <column name="template_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_template_day_item_day_template" tableName="template_day_item">
+            <column name="day_template_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

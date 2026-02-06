@@ -1,0 +1,6 @@
+package com.example.activity_diary.entity.enums;
+
+public enum TemplateType {
+    DAY,
+    WEEK
+}

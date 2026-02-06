@@ -18,6 +18,7 @@ import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.DiaryRepository;
 import com.example.activity_diary.repository.DictionaryRepository;
 import com.example.activity_diary.repository.UserRepository;
+import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import com.example.activity_diary.service.diary.*;
 import com.example.activity_diary.service.sync.UserSyncService;
@@ -46,6 +47,7 @@ public class DiaryServiceImpl implements DiaryService {
     private final TagResolverService tagResolverService;
     private final DiaryEntryMapper mapper;
     private final TagUsageAggService tagUsageAggService;
+    private final MetricUsageAggService metricUsageAggService;
 
     @Override
     @Transactional(readOnly = true)
@@ -111,6 +113,8 @@ public class DiaryServiceImpl implements DiaryService {
         entry.setTags(tagResolverService.resolveFromDescription(userId, dto.getDescription()));
 
         DiaryEntry saved = diaryRepository.save(entry);
+
+        metricUsageAggService.onEntryCreated(saved);
 
         tagUsageAggService.onEntryCreated(saved);
 

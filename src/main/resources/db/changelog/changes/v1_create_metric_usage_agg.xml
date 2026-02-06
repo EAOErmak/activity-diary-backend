@@ -1,0 +1,58 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="v1_create_metric_usage_agg" author="you">
+        <createTable tableName="metric_usage_agg">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="metric_type_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="unit_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="bucket" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="bucket_start" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="value_sum" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="value_count" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="metric_usage_agg"
+                columnNames="user_id, metric_type_id, unit_id, bucket, bucket_start"
+                constraintName="uk_metric_usage_agg"/>
+
+        <createIndex tableName="metric_usage_agg" indexName="idx_metric_usage_user_bucket_start">
+            <column name="user_id"/>
+            <column name="bucket"/>
+            <column name="bucket_start"/>
+        </createIndex>
+
+        <!-- фикс: индекс создаём на metric_usage_agg -->
+        <createIndex tableName="metric_usage_agg" indexName="idx_metric_usage_user_type_unit_bucket_start">
+            <column name="user_id"/>
+            <column name="metric_type_id"/>
+            <column name="unit_id"/>
+            <column name="bucket"/>
+            <column name="bucket_start"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

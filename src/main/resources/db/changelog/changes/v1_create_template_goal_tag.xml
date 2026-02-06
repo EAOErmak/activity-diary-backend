@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="v1_create_template_goal_tag" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="template_goal_tag"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="template_goal_tag">
+            <column name="template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usage_count" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="template_goal_tag" columnNames="template_id,tag_id" constraintName="pk_template_goal_tag"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_template_goal_tag_template"
+                baseTableName="template_goal_tag"
+                baseColumnNames="template_id"
+                referencedTableName="template"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_template_goal_tag_tag"
+                baseTableName="template_goal_tag"
+                baseColumnNames="tag_id"
+                referencedTableName="tag"
+                referencedColumnNames="id"
+                onDelete="RESTRICT"/>
+
+        <createIndex indexName="idx_template_goal_tag_template" tableName="template_goal_tag">
+            <column name="template_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_template_goal_tag_tag" tableName="template_goal_tag">
+            <column name="tag_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
