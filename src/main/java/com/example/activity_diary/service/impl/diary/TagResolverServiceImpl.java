@@ -2,10 +2,10 @@ package com.example.activity_diary.service.impl.diary;
 
 import com.example.activity_diary.entity.*;
 import com.example.activity_diary.entity.enums.TagStatus;
-import com.example.activity_diary.repository.TagRepository;
-import com.example.activity_diary.repository.TagSuggestionRepository;
+import com.example.activity_diary.repository.tag.TagRepository;
+import com.example.activity_diary.repository.tag.TagSuggestionRepository;
 import com.example.activity_diary.repository.UserRepository;
-import com.example.activity_diary.repository.UserTagRepository;
+import com.example.activity_diary.repository.tag.UserTagRepository;
 import com.example.activity_diary.service.diary.TagResolverService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class TagResolverServiceImpl implements TagResolverService {
      * - '#' должен быть в начале строки или после пробела (не "тест#спорт")
      */
     private static final Pattern TAG_PATTERN =
-            Pattern.compile("(?<!\\S)#([\\p{L}_-]+)(?=\\s|$)");
+            Pattern.compile("(?<!\\S)#([\\p{L}\\p{N}_-]+)(?=\\s|$)");
 
     @Transactional
     @Override
@@ -148,15 +148,10 @@ public class TagResolverServiceImpl implements TagResolverService {
         tagSuggestionRepository.save(s);
     }
 
-    /**
-     * Нормализация: lowercase + защита от мусора.
-     * Т.к. мы парсим regex-ом только [буквы_-], тут в основном только lowercase.
-     */
     private String normalize(String raw) {
         if (raw == null) return null;
         String s = raw.trim().toLowerCase(Locale.ROOT);
-        // защита: оставляем только буквы/_/-
-        s = s.replaceAll("[^\\p{L}_\\-]+", "");
+        s = s.replaceAll("[^\\p{L}\\p{N}_\\-]+", "");
         return s;
     }
 

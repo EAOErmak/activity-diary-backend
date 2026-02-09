@@ -61,6 +61,7 @@ public interface DiaryEntryMapper {
     );
 
     //Lightweight View DTO
+    @Mapping(target = "firstTag", expression = "java(firstTag(entity.getTags()))")
     DiaryEntryViewDto toListDto(DiaryEntry entity);
 
     List<DiaryEntryViewDto> toListDtoList(List<DiaryEntry> entities);
@@ -76,4 +77,14 @@ public interface DiaryEntryMapper {
                 .toList();
     }
 
+    default String firstTag(Set<Tag> tags) {
+        if (tags == null || tags.isEmpty()) return null;
+
+        // "первый" делаем детерминированным: минимальный tag.id
+        return tags.stream()
+                .filter(t -> t != null && t.getId() != null)
+                .min(java.util.Comparator.comparing(Tag::getId))
+                .map(Tag::getName)
+                .orElse(null);
+    }
 }

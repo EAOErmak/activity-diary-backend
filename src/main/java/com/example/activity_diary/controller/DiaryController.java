@@ -22,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,15 +34,40 @@ public class DiaryController {
 
     private final DiaryService diaryService;
 
-    @RateLimit(capacity = 30, refillTokens = 30, refillPeriodSeconds = 30)
     @GetMapping("/mine")
     public ResponseEntity<ApiResponse<Slice<DiaryEntryViewDto>>> myEntries(
             @AuthenticationPrincipal LightUserDetails user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+
+            @RequestParam(required = false) com.example.activity_diary.entity.enums.UiStatus uiStatus,
+
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            Instant now,
+
+            // AND фильтр по тегам:
+            @RequestParam(required = false, name = "tags") List<String> tags,
+
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            Instant from,
+
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            Instant to
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success(diaryService.getMyEntries(user.getId(), pageable)));
+        Pageable pageable = PageRequest.of(
+                page, size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "whenStarted")
+                        .and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))
+        );
+
+        Instant effectiveNow = (now != null) ? now : Instant.now();
+
+        return ResponseEntity.ok(ApiResponse.success(
+                diaryService.getMyEntriesFiltered(user.getId(), uiStatus, effectiveNow, tags, from, to, pageable)
+        ));
     }
 
     @GetMapping("/all")

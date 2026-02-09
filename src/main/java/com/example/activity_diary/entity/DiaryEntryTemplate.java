@@ -27,26 +27,18 @@ import java.util.Set;
 @Builder
 public class DiaryEntryTemplate extends BaseEntity {
 
-    /** Владелец шаблона */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    /** Имя шаблона (для UI) */
     @Column(nullable = false, length = 120)
     private String name;
 
-    /** Настроение (1..5 если ты так хочешь, можно валидировать в сервисе/методе) */
     private Short mood;
 
-    /** Описание (можно хранить и как “текст с #тегами” если ты это используешь) */
     @Column(length = 1000)
     private String description;
 
-    /**
-     * Теги шаблона записи.
-     * Важно: это шаблонные теги. При создании реальной DiaryEntry они копируются в запись.
-     */
     @ManyToMany
     @JoinTable(
             name = "diary_entry_template_tag",
@@ -56,18 +48,13 @@ public class DiaryEntryTemplate extends BaseEntity {
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
-    /**
-     * Метрики шаблона (тип метрики -> значения по unit).
-     * Это НЕ EntryMetric, потому что EntryMetric жёстко привязан к DiaryEntry.
-     * Нужны отдельные сущности под шаблоны.
-     */
     @OneToMany(
             mappedBy = "template",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     @Builder.Default
-    private List<EntryTemplateMetric> metrics = new ArrayList<>();
+    private Set<EntryTemplateMetric> metrics = new HashSet<>();
 
     /* ---------- DOMAIN HELPERS ---------- */
 
@@ -95,10 +82,6 @@ public class DiaryEntryTemplate extends BaseEntity {
         if (tags != null) this.tags.addAll(tags);
     }
 
-    /**
-     * Добавить метрику-шаблон.
-     * Важно: EntryTemplateMetric.create(...) прикрепляет её к этому шаблону.
-     */
     public void addMetric(EntryTemplateMetric metric) {
         if (metric == null) throw new IllegalArgumentException("Metric cannot be null");
         metric.attachTo(this);
@@ -111,10 +94,6 @@ public class DiaryEntryTemplate extends BaseEntity {
         metric.detach();
     }
 
-    /**
-     * Удобная фабрика.
-     * (Логику уникальности name в рамках user обеспечивает БД constraint.)
-     */
     public static DiaryEntryTemplate create(User user, String name, Short mood, String description) {
         if (user == null) throw new IllegalArgumentException("User is required");
         DiaryEntryTemplate t = DiaryEntryTemplate.builder()

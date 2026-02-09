@@ -1,7 +1,7 @@
 package com.example.activity_diary.service.impl.analytics;
 
 import com.example.activity_diary.entity.*;
-import com.example.activity_diary.repository.MetricUsageAggRepository;
+import com.example.activity_diary.repository.diary.MetricUsageAggRepository;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

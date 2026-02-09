@@ -1,4 +1,4 @@
-package com.example.activity_diary.repository;
+package com.example.activity_diary.repository.diary;
 
 import com.example.activity_diary.entity.MetricUsageAgg;
 import com.example.activity_diary.entity.MetricUsageAggId;

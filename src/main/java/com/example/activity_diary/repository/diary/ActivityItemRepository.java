@@ -1,4 +1,4 @@
-package com.example.activity_diary.repository;
+package com.example.activity_diary.repository.diary;
 
 import com.example.activity_diary.entity.EntryMetric;
 import org.springframework.data.jpa.repository.JpaRepository;

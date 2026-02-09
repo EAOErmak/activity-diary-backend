@@ -5,7 +5,7 @@ import com.example.activity_diary.dto.mapper.EntryFieldConfigMapper;
 import com.example.activity_diary.entity.EntryFieldConfig;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.EntryFieldConfigRepository;
+import com.example.activity_diary.repository.diary.EntryFieldConfigRepository;
 import com.example.activity_diary.service.admin.AdminEntryFieldConfigService;
 import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;

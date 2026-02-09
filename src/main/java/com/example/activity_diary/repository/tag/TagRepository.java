@@ -1,6 +1,8 @@
-package com.example.activity_diary.repository;
+package com.example.activity_diary.repository.tag;
 
 import com.example.activity_diary.entity.Tag;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,8 +10,11 @@ import org.springframework.data.repository.query.Param;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
+
+    List<Tag> findAllByIdIn(Set<Long> ids);
 
     Optional<Tag> findByName(String name);
 
@@ -40,6 +45,33 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             t.name
     """)
     List<Tag> findAllVisible(@Param("userId") Long userId);
+
+    @Query("""
+        select t from Tag t
+        order by
+          case
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.PENDING then 0
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.APPROVED then 1
+            else 2
+          end,
+          t.name,
+          t.id
+    """)
+    Slice<Tag> findAllSlice(Pageable pageable);
+
+    @Query("""
+        select t from Tag t
+        where lower(t.name) like concat('%', :q, '%')
+        order by
+          case
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.PENDING then 0
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.APPROVED then 1
+            else 2
+          end,
+          t.name,
+          t.id
+    """)
+    Slice<Tag> searchSlice(@Param("q") String q, Pageable pageable);
 
     List<Tag> findByNameIn(LinkedHashSet<String> names);
 }

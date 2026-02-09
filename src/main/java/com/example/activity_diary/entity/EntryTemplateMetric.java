@@ -8,7 +8,9 @@ import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -44,7 +46,7 @@ public class EntryTemplateMetric extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private final List<EntryTemplateMetricValue> values = new ArrayList<>();
+    private Set<EntryTemplateMetricValue> values = new HashSet<>();
 
     /* ---------- FACTORY ---------- */
 
@@ -82,6 +84,15 @@ public class EntryTemplateMetric extends BaseEntity {
 
         EntryTemplateMetricValue metricValue = EntryTemplateMetricValue.create(this, unit, value);
         values.add(metricValue);
+    }
+
+    public void removeValue(DictionaryItem unit) {
+        if (unit == null) return;
+        values.removeIf(v -> unit.equals(v.getUnit()));
+    }
+
+    public void clearValues() {
+        values.clear();
     }
 
     public void changeMetricType(DictionaryItem newType) {

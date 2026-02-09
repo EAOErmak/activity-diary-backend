@@ -15,8 +15,8 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.DiaryRepository;
-import com.example.activity_diary.repository.DictionaryRepository;
+import com.example.activity_diary.repository.diary.DiaryRepository;
+import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
@@ -61,6 +61,52 @@ public class DiaryServiceImpl implements DiaryService {
     }
 
     @Override
+    public Slice<DiaryEntryViewDto> getMyEntriesFiltered(
+            Long userId,
+            com.example.activity_diary.entity.enums.UiStatus uiStatus,
+            Instant now,
+            List<String> tags,
+            Instant from,
+            Instant to,
+            Pageable pageable
+    ) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BadRequestException("from must be <= to");
+        }
+
+        Instant effectiveNow = (now != null) ? now : Instant.now();
+
+        // ВАЖНО: список всегда должен быть НЕ null
+        List<String> tagNames = List.of();
+        boolean hasTags = false;
+        int tagCount = 0;
+
+        if (tags != null && !tags.isEmpty()) {
+            tagNames = tags.stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .distinct()
+                    .toList();
+
+            hasTags = !tagNames.isEmpty();
+            tagCount = tagNames.size();
+        }
+
+        return diaryRepository.findListByUserIdFilteredAndTags(
+                userId,
+                uiStatus == null ? null : uiStatus.name(),
+                effectiveNow,
+                hasTags,
+                tagNames,
+                tagCount,
+                from,
+                to,
+                pageable
+        );
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<DiaryEntryViewDto> getEntriesByDateRange(
             Long userId,
@@ -100,24 +146,36 @@ public class DiaryServiceImpl implements DiaryService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
+        // 1) Нормализуем описание
+        String desc = dto.getDescription() == null ? null : dto.getDescription().trim();
+
+        // 2) Жёстко требуем непустое описание
+        if (desc == null || desc.isBlank()) {
+            throw new BadRequestException("Description is required");
+        }
+
+        // 3) Резолвим теги и требуем хотя бы 1
+        var resolvedTags = tagResolverService.resolveFromDescription(userId, desc);
+        if (resolvedTags == null || resolvedTags.isEmpty()) {
+            throw new BadRequestException("At least one tag is required");
+        }
+
         DiaryEntry entry = DiaryEntry.create(
                 user,
                 dto.getWhenStarted(),
                 dto.getWhenEnded(),
                 dto.getMood(),
-                dto.getDescription()
+                desc
         );
 
         applyMetricsOnCreate(dto.getMetrics(), entry);
 
-        entry.setTags(tagResolverService.resolveFromDescription(userId, dto.getDescription()));
+        entry.setTags(resolvedTags);
 
         DiaryEntry saved = diaryRepository.save(entry);
 
         metricUsageAggService.onEntryCreated(saved);
-
         tagUsageAggService.onEntryCreated(saved);
-
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
 
         return mapper.toDto(saved);

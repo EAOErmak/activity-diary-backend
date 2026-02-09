@@ -1,4 +1,4 @@
-package com.example.activity_diary.repository;
+package com.example.activity_diary.repository.template;
 
 import com.example.activity_diary.entity.TemplateGoalMetric;
 import com.example.activity_diary.entity.TemplateGoalMetricId;

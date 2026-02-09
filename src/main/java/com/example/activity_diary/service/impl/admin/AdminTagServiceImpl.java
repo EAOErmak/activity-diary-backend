@@ -1,24 +1,46 @@
-package com.example.activity_diary.service.impl.diary;
+package com.example.activity_diary.service.impl.admin;
 
+import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.Tag;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
-import com.example.activity_diary.service.diary.TagService;
+import com.example.activity_diary.service.admin.AdminTagService;
+
 import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class TagServiceImpl implements TagService {
+public class AdminTagServiceImpl implements AdminTagService {
 
     private final TagRepository tagRepository;
     private final GlobalSyncService globalSyncService;
     private final TagMapper tagMapper;
+
+    @Override
+    public Slice<TagDto> getTags(String q, Pageable pageable) {
+        String query = normalizeQuery(q);
+
+        Slice<Tag> slice = (query == null)
+                ? tagRepository.findAllSlice(pageable)
+                : tagRepository.searchSlice(query, pageable);
+
+        return slice.map(tagMapper::toDto);
+    }
+
+    private String normalizeQuery(String q) {
+        if (q == null) return null;
+        String s = q.trim();
+        if (s.isEmpty()) return null;
+        return s.toLowerCase();
+    }
 
     @Override
     @Transactional
@@ -69,3 +91,4 @@ public class TagServiceImpl implements TagService {
         return raw.trim().toLowerCase();
     }
 }
+

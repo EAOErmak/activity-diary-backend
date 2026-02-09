@@ -8,7 +8,7 @@
 //import com.example.activity_diary.entity.enums.DictionaryType;
 //import com.example.activity_diary.exception.types.BadRequestException;
 //import com.example.activity_diary.exception.types.NotFoundException;
-//import com.example.activity_diary.repository.DictionaryRepository;
+//import com.example.activity_diary.repository.diary.DictionaryRepository;
 //import com.example.activity_diary.service.diary.DiaryItemService;
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.stereotype.Service;

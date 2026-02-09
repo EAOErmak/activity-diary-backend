@@ -1,5 +1,5 @@
 // src/main/java/com/example/activity_diary/repository/DictionaryRepository.java
-package com.example.activity_diary.repository;
+package com.example.activity_diary.repository.diary;
 
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;

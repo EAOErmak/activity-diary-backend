@@ -2,7 +2,7 @@
 package com.example.activity_diary.service.impl.admin;
 
 import com.example.activity_diary.repository.UserRepository;
-import com.example.activity_diary.repository.DiaryRepository;
+import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.service.admin.AdminDashboardService;
 import com.example.activity_diary.dto.admin.AdminDashboardStatsDto;
 import lombok.RequiredArgsConstructor;

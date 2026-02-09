@@ -3,7 +3,7 @@
 //import com.example.activity_diary.dto.analytics.ChartPointDto;
 //import com.example.activity_diary.dto.analytics.ChartResponseDto;
 //import com.example.activity_diary.entity.DiaryEntry;
-//import com.example.activity_diary.repository.DiaryRepository;
+//import com.example.activity_diary.repository.diary.DiaryRepository;
 //import com.example.activity_diary.service.analytics.AnalyticsService;
 //import com.example.activity_diary.service.analytics.ChartValueService;
 //import lombok.RequiredArgsConstructor;

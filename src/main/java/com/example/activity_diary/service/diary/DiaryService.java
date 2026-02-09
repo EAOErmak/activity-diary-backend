@@ -4,15 +4,27 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
+import com.example.activity_diary.entity.enums.UiStatus;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DiaryService {
 
     Slice<DiaryEntryViewDto> getMyEntries(Long userId, Pageable pageable);
+
+    Slice<DiaryEntryViewDto> getMyEntriesFiltered(
+            Long userId,
+            com.example.activity_diary.entity.enums.UiStatus uiStatus,
+            Instant now,
+            List<String> tags,
+            Instant from,
+            Instant to,
+            Pageable pageable
+    );
 
     DiaryEntryDto getMyEntryById(Long id, Long userId);
 

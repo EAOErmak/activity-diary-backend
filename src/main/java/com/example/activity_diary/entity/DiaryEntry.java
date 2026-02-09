@@ -69,7 +69,11 @@ public class DiaryEntry extends BaseEntity {
     private EntryStatus status;
 
     public void updateDescription(String description) {
-        this.description = description == null ? null : description.trim();
+        String trimmed = description == null ? null : description.trim();
+        if (trimmed == null || trimmed.isBlank()) {
+            throw new IllegalArgumentException("Description is required");
+        }
+        this.description = trimmed;
     }
 
     public void updateMood(Short mood) {
@@ -158,9 +162,16 @@ public class DiaryEntry extends BaseEntity {
     }
 
     public void setTags(Set<Tag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            throw new IllegalArgumentException("At least one tag is required");
+        }
+        if (tags.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("Tags cannot contain null");
+        }
+
         if (this.tags == null) this.tags = new java.util.HashSet<>();
         this.tags.clear();
-        if (tags != null) this.tags.addAll(tags);
+        this.tags.addAll(tags);
     }
 
     public void addMetric(EntryMetric item) {

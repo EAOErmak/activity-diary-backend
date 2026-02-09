@@ -1,4 +1,4 @@
-package com.example.activity_diary.repository;
+package com.example.activity_diary.repository.tag;
 
 import com.example.activity_diary.entity.UserTag;
 import com.example.activity_diary.entity.UserTagId;

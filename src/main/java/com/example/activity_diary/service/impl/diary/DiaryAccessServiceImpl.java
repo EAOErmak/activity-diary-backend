@@ -4,7 +4,7 @@ import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.DiaryRepository;
+import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.diary.DiaryAccessService;
 import lombok.RequiredArgsConstructor;

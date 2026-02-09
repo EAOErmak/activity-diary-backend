@@ -2,7 +2,7 @@ package com.example.activity_diary.service.impl.analytics;
 
 import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.Tag;
-import com.example.activity_diary.repository.TagUsageAggRepository;
+import com.example.activity_diary.repository.tag.TagUsageAggRepository;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
