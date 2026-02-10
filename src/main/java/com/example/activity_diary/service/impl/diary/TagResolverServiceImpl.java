@@ -3,7 +3,6 @@ package com.example.activity_diary.service.impl.diary;
 import com.example.activity_diary.entity.*;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.repository.tag.TagRepository;
-import com.example.activity_diary.repository.tag.TagSuggestionRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.tag.UserTagRepository;
 import com.example.activity_diary.service.diary.TagResolverService;
@@ -12,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,7 +23,6 @@ public class TagResolverServiceImpl implements TagResolverService {
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final UserTagRepository userTagRepository;
-    private final TagSuggestionRepository tagSuggestionRepository;
 
     /**
      * Правило:
@@ -60,7 +57,6 @@ public class TagResolverServiceImpl implements TagResolverService {
      * - создаёт PENDING Tag если нет
      * - запрещает REJECTED
      * - гарантирует UserTag(user, tag)
-     * - ведёт TagSuggestion (упрощённо: счётчик может быть завышен без таблицы уникальности)
      */
     @Transactional
     @Override
@@ -97,7 +93,6 @@ public class TagResolverServiceImpl implements TagResolverService {
                             .status(TagStatus.PENDING)
                             .createdBy(userRef)
                             .build());
-                    upsertSuggestion(name);
                 } catch (DataIntegrityViolationException e) {
                     // кто-то создал параллельно
                     tag = tagRepository.findByName(name).orElseThrow(() -> e);
@@ -109,9 +104,6 @@ public class TagResolverServiceImpl implements TagResolverService {
                 }
 
                 // 5) если PENDING — считаем в suggestion (опционально)
-                if (tag.getStatus() == TagStatus.PENDING) {
-                    upsertSuggestion(name);
-                }
             }
 
             result.add(tag);
@@ -130,24 +122,6 @@ public class TagResolverServiceImpl implements TagResolverService {
         return result;
     }
 
-    private void upsertSuggestion(String normalizedName) {
-        Instant now = Instant.now();
-
-        TagSuggestion s = tagSuggestionRepository.findByTagName(normalizedName)
-                .orElseGet(() -> TagSuggestion.builder()
-                        .tagName(normalizedName)
-                        .userCount(0)
-                        .lastSeenAt(now)
-                        .build());
-
-        // ВНИМАНИЕ: это не "уникальные пользователи", а "количество использований"
-        // Для уникальности нужна доп. таблица tag_suggestion_user(tag_name, user_id).
-        s.incrementUserCount();
-        s.markSeen(now);
-
-        tagSuggestionRepository.save(s);
-    }
-
     private String normalize(String raw) {
         if (raw == null) return null;
         String s = raw.trim().toLowerCase(Locale.ROOT);
@@ -159,3 +133,4 @@ public class TagResolverServiceImpl implements TagResolverService {
         return s.length() >= 2 && s.length() <= 32;
     }
 }
+

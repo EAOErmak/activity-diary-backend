@@ -23,7 +23,6 @@
     <include file="db/changelog/changes/v1_create_tag.xml"/>
     <include file="db/changelog/changes/v1_create_diary_entry_tag.xml"/>
     <include file="db/changelog/changes/v1_create_user_tag.xml"/>
-    <include file="db/changelog/changes/v1_create_tag_suggestion.xml"/>
     <include file="db/changelog/changes/v1_create_tag_usage_agg.xml"/>
     <include file="db/changelog/changes/v1_create_metric_usage_agg.xml"/>
     <include file="db/changelog/changes/v1_create_diary_entry_template.xml"/>
