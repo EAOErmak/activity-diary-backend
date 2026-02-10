@@ -87,7 +87,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
             d.id, d.status, d.whenStarted, d.whenEnded,
             coalesce(
-                /* если ищем по тегам -> первый совпавший */
                 (
                     select tMatch.name
                     from DiaryEntry d2 join d2.tags tMatch
@@ -101,7 +100,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
                             and lower(t2.name) in (:tagNames)
                       )
                 ),
-                /* иначе -> первый тег записи */
                 (
                     select t.name
                     from DiaryEntry d4 join d4.tags t
@@ -131,7 +129,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
           and d.whenStarted >= coalesce(:from, d.whenStarted)
           and d.whenStarted <= coalesce(:to,   d.whenStarted)
     
-          /* AND-семантика: у записи должны быть ВСЕ теги из списка */
           and (
             :hasTags = false
             or (
