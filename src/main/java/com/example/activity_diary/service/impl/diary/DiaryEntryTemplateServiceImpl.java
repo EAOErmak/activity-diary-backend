@@ -169,13 +169,6 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         template.getMetrics().clear();
         if (incoming == null || incoming.isEmpty()) return;
 
-        Set<Long> typeIds = new HashSet<>();
-        for (EntryTemplateMetricUpsertDto m : incoming) {
-            if (!typeIds.add(m.getMetricTypeId())) {
-                throw new BadRequestException("Duplicate metricTypeId: " + m.getMetricTypeId());
-            }
-        }
-
         Set<Long> dictIds = new HashSet<>();
         for (EntryTemplateMetricUpsertDto m : incoming) {
             dictIds.add(m.getMetricTypeId());
