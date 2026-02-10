@@ -12,7 +12,6 @@ import java.util.List;
 @Setter
 public class EntryMetricUpdateDto {
 
-    @NotNull
     @Positive
     private Long id;
 
