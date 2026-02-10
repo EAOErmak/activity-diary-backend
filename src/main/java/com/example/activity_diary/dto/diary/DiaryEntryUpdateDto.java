@@ -18,8 +18,8 @@ public class DiaryEntryUpdateDto {
 
     private Instant whenEnded;
 
-    @PositiveOrZero(message = "mood must be between 0 and 10")
-    @Max(value = 10, message = "mood must be between 0 and 10")
+    @Min(value = 1, message = "mood must be between 1 and 5")
+    @Max(value = 5, message = "mood must be between 1 and 5")
     private Short mood;
 
     @Size(max = 1000, message = "description must not exceed 1000 characters")

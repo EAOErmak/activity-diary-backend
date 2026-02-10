@@ -2,19 +2,26 @@ package com.example.activity_diary.service.impl.diary;
 
 import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.service.diary.DiaryValidationService;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class DiaryValidationServiceImpl implements DiaryValidationService {
 
     private static final int MAX_DESCRIPTION_LENGTH = 1000;
-    private static final short MIN_MOOD = 0;
-    private static final short MAX_MOOD = 10;
+    private static final short MIN_MOOD = 1;
+    private static final short MAX_MOOD = 5;
 
     @Override
     public void validateCreate(DiaryEntryCreateDto dto) {
@@ -24,6 +31,8 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
         validateMood(dto.getMood());
 
         validateDescription(dto.getDescription());
+
+        validateMetricsCreate(dto.getMetrics());
     }
 
     @Override
@@ -36,6 +45,8 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
         validateMood(dto.getMood());
 
         validateDescription(dto.getDescription());
+
+        validateMetricsUpdate(dto.getMetrics());
     }
 
     private void validateTime(Instant start, Instant end) {
@@ -66,9 +77,88 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
     private void validateDescription(String desc) {
 
         if (desc == null) return;
-
+        if (desc.isBlank()) {
+            throw new BadRequestException("Description is required");
+        }
         if (desc.length() > MAX_DESCRIPTION_LENGTH) {
             throw new BadRequestException("Description is too long");
+        }
+    }
+
+    private void validateMetricsCreate(List<EntryMetricCreateDto> metrics) {
+        if (metrics == null || metrics.isEmpty()) return;
+
+        Set<Long> metricTypeIds = new HashSet<>();
+
+        for (EntryMetricCreateDto metric : metrics) {
+            if (metric == null) {
+                throw new BadRequestException("Metric cannot be null");
+            }
+
+            Long metricTypeId = metric.getMetricTypeId();
+            if (metricTypeId == null) {
+                throw new BadRequestException("metricTypeId is required");
+            }
+
+            if (!metricTypeIds.add(metricTypeId)) {
+                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
+            }
+
+            validateMetricValues(metricTypeId, metric.getValues());
+        }
+    }
+
+    private void validateMetricsUpdate(List<EntryMetricUpdateDto> metrics) {
+        if (metrics == null || metrics.isEmpty()) return;
+
+        Set<Long> metricTypeIds = new HashSet<>();
+
+        for (EntryMetricUpdateDto metric : metrics) {
+            if (metric == null) {
+                throw new BadRequestException("Metric cannot be null");
+            }
+
+            Long metricTypeId = metric.getMetricTypeId();
+            if (metricTypeId == null) {
+                throw new BadRequestException("metricTypeId is required");
+            }
+
+            if (!metricTypeIds.add(metricTypeId)) {
+                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
+            }
+
+            validateMetricValues(metricTypeId, metric.getValues());
+        }
+    }
+
+    private void validateMetricValues(Long metricTypeId, List<?> values) {
+        if (values == null || values.isEmpty()) {
+            throw new BadRequestException("Values are required for metricTypeId: " + metricTypeId);
+        }
+
+        Set<Long> unitIds = new HashSet<>();
+
+        for (Object raw : values) {
+            if (raw == null) {
+                throw new BadRequestException("Metric value cannot be null for metricTypeId: " + metricTypeId);
+            }
+
+            Long unitId;
+            if (raw instanceof EntryMetricValueCreateDto v) {
+                unitId = v.getUnitId();
+            } else if (raw instanceof EntryMetricValueUpdateDto v) {
+                unitId = v.getUnitId();
+            } else {
+                throw new BadRequestException("Invalid metric value type for metricTypeId: " + metricTypeId);
+            }
+
+            if (unitId == null) {
+                throw new BadRequestException("unitId is required for metricTypeId: " + metricTypeId);
+            }
+
+            if (!unitIds.add(unitId)) {
+                throw new BadRequestException("Duplicate unitId " + unitId + " for metricTypeId: " + metricTypeId);
+            }
         }
     }
 }

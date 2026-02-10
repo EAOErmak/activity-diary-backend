@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(
@@ -65,7 +66,7 @@ public class EntryMetric extends BaseEntity {
             throw new IllegalArgumentException("Value must be positive");
 
         boolean exists = values.stream()
-                .anyMatch(v -> v.getUnit().equals(unit));
+                .anyMatch(v -> Objects.equals(v.getUnit().getId(), unit.getId()));
 
         if (exists)
             throw new IllegalStateException("Unit already exists for this metric");

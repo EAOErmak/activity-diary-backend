@@ -109,6 +109,7 @@ public class DiaryEntry extends BaseEntity {
                 .status(EntryStatus.LOSE)
                 .build();
 
+        entry.updateMood(mood);
         entry.autoUpdateStatusByTime(Instant.now());
 
         return entry;

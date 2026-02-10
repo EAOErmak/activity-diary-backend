@@ -184,6 +184,8 @@ public class DiaryServiceImpl implements DiaryService {
     @Override
     public DiaryEntryDto update(Long id, DiaryEntryUpdateDto dto, Long userId) {
 
+        validationService.validateUpdate(dto);
+
         DiaryEntry entry = diaryRepository.findById(id)
                 .filter(e -> e.getUser().getId().equals(userId))
                 .orElseThrow(() -> new NotFoundException("Entry not found"));

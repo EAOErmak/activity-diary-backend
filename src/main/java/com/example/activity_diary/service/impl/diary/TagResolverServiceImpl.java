@@ -31,11 +31,11 @@ public class TagResolverServiceImpl implements TagResolverService {
      * Правило:
      * - тег начинается с '#'
      * - внутри только буквы + '_' + '-'
-     * - тег заканчивается пробелом/переводом строки/концом текста
+     * - тег заканчивается пробелом/переводом строки/концом текста/знаком пунктуации
      * - '#' должен быть в начале строки или после пробела (не "тест#спорт")
      */
     private static final Pattern TAG_PATTERN =
-            Pattern.compile("(?<!\\S)#([\\p{L}\\p{N}_-]+)(?=\\s|$)");
+            Pattern.compile("(?<!\\S)#([\\p{L}\\p{N}_-]+)(?=\\s|$|\\p{P})");
 
     @Transactional
     @Override

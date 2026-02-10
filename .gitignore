@@ -39,3 +39,4 @@ out/
 # Environment files
 .env
 *.env
+src/main/resources/application.properties
