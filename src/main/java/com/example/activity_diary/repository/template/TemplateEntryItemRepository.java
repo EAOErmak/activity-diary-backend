@@ -16,10 +16,10 @@ public interface TemplateEntryItemRepository extends JpaRepository<TemplateEntry
           left join fetch et.tags
           left join fetch et.metrics m
           left join fetch m.values mv
-        where di.template.id in :dayIds
-        order by di.template.id, di.position
+        where di.dayTemplate.id in :dayIds
+        order by di.dayTemplate.id, di.position
     """)
     List<TemplateEntryItem> findDayItemsGraph(@Param("dayIds") List<Long> dayIds);
-
-    void deleteByTemplateId(Long templateId);
+    
+    void deleteByDayTemplate_Id(Long dayTemplateId);
 }
