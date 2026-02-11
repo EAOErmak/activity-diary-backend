@@ -163,18 +163,6 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         }
     }
 
-    private Set<Tag> resolveTags(Set<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) return Collections.emptySet();
-
-        List<Tag> found = tagRepository.findAllByIdIn(tagIds);
-        if (found.size() != tagIds.size()) {
-            Set<Long> foundIds = found.stream().map(Tag::getId).collect(Collectors.toSet());
-            Set<Long> missing = tagIds.stream().filter(id -> !foundIds.contains(id)).collect(Collectors.toSet());
-            throw new BadRequestException("Tags not found: " + missing);
-        }
-        return new HashSet<>(found);
-    }
-
     private void applyMetricsReplace(DiaryEntryTemplate template, List<EntryTemplateMetricUpsertDto> incoming) {
         template.getMetrics().clear();
         if (incoming == null || incoming.isEmpty()) return;
