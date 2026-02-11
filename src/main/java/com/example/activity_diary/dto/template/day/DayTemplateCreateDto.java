@@ -6,5 +6,5 @@ import java.util.List;
 @Data
 public class DayTemplateCreateDto {
     String name;
-    List<TemplateEntryItemCreateDto> items;
+    List<DayTemplateItemDto> items;
 }

@@ -6,5 +6,5 @@ import java.util.List;
 @Data
 public class WeekTemplateCreateDto {
     String name;
-    List<TemplateDayItemCreateDto> items;
+    List<WeekTemplateDayItemDto> items;
 }

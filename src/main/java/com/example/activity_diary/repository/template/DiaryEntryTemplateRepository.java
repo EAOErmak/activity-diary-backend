@@ -18,4 +18,6 @@ public interface DiaryEntryTemplateRepository extends JpaRepository<DiaryEntryTe
 
     @EntityGraph(attributePaths = {"tags"})
     Page<DiaryEntryTemplate> findAllByUser_Id(Long userId, Pageable pageable);
+
+    List<DiaryEntryTemplate> findAllByIdInAndUser_Id(Collection<Long> ids, Long userId);
 }
