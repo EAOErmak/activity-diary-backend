@@ -1,8 +1,11 @@
 package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.template.*;
-import com.example.activity_diary.entity.EntryTemplateMetric;
-import com.example.activity_diary.entity.EntryTemplateMetricValue;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueViewDto;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricViewDto;
+import com.example.activity_diary.entity.template.EntryTemplateMetric;
+import com.example.activity_diary.entity.template.EntryTemplateMetricValue;
+
 import org.mapstruct.*;
 
 import java.util.List;

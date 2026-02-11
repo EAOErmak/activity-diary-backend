@@ -3,10 +3,11 @@ package com.example.activity_diary.dto.mapper;
 import com.example.activity_diary.dto.diary.*;
 import com.example.activity_diary.dto.diary.metric.EntryMetricResponseDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueResponseDto;
-import com.example.activity_diary.entity.EntryMetric;
-import com.example.activity_diary.entity.DiaryEntry;
-import com.example.activity_diary.entity.EntryMetricValue;
-import com.example.activity_diary.entity.Tag;
+import com.example.activity_diary.entity.diary.DiaryEntry;
+import com.example.activity_diary.entity.diary.EntryMetric;
+import com.example.activity_diary.entity.diary.EntryMetricValue;
+import com.example.activity_diary.entity.diary.Tag;
+
 import org.mapstruct.*;
 import org.springframework.data.domain.Slice;
 

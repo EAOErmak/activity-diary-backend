@@ -1,7 +1,8 @@
 package com.example.activity_diary.service.diary;
 
-import com.example.activity_diary.entity.DiaryEntry;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.example.activity_diary.entity.diary.DiaryEntry;
 
 public interface DiaryAccessService {
 

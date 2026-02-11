@@ -1,5 +1,6 @@
-package com.example.activity_diary.entity;
+package com.example.activity_diary.entity.diary;
 
+import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.base.BaseEntity;
 import com.example.activity_diary.entity.enums.TagStatus;
 import jakarta.persistence.*;

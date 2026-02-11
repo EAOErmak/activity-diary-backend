@@ -1,14 +1,15 @@
-package com.example.activity_diary.dto.template;
+package com.example.activity_diary.dto.template.diary;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Set;
 
 @Data
-public class DiaryEntryTemplateUpdateDto {
+public class DiaryEntryTemplateCreateDto {
+    @NotBlank
     @Size(max = 120)
     String name;
 

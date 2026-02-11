@@ -1,7 +1,7 @@
 package com.example.activity_diary.service.impl.diary;
 
-import com.example.activity_diary.entity.DiaryEntry;
 import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;

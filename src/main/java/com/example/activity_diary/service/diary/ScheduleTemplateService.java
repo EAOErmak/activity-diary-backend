@@ -1,6 +1,9 @@
 package com.example.activity_diary.service.diary;
 
 import com.example.activity_diary.dto.template.*;
+import com.example.activity_diary.dto.template.day.DayTemplateCreateDto;
+import com.example.activity_diary.dto.template.week.WeekTemplateCreateDto;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,4 +1,4 @@
-package com.example.activity_diary.dto.template;
+package com.example.activity_diary.dto.template.diary;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

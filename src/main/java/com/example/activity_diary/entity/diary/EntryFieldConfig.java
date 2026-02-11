@@ -1,4 +1,4 @@
-package com.example.activity_diary.entity;
+package com.example.activity_diary.entity.diary;
 
 import com.example.activity_diary.entity.base.BaseEntity;
 import jakarta.persistence.*;

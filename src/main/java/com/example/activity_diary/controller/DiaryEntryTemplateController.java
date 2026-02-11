@@ -1,8 +1,8 @@
 package com.example.activity_diary.controller;
 
-import com.example.activity_diary.dto.template.DiaryEntryTemplateCreateDto;
-import com.example.activity_diary.dto.template.DiaryEntryTemplateUpdateDto;
-import com.example.activity_diary.dto.template.DiaryEntryTemplateViewDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateCreateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.diary.DiaryEntryTemplateService;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,8 @@
 package com.example.activity_diary.controller;
 
-import com.example.activity_diary.dto.template.DayTemplateCreateDto;
 import com.example.activity_diary.dto.template.TemplateItemsUpdateDto;
-import com.example.activity_diary.dto.template.WeekTemplateCreateDto;
+import com.example.activity_diary.dto.template.day.DayTemplateCreateDto;
+import com.example.activity_diary.dto.template.week.WeekTemplateCreateDto;
 import com.example.activity_diary.dto.template.TemplateListItemDto;
 import com.example.activity_diary.dto.template.TemplateViewDto;
 import com.example.activity_diary.security.LightUserDetails;

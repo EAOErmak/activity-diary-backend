@@ -1,8 +1,18 @@
 package com.example.activity_diary.service.impl.diary;
 
 import com.example.activity_diary.dto.template.*;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateCreateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricUpsertDto;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueUpsertDto;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueViewDto;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricViewDto;
 import com.example.activity_diary.entity.*;
+import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.entity.template.DiaryEntryTemplate;
+import com.example.activity_diary.entity.template.EntryTemplateMetric;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;

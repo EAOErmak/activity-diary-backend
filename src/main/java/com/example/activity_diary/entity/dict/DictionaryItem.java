@@ -1,7 +1,7 @@
 package com.example.activity_diary.entity.dict;
 
-import com.example.activity_diary.entity.EntryFieldConfig;
 import com.example.activity_diary.entity.base.BaseEntity;
+import com.example.activity_diary.entity.diary.EntryFieldConfig;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;

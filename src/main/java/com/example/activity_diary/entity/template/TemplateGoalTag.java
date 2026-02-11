@@ -1,4 +1,6 @@
-package com.example.activity_diary.entity;
+package com.example.activity_diary.entity.template;
+
+import com.example.activity_diary.entity.diary.Tag;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,6 +1,7 @@
 package com.example.activity_diary.entity;
 
 import com.example.activity_diary.entity.base.BaseEntity;
+import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

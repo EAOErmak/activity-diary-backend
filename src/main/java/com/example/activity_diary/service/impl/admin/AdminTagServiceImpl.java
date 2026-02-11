@@ -2,7 +2,7 @@ package com.example.activity_diary.service.impl.admin;
 
 import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
-import com.example.activity_diary.entity.Tag;
+import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;

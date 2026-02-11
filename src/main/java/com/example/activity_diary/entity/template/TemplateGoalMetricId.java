@@ -1,4 +1,4 @@
-package com.example.activity_diary.entity;
+package com.example.activity_diary.entity.template;
 
 import jakarta.persistence.Embeddable;
 import lombok.*;

@@ -1,4 +1,4 @@
-package com.example.activity_diary.dto.template;
+package com.example.activity_diary.dto.template.diary;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

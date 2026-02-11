@@ -1,10 +1,11 @@
 package com.example.activity_diary.repository.template;
 
-import com.example.activity_diary.entity.DiaryEntryTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.activity_diary.entity.template.DiaryEntryTemplate;
 
 import java.util.*;
 

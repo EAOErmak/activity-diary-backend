@@ -1,6 +1,6 @@
 package com.example.activity_diary.service.impl.analytics;
 
-import com.example.activity_diary.entity.DiaryEntry;
+import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.service.analytics.ChartCalculationStrategy;
 import org.springframework.context.annotation.Profile;

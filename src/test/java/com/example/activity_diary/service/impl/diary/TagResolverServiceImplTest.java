@@ -1,9 +1,9 @@
 package com.example.activity_diary.service.impl.diary;
 
-import com.example.activity_diary.entity.Tag;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.UserTag;
 import com.example.activity_diary.entity.UserTagId;
+import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.tag.TagRepository;

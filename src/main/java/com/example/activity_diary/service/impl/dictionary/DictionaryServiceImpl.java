@@ -5,7 +5,7 @@ import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
-import com.example.activity_diary.entity.EntryFieldConfig;
+import com.example.activity_diary.entity.diary.EntryFieldConfig;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;

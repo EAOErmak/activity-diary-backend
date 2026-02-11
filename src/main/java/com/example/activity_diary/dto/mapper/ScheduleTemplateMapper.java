@@ -2,6 +2,12 @@ package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.template.*;
 import com.example.activity_diary.entity.*;
+import com.example.activity_diary.entity.template.Template;
+import com.example.activity_diary.entity.template.TemplateDayItem;
+import com.example.activity_diary.entity.template.TemplateEntryItem;
+import com.example.activity_diary.entity.template.TemplateGoalMetric;
+import com.example.activity_diary.entity.template.TemplateGoalTag;
+
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

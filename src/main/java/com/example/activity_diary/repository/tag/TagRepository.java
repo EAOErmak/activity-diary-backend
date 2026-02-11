@@ -1,11 +1,12 @@
 package com.example.activity_diary.repository.tag;
 
-import com.example.activity_diary.entity.Tag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.example.activity_diary.entity.diary.Tag;
 
 import java.util.LinkedHashSet;
 import java.util.List;

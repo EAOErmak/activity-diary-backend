@@ -1,4 +1,4 @@
-package com.example.activity_diary.dto.template;
+package com.example.activity_diary.dto.template.diary;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,6 +6,8 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+
+import com.example.activity_diary.dto.template.TagBriefDto;
 
 @Data
 @AllArgsConstructor

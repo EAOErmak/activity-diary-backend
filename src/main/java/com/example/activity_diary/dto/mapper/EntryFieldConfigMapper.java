@@ -1,7 +1,8 @@
 package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.diary.EntryFieldConfigDto;
-import com.example.activity_diary.entity.EntryFieldConfig;
+import com.example.activity_diary.entity.diary.EntryFieldConfig;
+
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

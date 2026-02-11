@@ -1,7 +1,8 @@
 package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.admin.AdminTagDto;
-import com.example.activity_diary.entity.Tag;
+import com.example.activity_diary.entity.diary.Tag;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

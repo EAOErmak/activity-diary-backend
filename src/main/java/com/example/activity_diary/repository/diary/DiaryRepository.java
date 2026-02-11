@@ -1,7 +1,8 @@
 package com.example.activity_diary.repository.diary;
 
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
-import com.example.activity_diary.entity.DiaryEntry;
+import com.example.activity_diary.entity.diary.DiaryEntry;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;

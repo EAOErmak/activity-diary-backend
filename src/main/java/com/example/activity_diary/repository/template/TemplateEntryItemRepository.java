@@ -1,8 +1,9 @@
 package com.example.activity_diary.repository.template;
 
-import com.example.activity_diary.entity.TemplateEntryItem;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
+
+import com.example.activity_diary.entity.template.TemplateEntryItem;
 
 import java.util.List;
 

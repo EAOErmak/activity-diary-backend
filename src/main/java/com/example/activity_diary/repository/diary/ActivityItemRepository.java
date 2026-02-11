@@ -1,7 +1,8 @@
 package com.example.activity_diary.repository.diary;
 
-import com.example.activity_diary.entity.EntryMetric;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.activity_diary.entity.diary.EntryMetric;
 
 import java.util.List;
 

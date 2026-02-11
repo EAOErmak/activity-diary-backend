@@ -1,6 +1,10 @@
 package com.example.activity_diary.service.diary;
 
 import com.example.activity_diary.dto.template.*;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateCreateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

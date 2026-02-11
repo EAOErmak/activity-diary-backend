@@ -1,7 +1,10 @@
 package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.template.*;
-import com.example.activity_diary.entity.DiaryEntryTemplate;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto;
+import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;
+import com.example.activity_diary.entity.template.DiaryEntryTemplate;
+
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", uses = {TagMapper.class, EntryTemplateMetricMapper.class})
