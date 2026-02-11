@@ -9,8 +9,6 @@ import com.example.activity_diary.entity.template.EntryTemplateMetric;
 import com.example.activity_diary.entity.template.Template;
 import com.example.activity_diary.entity.template.TemplateDayItem;
 import com.example.activity_diary.entity.template.TemplateEntryItem;
-import com.example.activity_diary.entity.template.TemplateGoalMetric;
-import com.example.activity_diary.entity.template.TemplateGoalTag;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.template.TemplateEntryItemRepository;
 import com.example.activity_diary.repository.template.TemplateGoalMetricRepository;

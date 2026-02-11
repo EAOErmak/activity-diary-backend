@@ -1,10 +1,7 @@
 package com.example.activity_diary.repository.template;
 
-import com.example.activity_diary.entity.*;
-        import com.example.activity_diary.entity.enums.TemplateType;
+import com.example.activity_diary.entity.enums.TemplateType;
 import com.example.activity_diary.entity.template.Template;
-import com.example.activity_diary.entity.template.TemplateGoalMetric;
-import com.example.activity_diary.entity.template.TemplateGoalTag;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
