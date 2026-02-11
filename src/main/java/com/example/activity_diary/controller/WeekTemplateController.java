@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/week-templates")
+@RequestMapping("/api/week-templates")
 public class WeekTemplateController {
 
     private final WeekTemplateService service;

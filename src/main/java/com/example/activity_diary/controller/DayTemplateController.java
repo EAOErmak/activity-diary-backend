@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/day-templates")
+@RequestMapping("/api/day-templates")
 public class DayTemplateController {
 
     private final DayTemplateService service;
