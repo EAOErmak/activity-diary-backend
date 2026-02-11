@@ -3,8 +3,10 @@ package com.example.activity_diary.service.diary;
 import com.example.activity_diary.dto.template.day.DayTemplateCreateDto;
 import com.example.activity_diary.dto.template.day.DayTemplateUpdateDto;
 import com.example.activity_diary.dto.template.day.DayTemplateViewDto;
+import org.springframework.data.domain.Page;
 
 public interface DayTemplateService {
+    Page<DayTemplateViewDto> list(Long userId, int page, int size);
     DayTemplateViewDto create(Long userId, DayTemplateCreateDto dto);
     DayTemplateViewDto update(Long userId, Long id, DayTemplateUpdateDto dto);
     DayTemplateViewDto get(Long userId, Long id);

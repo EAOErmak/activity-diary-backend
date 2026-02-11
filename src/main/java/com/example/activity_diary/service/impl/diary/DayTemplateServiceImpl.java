@@ -17,6 +17,10 @@ import com.example.activity_diary.repository.template.DiaryEntryTemplateReposito
 import com.example.activity_diary.repository.template.DayTemplateRepository;
 import com.example.activity_diary.service.diary.DayTemplateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +38,15 @@ public class DayTemplateServiceImpl implements DayTemplateService {
     private final DayTemplateRepository dayTemplateRepository;
     private final DiaryEntryTemplateRepository entryTemplateRepository;
 
-    private final DayTemplateMapper mapper; // MapStruct (ниже)
+    private final DayTemplateMapper mapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DayTemplateViewDto> list(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        return dayTemplateRepository.findAllByUser_Id(userId, pageable)
+                .map(mapper::toView);
+    }
 
     @Override
     public DayTemplateViewDto create(Long userId, DayTemplateCreateDto dto) {

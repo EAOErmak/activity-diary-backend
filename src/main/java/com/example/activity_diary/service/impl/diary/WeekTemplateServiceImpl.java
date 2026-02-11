@@ -16,6 +16,10 @@ import com.example.activity_diary.repository.template.DayTemplateRepository;
 import com.example.activity_diary.repository.template.WeekTemplateRepository;
 import com.example.activity_diary.service.diary.WeekTemplateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +37,15 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
     private final WeekTemplateRepository weekTemplateRepository;
     private final DayTemplateRepository dayTemplateRepository;
 
-    private final WeekTemplateMapper mapper; //
+    private final WeekTemplateMapper mapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<WeekTemplateViewDto> list(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        return weekTemplateRepository.findAllByUser_Id(userId, pageable)
+                .map(mapper::toView);
+    }
 
     @Override
     public WeekTemplateViewDto create(Long userId, WeekTemplateCreateDto dto) {
