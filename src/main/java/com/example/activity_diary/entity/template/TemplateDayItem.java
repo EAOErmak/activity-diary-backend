@@ -8,8 +8,7 @@ import lombok.*;
 @Table(
         name = "template_day_item",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_day_item_dayofweek", columnNames = {"week_template_id", "day_of_week"}),
-                @UniqueConstraint(name = "uk_day_item_unique_day", columnNames = {"week_template_id", "day_template_id"})
+                @UniqueConstraint(name = "uk_day_item_dayofweek", columnNames = {"week_template_id", "day_of_week"})
         },
         indexes = {
                 @Index(name = "idx_day_item_week_tpl", columnList = "week_template_id"),

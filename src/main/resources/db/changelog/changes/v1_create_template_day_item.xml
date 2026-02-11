@@ -68,4 +68,10 @@
 
     </changeSet>
 
+    <changeSet id="drop_uk_day_item_unique_day" author="you">
+        <dropUniqueConstraint
+                tableName="template_day_item"
+                constraintName="uk_day_item_unique_day"/>
+    </changeSet>
+
 </databaseChangeLog>
