@@ -1,0 +1,71 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="v1_create_template_day_item" author="you">
+
+        <createTable tableName="template_day_item">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_template_day_item"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="week_template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="day_template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="day_of_week" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_day_item_week_tpl"
+                baseTableName="template_day_item" baseColumnNames="week_template_id"
+                referencedTableName="week_template" referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_day_item_day_tpl"
+                baseTableName="template_day_item" baseColumnNames="day_template_id"
+                referencedTableName="day_template" referencedColumnNames="id"
+                onDelete="RESTRICT"/>
+
+        <addUniqueConstraint
+                tableName="template_day_item"
+                columnNames="week_template_id,day_of_week"
+                constraintName="uk_day_item_dayofweek"/>
+
+        <addUniqueConstraint
+                tableName="template_day_item"
+                columnNames="week_template_id,day_template_id"
+                constraintName="uk_day_item_unique_day"/>
+
+        <createIndex indexName="idx_day_item_week_tpl" tableName="template_day_item">
+            <column name="week_template_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_day_item_day_tpl" tableName="template_day_item">
+            <column name="day_template_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="template_day_item"/>
+        </rollback>
+
+    </changeSet>
+
+</databaseChangeLog>

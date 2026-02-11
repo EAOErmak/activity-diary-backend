@@ -1,0 +1,52 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="v1_create_week_template" author="you">
+
+        <createTable tableName="week_template">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_week_template"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="week_template"
+                columnNames="user_id,name"
+                constraintName="uk_week_tpl_user_name"/>
+
+        <createIndex indexName="idx_week_tpl_user" tableName="week_template">
+            <column name="user_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                constraintName="fk_week_tpl_user"
+                baseTableName="week_template" baseColumnNames="user_id"
+                referencedTableName="users" referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropTable tableName="week_template"/>
+        </rollback>
+
+    </changeSet>
+
+</databaseChangeLog>

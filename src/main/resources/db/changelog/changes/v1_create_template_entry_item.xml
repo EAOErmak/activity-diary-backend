@@ -1,0 +1,66 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="v1_create_template_entry_item" author="you">
+
+        <createTable tableName="template_entry_item">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_template_entry_item"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="day_template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="entry_template_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="position" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_entry_item_day_tpl"
+                baseTableName="template_entry_item" baseColumnNames="day_template_id"
+                referencedTableName="day_template" referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_entry_item_entry_tpl"
+                baseTableName="template_entry_item" baseColumnNames="entry_template_id"
+                referencedTableName="diary_entry_template" referencedColumnNames="id"
+                onDelete="RESTRICT"/>
+
+        <addUniqueConstraint
+                tableName="template_entry_item"
+                columnNames="day_template_id,position"
+                constraintName="uk_entry_item_pos"/>
+
+        <createIndex indexName="idx_entry_item_day_tpl" tableName="template_entry_item">
+            <column name="day_template_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_entry_item_entry_tpl" tableName="template_entry_item">
+            <column name="entry_template_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="template_entry_item"/>
+        </rollback>
+
+    </changeSet>
+
+</databaseChangeLog>
