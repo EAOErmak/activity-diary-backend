@@ -4,6 +4,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
+import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.enums.UiStatus;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,11 @@ public interface DiaryService {
 
     DiaryEntryDto getMyEntryById(Long id, Long userId);
 
-    DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId);
+    DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId, DiaryEntryCreateMode mode);
+
+    default DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId) {
+        return create(dto, userId, DiaryEntryCreateMode.NORMAL);
+    }
 
     DiaryEntryDto update(Long id, DiaryEntryUpdateDto dto, Long userId);
 

@@ -12,6 +12,7 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
@@ -139,7 +140,7 @@ public class DiaryServiceImpl implements DiaryService {
     }
 
     @Override
-    public DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId) {
+    public DiaryEntryDto create(DiaryEntryCreateDto dto, Long userId, DiaryEntryCreateMode mode) {
 
         validationService.validateCreate(dto);
 

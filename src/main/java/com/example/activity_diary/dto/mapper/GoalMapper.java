@@ -5,6 +5,8 @@ import com.example.activity_diary.entity.goal.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface GoalMapper {
 
@@ -16,4 +18,18 @@ public interface GoalMapper {
 
     @Mapping(target = "currentEntryId", expression = "java(goal.getCurrentEntry() == null ? null : goal.getCurrentEntry().getId())")
     DiaryEntryGoalViewDto toEntry(DiaryEntryGoal goal);
+
+    @Mapping(target = "days", source = "days")
+    WeekGoalViewDto toWeekView(WeekGoal week);
+    List<WeekGoalViewDto> toWeekViews(List<WeekGoal> weeks);
+
+    @Mapping(target = "entries", source = "entryGoals")
+    DayGoalViewDto toDayView(DayGoal day);
+    List<DayGoalViewDto> toDayViews(List<DayGoal> days);
+
+
+
+    @Mapping(target = "currentEntryId", source = "currentEntry.id")
+    DiaryEntryGoalViewDto toEntryView(DiaryEntryGoal goal);
+    List<DiaryEntryGoalViewDto> toEntryViews(List<DiaryEntryGoal> goals);
 }

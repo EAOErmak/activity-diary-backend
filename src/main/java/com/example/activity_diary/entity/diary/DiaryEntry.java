@@ -126,6 +126,13 @@ public class DiaryEntry extends BaseEntity {
         }
     }
 
+    public void forceStatusWin() {
+        if (this.status == EntryStatus.DELETED) {
+            throw new IllegalStateException("Deleted entry cannot change status");
+        }
+        this.status = EntryStatus.WIN;
+    }
+
     public void updateTime(Instant started, Instant ended) {
         if (this.whenEnded.isBefore(Instant.now())) {
             throw new IllegalStateException("Cannot modify entry after it has ended");

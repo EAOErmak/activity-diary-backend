@@ -8,12 +8,22 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.EntityGraph;
+import java.util.Optional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
+
+    @EntityGraph(attributePaths = {
+            "metrics",
+            "metrics.metricType",
+            "metrics.values",
+            "metrics.values.unit"
+    })
+    Optional<DiaryEntry> findGraphByIdAndUser_Id(Long id, Long userId);
 
     @Query("""
         select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
