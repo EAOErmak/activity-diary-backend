@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1_create_entry_metric_goal" author="you">
+        <createTable tableName="entry_metric_goal">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="entry_goal_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="metric_type_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="entry_metric_goal"
+                             constraintName="uk_metric_goal_entry_type"
+                             columnNames="entry_goal_id,metric_type_id"/>
+
+        <createIndex tableName="entry_metric_goal" indexName="idx_metric_goal_entry_goal">
+            <column name="entry_goal_id"/>
+        </createIndex>
+        <createIndex tableName="entry_metric_goal" indexName="idx_metric_goal_type">
+            <column name="metric_type_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint constraintName="fk_metric_goal_entry_goal"
+                                 baseTableName="entry_metric_goal" baseColumnNames="entry_goal_id"
+                                 referencedTableName="diary_entry_goal" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint constraintName="fk_metric_goal_type"
+                                 baseTableName="entry_metric_goal" baseColumnNames="metric_type_id"
+                                 referencedTableName="dictionary_item" referencedColumnNames="id"/>
+    </changeSet>
+</databaseChangeLog>

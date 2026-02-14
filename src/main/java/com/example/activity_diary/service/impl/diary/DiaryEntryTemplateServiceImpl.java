@@ -9,7 +9,6 @@ import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueUps
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueViewDto;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricViewDto;
 import com.example.activity_diary.entity.*;
-import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.template.DiaryEntryTemplate;
 import com.example.activity_diary.entity.template.EntryTemplateMetric;
@@ -17,16 +16,15 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
-import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.diary.DiaryEntryTemplateService;
-import com.example.activity_diary.service.diary.TagResolverService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,9 +35,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
 
     private final DiaryEntryTemplateRepository diaryEntryTemplateRepository;
     private final UserRepository userRepository;
-    private final TagRepository tagRepository;
     private final DictionaryRepository dictionaryRepository;
-    private final TagResolverService tagResolverService;
 
     @Override
     public DiaryEntryTemplateViewDto create(Long userId, DiaryEntryTemplateCreateDto dto) {
@@ -61,19 +57,16 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
             throw new BadRequestException("Description is required");
         }
 
-        Set<Tag> resolvedTags = tagResolverService.resolveFromDescription(userId, desc);
-        if (resolvedTags == null || resolvedTags.isEmpty()) {
-            throw new BadRequestException("At least one tag is required");
-        }
+        validateTime(dto.getTimeStart(), dto.getTimeEnd());
 
         DiaryEntryTemplate template = DiaryEntryTemplate.create(
                 user,
                 name,
                 dto.getMood(),
-                desc
+                desc,
+                dto.getTimeStart(),
+                dto.getTimeEnd()
         );
-
-        template.setTags(resolvedTags);
 
         if (dto.getMetrics() != null) {
             applyMetricsReplace(template, dto.getMetrics());
@@ -105,20 +98,20 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
             template.updateMood(dto.getMood());
         }
 
-        // description -> пересчитать теги
         if (dto.getDescription() != null) {
             String desc = dto.getDescription().trim();
             if (desc.isBlank()) {
                 throw new BadRequestException("Description is required");
             }
-
-            Set<Tag> resolvedTags = tagResolverService.resolveFromDescription(userId, desc);
-            if (resolvedTags == null || resolvedTags.isEmpty()) {
-                throw new BadRequestException("At least one tag is required");
-            }
-
             template.updateDescription(desc);
-            template.setTags(resolvedTags);
+        }
+
+        if (dto.getTimeStart() != null || dto.getTimeEnd() != null) {
+            LocalTime start = (dto.getTimeStart() != null) ? dto.getTimeStart() : template.getTimeStart();
+            LocalTime end   = (dto.getTimeEnd() != null) ? dto.getTimeEnd() : template.getTimeEnd();
+
+            validateTime(start, end);
+            template.updateTime(start, end);
         }
 
         if (dto.getMetrics() != null) {
@@ -205,12 +198,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
     }
 
     private DiaryEntryTemplateViewDto toViewDto(DiaryEntryTemplate t, boolean includeMetrics) {
-        Set<TagBriefDto> tags = (t.getTags() == null)
-                ? Set.of()
-                : t.getTags().stream()
-                .map(tag -> new TagBriefDto(tag.getId(), tag.getName()))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-
+        if (t == null) return null;
         List<EntryTemplateMetricViewDto> metrics = List.of();
         if (includeMetrics) {
             metrics = (t.getMetrics() == null) ? List.of() : t.getMetrics().stream()
@@ -223,7 +211,8 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
                 t.getName(),
                 t.getMood(),
                 t.getDescription(),
-                tags,
+                t.getTimeStart(),
+                t.getTimeEnd(),
                 metrics,
                 t.getCreatedAt(),
                 t.getUpdatedAt()
@@ -251,5 +240,11 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
                 typeName,
                 values
         );
+    }
+
+    private static void validateTime(java.time.LocalTime start, java.time.LocalTime end) {
+        if (start != null && end != null && end.isBefore(start)) {
+            throw new BadRequestException("End time cannot be before start time");
+        }
     }
 }

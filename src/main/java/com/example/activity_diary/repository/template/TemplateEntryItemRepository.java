@@ -13,7 +13,6 @@ public interface TemplateEntryItemRepository extends JpaRepository<TemplateEntry
         select distinct di
         from TemplateEntryItem di
           join fetch di.entryTemplate et
-          left join fetch et.tags
           left join fetch et.metrics m
           left join fetch m.values mv
         where di.dayTemplate.id in :dayIds

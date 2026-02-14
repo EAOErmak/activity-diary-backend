@@ -2,21 +2,18 @@ package com.example.activity_diary.entity.template;
 
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.diary.Tag;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.time.LocalTime;
 
 @Entity
 @Table(
         name = "diary_entry_template",
         uniqueConstraints = {
-                // Имя шаблона уникально в рамках пользователя
                 @UniqueConstraint(name = "uk_entry_tpl_user_name", columnNames = {"user_id", "name"})
         },
         indexes = {
@@ -42,14 +39,11 @@ public class DiaryEntryTemplate extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
-    @ManyToMany
-    @JoinTable(
-            name = "diary_entry_template_tag",
-            joinColumns = @JoinColumn(name = "template_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    @Builder.Default
-    private Set<Tag> tags = new HashSet<>();
+    @Column(name = "time_start", columnDefinition = "TIME")
+    private LocalTime timeStart;
+
+    @Column(name = "time_end", columnDefinition = "TIME")
+    private LocalTime timeEnd;
 
     @OneToMany(
             mappedBy = "template",
@@ -79,10 +73,12 @@ public class DiaryEntryTemplate extends BaseEntity {
         this.mood = mood;
     }
 
-    public void setTags(Set<Tag> tags) {
-        if (this.tags == null) this.tags = new HashSet<>();
-        this.tags.clear();
-        if (tags != null) this.tags.addAll(tags);
+    public void updateTime(LocalTime start, LocalTime end) {
+        if (start != null && end != null && end.isBefore(start)) {
+            throw new IllegalArgumentException("End time cannot be before start time");
+        }
+        this.timeStart = start;
+        this.timeEnd = end;
     }
 
     public void addMetric(EntryTemplateMetric metric) {
@@ -97,20 +93,34 @@ public class DiaryEntryTemplate extends BaseEntity {
         metric.detach();
     }
 
-    public static DiaryEntryTemplate create(User user, String name, Short mood, String description) {
+    public static DiaryEntryTemplate create(
+            User user,
+            String name,
+            Short mood,
+            String description,
+            LocalTime timeStart,
+            LocalTime timeEnd
+    ) {
         if (user == null) throw new IllegalArgumentException("User is required");
-        DiaryEntryTemplate t = DiaryEntryTemplate.builder()
-                .user(user)
-                .name(name == null ? null : name.trim())
-                .mood(mood)
-                .description(description == null ? null : description.trim())
-                .build();
 
-        if (t.name == null || t.name.isBlank()) throw new IllegalArgumentException("Template name is required");
-        if (t.name.length() > 120) throw new IllegalArgumentException("Template name is too long");
+        String n = (name == null) ? null : name.trim();
+        String d = (description == null) ? null : description.trim();
+
+        if (n == null || n.isBlank()) throw new IllegalArgumentException("Template name is required");
+        if (n.length() > 120) throw new IllegalArgumentException("Template name is too long");
         if (mood != null && (mood < 1 || mood > 5)) throw new IllegalArgumentException("Mood must be between 1 and 5");
+        if (timeStart != null && timeEnd != null && timeEnd.isBefore(timeStart)) {
+            throw new IllegalArgumentException("End time cannot be before start time");
+        }
 
-        return t;
+        return DiaryEntryTemplate.builder()
+                .user(user)
+                .name(n)
+                .mood(mood)
+                .description(d)
+                .timeStart(timeStart)
+                .timeEnd(timeEnd)
+                .build();
     }
 }
 

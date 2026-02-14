@@ -26,12 +26,16 @@
     <include file="db/changelog/changes/v1_create_tag_usage_agg.xml"/>
     <include file="db/changelog/changes/v1_create_metric_usage_agg.xml"/>
     <include file="db/changelog/changes/v1_create_diary_entry_template.xml"/>
-    <include file="db/changelog/changes/v1_create_diary_entry_template_tag.xml"/>
     <include file="db/changelog/changes/v1_create_entry_template_metric.xml"/>
     <include file="db/changelog/changes/v1_create_entry_template_metric_value.xml"/>
     <include file="db/changelog/changes/v1_create_day_template.xml"/>
     <include file="db/changelog/changes/v1_create_week_template.xml"/>
     <include file="db/changelog/changes/v1_create_template_day_item.xml"/>
     <include file="db/changelog/changes/v1_create_template_entry_item.xml"/>
+    <include file="db/changelog/changes/v1_create_week_goal.xml"/>
+    <include file="db/changelog/changes/v1_create_day_goal.xml"/>
+    <include file="db/changelog/changes/v1_create_diary_entry_goal.xml"/>
+    <include file="db/changelog/changes/v1_create_entry_metric_goal.xml"/>
+    <include file="db/changelog/changes/v1_create_entry_metric_value_goal.xml"/>
 
 </databaseChangeLog>
