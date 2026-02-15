@@ -18,10 +18,35 @@ public interface GoalGetMapper {
 
     DiaryEntryGoalSummaryDto toEntrySummary(DiaryEntryGoal g);
 
-    @Mapping(target = "currentEntryId", expression = "java(g.getCurrentEntry() == null ? null : g.getCurrentEntry().getId())")
+    @Mapping(target = "currentEntryId",
+            expression = "java(g.getCurrentEntry() == null ? null : g.getCurrentEntry().getId())")
+    @Mapping(target = "metricGoals", source = "metricGoals")
     DiaryEntryGoalDetailDto toEntryDetail(DiaryEntryGoal g);
 
     List<DiaryEntryGoalSummaryDto> toEntrySummaryList(List<DiaryEntryGoal> goals);
+
+    // =========================
+    // MetricGoal -> DTO
+    // =========================
+
+    @Mapping(target = "metricTypeId", source = "metricType.id")
+    @Mapping(target = "metricTypeName", source = "metricType.label") // ты говорил label
+    @Mapping(target = "values", source = "values")
+    EntryMetricGoalDto toMetricGoalDto(EntryMetricGoal mg);
+
+    List<EntryMetricGoalDto> toMetricGoalDtoList(List<EntryMetricGoal> mgs);
+
+    // =========================
+    // MetricValueGoal -> DTO
+    // =========================
+
+    @Mapping(target = "unitId", source = "unit.id")
+    @Mapping(target = "unitName", source = "unit.label")
+    // ВАЖНО: поле в DTO должно называться expectedValue (как у тебя) или пропиши правильное имя
+    @Mapping(target = "expectedValue", source = "expectedValue")
+    EntryMetricValueGoalDto toMetricValueGoalDto(EntryMetricValueGoal vg);
+
+    List<EntryMetricValueGoalDto> toMetricValueGoalDtoList(List<EntryMetricValueGoal> vgs);
 
     // =========================
     // Day
@@ -29,7 +54,6 @@ public interface GoalGetMapper {
 
     DayGoalSummaryDto toDaySummary(DayGoal d);
 
-    // ВАЖНО: entries мы в аннотациях не маппим, сделаем в default методе с сортировкой
     @Mapping(target = "entries", ignore = true)
     DayGoalDetailDto toDayDetailBase(DayGoal d);
 
@@ -41,7 +65,6 @@ public interface GoalGetMapper {
 
     WeekGoalSummaryDto toWeekSummary(WeekGoal w);
 
-    // ВАЖНО: days мы в аннотациях не маппим, сделаем в default методе с сортировкой
     @Mapping(target = "days", ignore = true)
     WeekGoalDetailDto toWeekDetailBase(WeekGoal w);
 

@@ -100,10 +100,6 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
                 throw new BadRequestException("metricTypeId is required");
             }
 
-            if (!metricTypeIds.add(metricTypeId)) {
-                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
-            }
-
             validateMetricValues(metricTypeId, metric.getValues());
         }
     }
@@ -121,10 +117,6 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             Long metricTypeId = metric.getMetricTypeId();
             if (metricTypeId == null) {
                 throw new BadRequestException("metricTypeId is required");
-            }
-
-            if (!metricTypeIds.add(metricTypeId)) {
-                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
             }
 
             validateMetricValues(metricTypeId, metric.getValues());

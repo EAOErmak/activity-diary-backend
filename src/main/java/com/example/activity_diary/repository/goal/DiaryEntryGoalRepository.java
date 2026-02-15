@@ -16,7 +16,12 @@ public interface DiaryEntryGoalRepository extends JpaRepository<DiaryEntryGoal, 
     @EntityGraph(attributePaths = {"currentEntry"})
     Optional<DiaryEntryGoal> findSummaryByIdAndUser_Id(Long id, Long userId);
 
-    @EntityGraph(attributePaths = {"currentEntry", "metricGoals", "metricGoals.values"})
+    @EntityGraph(attributePaths = {
+            "metricGoals",
+            "metricGoals.metricType",
+            "metricGoals.values",
+            "metricGoals.values.unit"
+    })
     Optional<DiaryEntryGoal> findDetailByIdAndUser_Id(Long id, Long userId);
 
     @Query("""

@@ -169,6 +169,10 @@ public class DiaryServiceImpl implements DiaryService {
                 desc
         );
 
+        if (mode == DiaryEntryCreateMode.CONFIRM_GOAL) {
+            entry.forceStatusWin();
+        }
+
         applyMetricsOnCreate(dto.getMetrics(), entry);
 
         entry.setTags(resolvedTags);

@@ -3,6 +3,7 @@ package com.example.activity_diary.dto.goal;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 public class DiaryEntryGoalDetailDto {
@@ -19,4 +20,6 @@ public class DiaryEntryGoalDetailDto {
     Integer completeness;
 
     Long currentEntryId;
+
+    List<EntryMetricGoalDto> metricGoals;
 }

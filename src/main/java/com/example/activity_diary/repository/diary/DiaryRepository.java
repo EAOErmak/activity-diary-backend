@@ -20,8 +20,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     @EntityGraph(attributePaths = {
             "metrics",
             "metrics.metricType",
-            "metrics.values",
-            "metrics.values.unit"
     })
     Optional<DiaryEntry> findGraphByIdAndUser_Id(Long id, Long userId);
 
