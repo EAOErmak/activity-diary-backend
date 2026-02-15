@@ -18,8 +18,8 @@ import java.util.Objects;
         },
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_metric_goal_entry_type",
-                        columnNames = {"entry_goal_id", "metric_type_id"}
+                        name = "uk_metric_goal_entry_pos",
+                        columnNames = {"entry_goal_id", "position"}
                 )
         }
 )
@@ -33,10 +33,12 @@ public class EntryMetricGoal extends BaseEntity {
     @JoinColumn(name = "entry_goal_id", nullable = false)
     private DiaryEntryGoal entryGoal;
 
-    // snapshot типа метрики (DictionaryItem может обновляться, но id остаётся тем же)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "metric_type_id", nullable = false)
     private DictionaryItem metricType;
+
+    @Column(nullable = false)
+    private Integer position;
 
     @OneToMany(
             mappedBy = "metricGoal",
@@ -46,19 +48,17 @@ public class EntryMetricGoal extends BaseEntity {
     @Builder.Default
     private List<EntryMetricValueGoal> values = new ArrayList<>();
 
-    /* ---------- FACTORY ---------- */
-
-    public static EntryMetricGoal create(DiaryEntryGoal goal, DictionaryItem metricType) {
+    public static EntryMetricGoal create(DiaryEntryGoal goal, DictionaryItem metricType, int position) {
         if (goal == null) throw new IllegalArgumentException("DiaryEntryGoal is required");
         if (metricType == null) throw new IllegalArgumentException("Metric type is required");
+        if (position <= 0) throw new IllegalArgumentException("Position must be positive");
 
         EntryMetricGoal mg = new EntryMetricGoal();
         mg.metricType = metricType;
+        mg.position = position;
         mg.attachTo(goal);
         return mg;
     }
-
-    /* ---------- DOMAIN ---------- */
 
     public void addValue(DictionaryItem unit, Integer expectedValue) {
         if (unit == null) throw new IllegalArgumentException("Unit is required");
@@ -74,11 +74,6 @@ public class EntryMetricGoal extends BaseEntity {
         values.add(v);
     }
 
-    void attachTo(DiaryEntryGoal goal) {
-        this.entryGoal = goal;
-    }
-
-    void detach() {
-        this.entryGoal = null;
-    }
+    void attachTo(DiaryEntryGoal goal) { this.entryGoal = goal; }
+    void detach() { this.entryGoal = null; }
 }

@@ -7,7 +7,6 @@ import com.example.activity_diary.dto.goal.*;
 import com.example.activity_diary.dto.mapper.GoalMapper;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.diary.DiaryEntry;
-import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.goal.*;
 import com.example.activity_diary.entity.template.*;
@@ -52,7 +51,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
-    public DiaryEntryGoalViewDto createEntryGoal(Long userId, Long templateId, LocalDate targetDate) {
+    public DiaryEntryGoalDetailDto createEntryGoal(Long userId, Long templateId, LocalDate targetDate) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -82,7 +81,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
-    public DayGoalViewDto createDayGoal(Long userId, Long templateId, LocalDate targetDate) {
+    public DayGoalDetailDto createDayGoal(Long userId, Long templateId, LocalDate targetDate) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -109,7 +108,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
-    public WeekGoalViewDto createWeekGoal(Long userId, Long templateId, LocalDate targetDate) {
+    public WeekGoalDetailDto createWeekGoal(Long userId, Long templateId, LocalDate targetDate) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -145,7 +144,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
-    public DiaryEntryGoalViewDto confirmEntryGoal(Long userId, Long goalId, DiaryEntryCreateDto dto) {
+    public DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, DiaryEntryCreateDto dto) {
 
         DiaryEntryGoal goal = diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)
                 .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
@@ -175,7 +174,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
-    public DiaryEntryGoalViewDto updateConfirmedEntryGoal(Long userId, Long goalId, DiaryEntryUpdateDto dto) {
+    public DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, DiaryEntryUpdateDto dto) {
 
         DiaryEntryGoal goal = diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)
                 .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
@@ -223,7 +222,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
-    public DayGoalViewDto confirmDayGoal(Long userId, Long dayGoalId) {
+    public DayGoalDetailDto confirmDayGoal(Long userId, Long dayGoalId) {
 
         DayGoal day = dayGoalRepository.findById(dayGoalId)
                 .orElseThrow(() -> new NotFoundException("DayGoal not found"));
@@ -272,6 +271,117 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
         weekGoalRepository.save(week);
 
         return goalMapper.toDayView(day);
+    }
+
+    @Override
+    @Transactional
+    public void deleteWeekGoal(Long userId, LocalDate targetDate) {
+        Instant weekStart = weekStartInstant(targetDate);
+
+        WeekGoal week = weekGoalRepository.findByUser_IdAndWhenStarted(userId, weekStart)
+                .orElseThrow(() -> new NotFoundException("WeekGoal not found"));
+
+        assertNotStarted(week.getWhenStarted(), "Week already started");
+
+        weekGoalRepository.delete(week); // каскадом удалит days/entries/metrics/values
+    }
+
+    @Override
+    @Transactional
+    public WeekGoalDetailDto replaceWeekGoal(Long userId, Long templateId, LocalDate targetDate) {
+        Instant weekStart = weekStartInstant(targetDate);
+
+        weekGoalRepository.findByUser_IdAndWhenStarted(userId, weekStart).ifPresent(week -> {
+            assertNotStarted(week.getWhenStarted(), "Week already started");
+            weekGoalRepository.delete(week);
+        });
+
+        // после удаления создаём новую неделю из WeekTemplate
+        return createWeekGoal(userId, templateId, targetDate);
+    }
+
+    @Override
+    @Transactional
+    public void deleteDayGoal(Long userId, LocalDate targetDate) {
+
+        Instant weekStart = weekStartInstant(targetDate);
+
+        WeekGoal week = weekGoalRepository.findByUser_IdAndWhenStarted(userId, weekStart)
+                .orElseThrow(() -> new NotFoundException("WeekGoal not found"));
+
+        DayGoal day = dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)
+                .orElseThrow(() -> new NotFoundException("DayGoal not found"));
+
+        assertNotStarted(day.getWhenStarted(), "Day already started");
+
+        dayGoalRepository.delete(day);
+
+        // если после удаления дней не осталось — удаляем week (только если week ещё не началась)
+        if (dayGoalRepository.countByWeekGoal_Id(week.getId()) == 0) {
+            assertNotStarted(week.getWhenStarted(), "Week already started");
+            weekGoalRepository.delete(week);
+        }
+    }
+
+    @Override
+    @Transactional
+    public DayGoalDetailDto replaceDayGoal(Long userId, Long templateId, LocalDate targetDate) {
+
+        Instant weekStart = weekStartInstant(targetDate);
+
+        WeekGoal week = weekGoalRepository.findByUser_IdAndWhenStarted(userId, weekStart)
+                .orElseThrow(() -> new NotFoundException("WeekGoal not found"));
+
+        dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate).ifPresent(day -> {
+            assertNotStarted(day.getWhenStarted(), "Day already started");
+            dayGoalRepository.delete(day);
+
+            if (dayGoalRepository.countByWeekGoal_Id(week.getId()) == 0) {
+                assertNotStarted(week.getWhenStarted(), "Week already started");
+                weekGoalRepository.delete(week);
+            }
+        });
+
+        return createDayGoal(userId, templateId, targetDate);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntryGoal(Long userId, Long entryGoalId) {
+
+        DiaryEntryGoal g = diaryEntryGoalRepository.findByIdAndUser_Id(entryGoalId, userId)
+                .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
+
+        assertNotStarted(g.getWhenStarted(), "EntryGoal already started");
+
+        DayGoal day = g.getDayGoal();
+        WeekGoal week = day.getWeekGoal();
+
+        diaryEntryGoalRepository.delete(g);
+
+        // если в дне больше нет entryGoals — удаляем day (если он ещё не начался)
+        if (diaryEntryGoalRepository.countByDayGoal_Id(day.getId()) == 0) {
+            assertNotStarted(day.getWhenStarted(), "Day already started");
+            dayGoalRepository.delete(day);
+
+            // если в неделе больше нет дней — удаляем week (если он ещё не начался)
+            if (dayGoalRepository.countByWeekGoal_Id(week.getId()) == 0) {
+                assertNotStarted(week.getWhenStarted(), "Week already started");
+                weekGoalRepository.delete(week);
+            }
+        }
+    }
+
+    private Instant weekStartInstant(LocalDate anyDateInWeek) {
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate monday = anyDateInWeek.with(DayOfWeek.MONDAY);
+        return monday.atStartOfDay(zone).toInstant();
+    }
+
+    private void assertNotStarted(Instant whenStarted, String message) {
+        if (!Instant.now().isBefore(whenStarted)) {
+            throw new BadRequestException(message);
+        }
     }
 
     private DiaryEntryCreateDto buildCreateDtoFromGoal(DiaryEntryGoal goal) {
@@ -389,12 +499,19 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
     }
 
     private void copyMetricsFromTemplate(DiaryEntryGoal goal, DiaryEntryTemplate tpl) {
+        // metricTypeId -> nextPosition
+        Map<Long, Integer> posByType = new HashMap<>();
+
         for (EntryTemplateMetric tm : tpl.getMetrics()) {
-            EntryMetricGoal mg = EntryMetricGoal.create(goal, tm.getMetricType());
+            Long typeId = tm.getMetricType().getId();
+
+            int pos = posByType.getOrDefault(typeId, 0) + 1;
+            posByType.put(typeId, pos);
+
+            EntryMetricGoal mg = EntryMetricGoal.create(goal, tm.getMetricType(), pos);
 
             for (EntryTemplateMetricValue tv : tm.getValues()) {
-                DictionaryItem unit = tv.getUnit();
-                mg.addValue(unit, tv.getValue());
+                mg.addValue(tv.getUnit(), tv.getValue());
             }
 
             goal.addMetricGoal(mg);

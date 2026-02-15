@@ -3,10 +3,9 @@ package com.example.activity_diary.dto.goal;
 import lombok.Data;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Data
-public class DiaryEntryGoalViewDto {
+public class DiaryEntryGoalDetailDto {
     Long id;
     Integer position;
     Instant whenStarted;
