@@ -44,4 +44,12 @@ public interface WeekGoalRepository extends JpaRepository<WeekGoal, Long> {
             @Param("from") Instant from,
             @Param("to") Instant to
     );
+
+    @Query("""
+        select w from WeekGoal w
+        left join fetch w.days d
+        where w.id = :id
+    """)
+    Optional<WeekGoal> findGraphById(Long id);
+
 }

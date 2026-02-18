@@ -174,6 +174,53 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     @Transactional
+    public DiaryEntryGoalDetailDto confirmEntryGoalSimple(Long userId, Long goalId) {
+
+        DiaryEntryGoal goal = diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)
+                .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
+
+        if (goal.getCurrentEntry() != null) {
+            throw new BadRequestException("Goal already confirmed");
+        }
+
+        Instant now = Instant.now();
+        if (!now.isBefore(goal.getWhenEnded())) {
+            throw new BadRequestException("Goal deadline has passed");
+        }
+
+        // 1) строим dto из goal
+        DiaryEntryCreateDto createDto = buildCreateDtoFromGoal(goal);
+
+        // 2) создаём entry
+        DiaryEntryDto createdDto = diaryService.create(createDto, userId, DiaryEntryCreateMode.CONFIRM_GOAL);
+
+        // 3) достаём graph
+        DiaryEntry createdEntry = diaryRepository.findGraphByIdAndUser_Id(createdDto.getId(), userId)
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
+
+        // 4) линк + completeness
+        goal.setCurrentEntry(createdEntry);
+        goal.setCompleteness(100);
+
+        // 5) пересчёт day/week (от entry goals)
+        DayGoal day = goal.getDayGoal();
+        GoalCompletenessCalculator.recalcDayGoal(day);
+
+        Long weekId = day.getWeekGoal().getId();
+
+        WeekGoal week = weekGoalRepository.findGraphById(weekId)
+                .orElseThrow(() -> new NotFoundException("WeekGoal not found"));
+        GoalCompletenessCalculator.recalcWeekGoal(week);
+
+        diaryEntryGoalRepository.save(goal);
+        dayGoalRepository.save(day);
+        weekGoalRepository.save(week);
+
+        return goalMapper.toEntryView(goal);
+    }
+
+    @Override
+    @Transactional
     public DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, DiaryEntryUpdateDto dto) {
 
         DiaryEntryGoal goal = diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)

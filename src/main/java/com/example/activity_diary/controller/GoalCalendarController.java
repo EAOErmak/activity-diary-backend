@@ -54,12 +54,20 @@ public class GoalCalendarController {
     }
 
     @PostMapping("/entry/{goalId}/confirm")
-    public ApiResponse<DiaryEntryGoalDetailDto> confirmEntryGoal(
+    public DiaryEntryGoalDetailDto confirmReal(
             @PathVariable Long goalId,
-            @Valid @RequestBody DiaryEntryCreateDto dto,
-            @AuthenticationPrincipal LightUserDetails user
+            @RequestParam Long userId,
+            @RequestBody DiaryEntryCreateDto dto
     ) {
-        return ApiResponse.ok(goalCalendarService.confirmEntryGoal(user.getId(), goalId, dto));
+        return goalCalendarService.confirmEntryGoal(userId, goalId, dto);
+    }
+
+    @PostMapping("/entry/{goalId}/confirm-simple")
+    public DiaryEntryGoalDetailDto confirmSimple(
+            @PathVariable Long goalId,
+            @RequestParam Long userId
+    ) {
+        return goalCalendarService.confirmEntryGoalSimple(userId, goalId);
     }
 
     @PutMapping("/entry/{goalId}")

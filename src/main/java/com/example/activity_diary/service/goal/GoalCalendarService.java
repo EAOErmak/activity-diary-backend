@@ -17,6 +17,7 @@ public interface GoalCalendarService {
     WeekGoalDetailDto createWeekGoal(Long userId, Long templateId, LocalDate targetDate);
 
     DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, DiaryEntryCreateDto dto);
+    DiaryEntryGoalDetailDto confirmEntryGoalSimple(Long userId, Long goalId);
 
     DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, DiaryEntryUpdateDto dto);
 
