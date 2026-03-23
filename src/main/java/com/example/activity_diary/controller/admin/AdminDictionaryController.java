@@ -1,4 +1,3 @@
-// src/main/java/com/example/activity_diary/controller/admin/AdminDictionaryController.java
 package com.example.activity_diary.controller.admin;
 
 import com.example.activity_diary.dto.ApiResponse;
@@ -6,7 +5,6 @@ import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.entity.enums.DictionaryType;
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -37,7 +35,6 @@ public class AdminDictionaryController {
     }
 
     @PostMapping
-    @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<DictionaryResponseDto>> create(
             @Valid @RequestBody DictionaryCreateDto dto
     ) {

@@ -5,7 +5,6 @@ import com.example.activity_diary.dto.admin.AdminUserDto;
 import com.example.activity_diary.dto.admin.CreateUserByAdminDto;
 import com.example.activity_diary.dto.admin.UpdateUserRoleDto;
 import com.example.activity_diary.dto.mapper.AdminUserMapper;
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.service.admin.AdminUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -26,7 +25,6 @@ public class AdminUserController {
     private final AdminUserMapper adminUserMapper;
 
     @GetMapping
-    @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<AdminUserDto>>> getAll() {
         return ResponseEntity.ok(
                 ApiResponse.ok(
@@ -39,7 +37,6 @@ public class AdminUserController {
     }
 
     @PostMapping
-    @RateLimit(capacity = 5, refillTokens = 5, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<Void>> create(
             @Valid @RequestBody CreateUserByAdminDto dto
     ) {

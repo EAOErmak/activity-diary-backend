@@ -5,8 +5,6 @@ import com.example.activity_diary.dto.user.ChangePasswordRequest;
 import com.example.activity_diary.dto.user.ChangeUsernameRequest;
 import com.example.activity_diary.dto.user.UpdateProfileRequest;
 import com.example.activity_diary.dto.user.UserDto;
-import com.example.activity_diary.dto.mapper.UserMapper;
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.user.UserService;
 import jakarta.validation.Valid;
@@ -22,7 +20,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 60)
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserDto>> me(
             @AuthenticationPrincipal LightUserDetails user

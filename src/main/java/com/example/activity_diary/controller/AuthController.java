@@ -2,7 +2,6 @@ package com.example.activity_diary.controller;
 
 import com.example.activity_diary.dto.*;
 import com.example.activity_diary.dto.auth.*;
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.service.auth.AuthService;
 import com.example.activity_diary.service.auth.VerificationService;
 import jakarta.validation.Valid;
@@ -20,7 +19,6 @@ public class AuthController {
     private final AuthService authService;
     private final VerificationService verificationService;
 
-    @RateLimit(capacity = 3, refillTokens = 3, refillPeriodSeconds = 3600)
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<RegisterResponseDto>> register(
             @Valid @RequestBody RegisterRequestDto req,
@@ -45,7 +43,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Email verified"));
     }
 
-    @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponseDto>> refresh(
             @Valid @RequestBody RefreshTokenRequest req

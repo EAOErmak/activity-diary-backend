@@ -5,7 +5,6 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
@@ -94,7 +93,6 @@ public class DiaryController {
         );
     }
 
-    @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 30)
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<DiaryEntryDto>> getById(
             @PathVariable @Positive Long id,
@@ -105,7 +103,6 @@ public class DiaryController {
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
-    @RateLimit(capacity = 30, refillTokens = 30, refillPeriodSeconds = 60)
     @PostMapping
     public ResponseEntity<ApiResponse<DiaryEntryDto>> create(
             @Valid @RequestBody DiaryEntryCreateDto dto,
@@ -118,7 +115,6 @@ public class DiaryController {
                 .body(ApiResponse.success(created));
     }
 
-    @RateLimit(capacity = 15, refillTokens = 15, refillPeriodSeconds = 60)
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DiaryEntryDto>> update(
             @PathVariable @Positive Long id,
@@ -131,7 +127,6 @@ public class DiaryController {
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
-    @RateLimit(capacity = 10, refillTokens = 10, refillPeriodSeconds = 60)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable @Positive Long id,

@@ -1,11 +1,9 @@
-// src/main/java/com/example/activity_diary/controller/DictionaryController.java
 package com.example.activity_diary.controller;
 
 import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +36,6 @@ public class DictionaryController {
     }
 
     @GetMapping("/{type}")
-    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getForUser(
             @PathVariable DictionaryType type,
             @RequestParam(required = false) Long parentId,
@@ -54,7 +51,6 @@ public class DictionaryController {
     }
 
     @GetMapping("/search")
-    @RateLimit(capacity = 60, refillTokens = 60, refillPeriodSeconds = 60)
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> search(
             @RequestParam String query,
             @AuthenticationPrincipal LightUserDetails user

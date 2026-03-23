@@ -1,6 +1,5 @@
 package com.example.activity_diary.controller;
 
-import com.example.activity_diary.rate.RateLimit;
 import com.example.activity_diary.service.telegram.TelegramWebhookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ public class TelegramWebhookController {
     private final TelegramWebhookService telegramWebhookService;
     private final ObjectMapper objectMapper;
 
-    @RateLimit(capacity = 20, refillTokens = 20, refillPeriodSeconds = 1)
     @PostMapping(
             value = "/webhook",
             consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE}
