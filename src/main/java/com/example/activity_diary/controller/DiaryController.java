@@ -5,6 +5,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
+import com.example.activity_diary.entity.enums.UiStatus;
 import com.example.activity_diary.security.LightUserDetails;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
@@ -38,23 +39,11 @@ public class DiaryController {
             @AuthenticationPrincipal LightUserDetails user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
-
-            @RequestParam(required = false) com.example.activity_diary.entity.enums.UiStatus uiStatus,
-
-            @RequestParam(required = false)
-            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
-            Instant now,
-
-            // AND фильтр по тегам:
+            @RequestParam(required = false) UiStatus uiStatus,
+            @RequestParam(required = false) Instant now,
             @RequestParam(required = false, name = "tags") List<String> tags,
-
-            @RequestParam(required = false)
-            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
-            Instant from,
-
-            @RequestParam(required = false)
-            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
-            Instant to
+            @RequestParam(required = false) Instant from,
+            @RequestParam(required = false) Instant to
     ) {
         Pageable pageable = PageRequest.of(
                 page, size,

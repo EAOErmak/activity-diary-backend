@@ -8,7 +8,7 @@
 
     <changeSet id="v1-02-create-dictionary-item" author="diary">
         <createTable tableName="dictionary_item">
-            <column name="id" type="BIGSERIAL">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
 
