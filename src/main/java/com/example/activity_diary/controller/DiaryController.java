@@ -100,8 +100,7 @@ public class DiaryController {
             @PathVariable @Positive Long id,
             @AuthenticationPrincipal LightUserDetails user
     ) {
-        DiaryEntryDto dto =
-                diaryService.getMyEntryById(id, user.getId());
+        DiaryEntryDto dto = diaryService.getMyEntryById(id, user.getId());
 
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
@@ -112,8 +111,7 @@ public class DiaryController {
             @Valid @RequestBody DiaryEntryCreateDto dto,
             @AuthenticationPrincipal LightUserDetails user
     ) {
-        DiaryEntryDto created =
-                diaryService.create(dto, user.getId());
+        DiaryEntryDto created = diaryService.create(dto, user.getId());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

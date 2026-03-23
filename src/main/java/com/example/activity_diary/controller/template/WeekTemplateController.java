@@ -1,11 +1,10 @@
-package com.example.activity_diary.controller;
+package com.example.activity_diary.controller.template;
 
-
-import com.example.activity_diary.dto.template.day.DayTemplateCreateDto;
-import com.example.activity_diary.dto.template.day.DayTemplateUpdateDto;
-import com.example.activity_diary.dto.template.day.DayTemplateViewDto;
+import com.example.activity_diary.dto.template.week.WeekTemplateCreateDto;
+import com.example.activity_diary.dto.template.week.WeekTemplateUpdateDto;
+import com.example.activity_diary.dto.template.week.WeekTemplateViewDto;
 import com.example.activity_diary.security.LightUserDetails;
-import com.example.activity_diary.service.diary.DayTemplateService;
+import com.example.activity_diary.service.diary.WeekTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -14,13 +13,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/day-templates")
-public class DayTemplateController {
+@RequestMapping("/api/week-templates")
+public class WeekTemplateController {
 
-    private final DayTemplateService service;
+    private final WeekTemplateService service;
 
     @GetMapping
-    public Page<DayTemplateViewDto> list(
+    public Page<WeekTemplateViewDto> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal LightUserDetails user
@@ -30,15 +29,15 @@ public class DayTemplateController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DayTemplateViewDto create(
-            @RequestBody DayTemplateCreateDto dto,
+    public WeekTemplateViewDto create(
+            @RequestBody WeekTemplateCreateDto dto,
             @AuthenticationPrincipal LightUserDetails user
     ) {
         return service.create(user.getId(), dto);
     }
 
     @GetMapping("/{id}")
-    public DayTemplateViewDto get(
+    public WeekTemplateViewDto get(
             @PathVariable Long id,
             @AuthenticationPrincipal LightUserDetails user
     ) {
@@ -46,9 +45,9 @@ public class DayTemplateController {
     }
 
     @PutMapping("/{id}")
-    public DayTemplateViewDto update(
+    public WeekTemplateViewDto update(
             @PathVariable Long id,
-            @RequestBody DayTemplateUpdateDto dto,
+            @RequestBody WeekTemplateUpdateDto dto,
             @AuthenticationPrincipal LightUserDetails user
     ) {
         return service.update(user.getId(), id, dto);

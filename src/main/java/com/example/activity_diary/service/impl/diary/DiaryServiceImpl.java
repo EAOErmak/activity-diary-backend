@@ -14,6 +14,7 @@ import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.enums.DictionaryType;
+import com.example.activity_diary.entity.enums.UiStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DiaryRepository;
@@ -64,7 +65,7 @@ public class DiaryServiceImpl implements DiaryService {
     @Override
     public Slice<DiaryEntryViewDto> getMyEntriesFiltered(
             Long userId,
-            com.example.activity_diary.entity.enums.UiStatus uiStatus,
+            UiStatus uiStatus,
             Instant now,
             List<String> tags,
             Instant from,
@@ -157,6 +158,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         // 3) Резолвим теги и требуем хотя бы 1
         var resolvedTags = tagResolverService.resolveFromDescription(userId, desc);
+
         if (resolvedTags == null || resolvedTags.isEmpty()) {
             throw new BadRequestException("At least one tag is required");
         }

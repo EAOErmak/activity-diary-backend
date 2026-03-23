@@ -3,6 +3,8 @@ package com.example.activity_diary.repository.diary;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 
+import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.entity.enums.EntryStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +24,17 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
             "metrics.metricType",
     })
     Optional<DiaryEntry> findGraphByIdAndUser_Id(Long id, Long userId);
+
+    List<DiaryEntry> findAllByUserIdAndTags_Id(Long userId, Long tagId);
+
+    List<DiaryEntry> findAllByUserIdAndWhenStartedBetweenAndStatusNotOrderByWhenStartedAsc(
+            Long userId,
+            Instant from,
+            Instant to,
+            EntryStatus status
+    );
+
+    Optional<DiaryEntry> findByIdAndUserId(Long id, Long userId);
 
     @Query("""
         select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(

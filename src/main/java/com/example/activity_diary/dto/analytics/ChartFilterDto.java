@@ -6,13 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
+import java.time.Instant;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChartResponseDto {
+public class ChartFilterDto {
+    private Long tagId;
+    private Instant dateFrom;
+    private Instant dateTo;
     private ChartType chartType;
-    private List<ChartSeriesDto> series;
 }

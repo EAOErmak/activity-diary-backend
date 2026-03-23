@@ -1,4 +1,4 @@
-package com.example.activity_diary.controller;
+package com.example.activity_diary.controller.template;
 
 import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateCreateDto;
 import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto;

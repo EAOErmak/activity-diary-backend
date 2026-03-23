@@ -38,4 +38,7 @@
     <include file="db/changelog/changes/v1_create_entry_metric_goal.xml"/>
     <include file="db/changelog/changes/v1_create_entry_metric_value_goal.xml"/>
 
+    <include file="db/changelog/changes/v1_insertion_test_dictionary_item.xml"/>
+    <include file="db/changelog/changes/v1_insertion_test_user.xml"/>
+
 </databaseChangeLog>

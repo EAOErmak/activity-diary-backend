@@ -1,13 +1,16 @@
 package com.example.activity_diary.dto.analytics;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChartSeriesDto {
-    private String label;
     private List<ChartPointDto> points;
 }
-
-

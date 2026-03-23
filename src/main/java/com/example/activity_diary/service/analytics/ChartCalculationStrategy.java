@@ -1,14 +1,10 @@
 package com.example.activity_diary.service.analytics;
 
-import com.example.activity_diary.entity.diary.DiaryEntry;
+import com.example.activity_diary.dto.analytics.ChartResponseDto;
+import com.example.activity_diary.dto.analytics.ChartFilterDto;
 import com.example.activity_diary.entity.enums.ChartType;
 
-import java.math.BigDecimal;
-
 public interface ChartCalculationStrategy {
-
-    ChartType supportedType();
-
-    BigDecimal calculateY(DiaryEntry entry);
+    ChartResponseDto calculate(Long userId, ChartFilterDto filter);
+    ChartType getChartType();
 }
-

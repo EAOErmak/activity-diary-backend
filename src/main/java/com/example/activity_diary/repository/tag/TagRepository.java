@@ -15,8 +15,6 @@ import java.util.Set;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
 
-    List<Tag> findAllByIdIn(Set<Long> ids);
-
     Optional<Tag> findByName(String name);
 
     @Query("""
