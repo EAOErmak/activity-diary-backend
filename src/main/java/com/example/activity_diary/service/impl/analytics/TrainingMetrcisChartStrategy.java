@@ -11,12 +11,16 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.service.analytics.ChartCalculationStrategy;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@Service
+@Transactional
 public class TrainingMetrcisChartStrategy implements ChartCalculationStrategy {
 
     private final DiaryRepository diaryRepository;
