@@ -3,7 +3,6 @@ package com.example.activity_diary.repository.diary;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 
-import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;

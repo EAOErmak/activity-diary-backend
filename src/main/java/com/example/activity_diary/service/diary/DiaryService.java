@@ -5,7 +5,6 @@ import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
-import com.example.activity_diary.entity.enums.UiStatus;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Pageable;
 

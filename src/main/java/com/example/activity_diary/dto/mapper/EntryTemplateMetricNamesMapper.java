@@ -1,6 +1,5 @@
 package com.example.activity_diary.dto.mapper;
 
-import com.example.activity_diary.dto.template.*;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueViewDto;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricViewDto;
 import com.example.activity_diary.entity.template.EntryTemplateMetric;

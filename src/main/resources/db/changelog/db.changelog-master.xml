@@ -9,7 +9,6 @@
     <include file="db/changelog/changes/v1_create_users.xml"/>
     <include file="db/changelog/changes/v1_create_entry_field_config.xml"/>
     <include file="db/changelog/changes/v1_create_dictionary_item.xml"/>
-    <include file="db/changelog/changes/v1_create_dictionary_suggestion.xml"/>
     <include file="db/changelog/changes/v1_create_diary_entry.xml"/>
     <include file="db/changelog/changes/v1_create_entry_metric.xml"/>
     <include file="db/changelog/changes/v1_create_entry_metric_value.xml"/>

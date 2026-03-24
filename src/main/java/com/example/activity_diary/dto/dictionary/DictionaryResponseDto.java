@@ -4,8 +4,6 @@ import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import lombok.Data;
 
-import java.time.Instant;
-
 @Data
 public class DictionaryResponseDto {
     private Long id;

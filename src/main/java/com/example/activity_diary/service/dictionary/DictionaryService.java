@@ -6,7 +6,6 @@ import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 
