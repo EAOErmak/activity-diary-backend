@@ -70,7 +70,7 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
         if (mood == null) return;
 
         if (mood < MIN_MOOD || mood > MAX_MOOD) {
-            throw new BadRequestException("Mood must be between 0 and 10");
+            throw new BadRequestException("Mood must be between 1 and 5");
         }
     }
 
@@ -100,6 +100,10 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
                 throw new BadRequestException("metricTypeId is required");
             }
 
+            if (!metricTypeIds.add(metricTypeId)) {
+                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
+            }
+
             validateMetricValues(metricTypeId, metric.getValues());
         }
     }
@@ -117,6 +121,10 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             Long metricTypeId = metric.getMetricTypeId();
             if (metricTypeId == null) {
                 throw new BadRequestException("metricTypeId is required");
+            }
+
+            if (!metricTypeIds.add(metricTypeId)) {
+                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
             }
 
             validateMetricValues(metricTypeId, metric.getValues());

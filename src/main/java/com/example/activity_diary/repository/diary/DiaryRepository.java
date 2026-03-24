@@ -19,6 +19,7 @@ import java.util.List;
 public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
     @EntityGraph(attributePaths = {
+            "user",
             "metrics",
             "metrics.metricType",
     })

@@ -92,6 +92,10 @@ public class DiaryEntry extends BaseEntity {
             String description
     ) {
 
+        if (user == null) {
+            throw new IllegalArgumentException("User is required");
+        }
+
         if (started == null || ended == null || !ended.isAfter(started)) {
             throw new IllegalArgumentException("Invalid time range");
         }
@@ -106,11 +110,12 @@ public class DiaryEntry extends BaseEntity {
                 .whenEnded(ended)
                 .duration(duration)
                 .mood(mood)
-                .description(description)
+                .description(null)
                 .status(EntryStatus.LOSE)
                 .build();
 
         entry.updateMood(mood);
+        entry.updateDescription(description);
         entry.autoUpdateStatusByTime(Instant.now());
 
         return entry;

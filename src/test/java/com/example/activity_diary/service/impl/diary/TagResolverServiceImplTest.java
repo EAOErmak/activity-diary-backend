@@ -69,6 +69,7 @@ class TagResolverServiceImplTest {
 
         assertEquals(2, tags.size());
 
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<LinkedHashSet<String>> namesCaptor =
                 ArgumentCaptor.forClass(LinkedHashSet.class);
         verify(tagRepository).findByNameIn(namesCaptor.capture());

@@ -1,5 +1,6 @@
 package com.example.activity_diary.dto.diary.metric;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -20,6 +21,7 @@ public class EntryMetricUpdateDto {
     private Long metricTypeId;
 
     @NotNull
+    @Valid
     @Size(min = 1)
     private List<EntryMetricValueUpdateDto> values;
 }

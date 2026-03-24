@@ -150,7 +150,7 @@ class DiaryServiceImplTest {
 
     @Test
     void getMyEntryById_missing_throwsNotFound() {
-        when(diaryRepository.findById(1L)).thenReturn(Optional.empty());
+        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service.getMyEntryById(1L, 10L));
     }
@@ -214,7 +214,7 @@ class DiaryServiceImplTest {
                 Instant.now().minusSeconds(600),
                 Instant.now().minusSeconds(300));
 
-        when(diaryRepository.findById(1L)).thenReturn(Optional.of(entry));
+        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.of(entry));
 
         assertThrows(BadRequestException.class, () -> service.update(1L, dto, 10L));
     }
@@ -230,8 +230,8 @@ class DiaryServiceImplTest {
                 Instant.now().plusSeconds(600));
 
         Tag tag = Tag.builder().name("tag").build();
-        when(diaryRepository.findById(1L)).thenReturn(Optional.of(entry));
-        when(tagResolverService.resolveFromDescription(10L, "  new desc ")).thenReturn(Set.of(tag));
+        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.of(entry));
+        when(tagResolverService.resolveFromDescription(10L, "new desc")).thenReturn(Set.of(tag));
         when(diaryRepository.save(entry)).thenReturn(entry);
         DiaryEntryDto mapped = new DiaryEntryDto();
         when(mapper.toDto(entry)).thenReturn(mapped);
@@ -240,6 +240,23 @@ class DiaryServiceImplTest {
 
         assertEquals(mapped, result);
         verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
+    }
+
+    @Test
+    void update_descriptionWithoutTags_throwsBadRequest() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setDescription("new desc");
+
+        User user = userWithId(10L);
+        DiaryEntry entry = entryForUser(user,
+                Instant.now().plusSeconds(300),
+                Instant.now().plusSeconds(600));
+
+        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.of(entry));
+        when(tagResolverService.resolveFromDescription(10L, "new desc")).thenReturn(Set.of());
+
+        assertThrows(BadRequestException.class, () -> service.update(1L, dto, 10L));
+        verify(diaryRepository, never()).save(any(DiaryEntry.class));
     }
 
     private static DiaryEntryCreateDto validCreateDto(String description) {

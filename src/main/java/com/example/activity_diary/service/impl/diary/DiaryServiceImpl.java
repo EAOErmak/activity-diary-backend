@@ -11,6 +11,7 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
+import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.enums.DictionaryType;
@@ -33,6 +34,7 @@ import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 
 @Service
@@ -131,13 +133,9 @@ public class DiaryServiceImpl implements DiaryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DiaryEntryDto getMyEntryById(Long id, Long userId) {
-
-        DiaryEntry entry = diaryRepository.findById(id)
-                .filter(e -> e.getUser().getId().equals(userId))
-                .orElseThrow(() -> new NotFoundException("Entry not found"));
-
-        return mapper.toDto(entry);
+        return mapper.toDto(getEntryGraphForUser(id, userId));
     }
 
     @Override
@@ -157,12 +155,6 @@ public class DiaryServiceImpl implements DiaryService {
         }
 
         // 3) Резолвим теги и требуем хотя бы 1
-        var resolvedTags = tagResolverService.resolveFromDescription(userId, desc);
-
-        if (resolvedTags == null || resolvedTags.isEmpty()) {
-            throw new BadRequestException("At least one tag is required");
-        }
-
         DiaryEntry entry = DiaryEntry.create(
                 user,
                 dto.getWhenStarted(),
@@ -177,7 +169,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         applyMetricsOnCreate(dto.getMetrics(), entry);
 
-        entry.setTags(resolvedTags);
+        entry.setTags(resolveRequiredTags(userId, desc));
 
         DiaryEntry saved = diaryRepository.save(entry);
 
@@ -193,9 +185,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         validationService.validateUpdate(dto);
 
-        DiaryEntry entry = diaryRepository.findById(id)
-                .filter(e -> e.getUser().getId().equals(userId))
-                .orElseThrow(() -> new NotFoundException("Entry not found"));
+        DiaryEntry entry = getEntryGraphForUser(id, userId);
 
         if (entry.getWhenEnded().isBefore(Instant.now())) {
             throw new BadRequestException("Past entry cannot be modified");
@@ -207,6 +197,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         if (dto.getDescription() != null) {
             entry.updateDescription(dto.getDescription());
+            entry.setTags(resolveRequiredTags(userId, entry.getDescription()));
         }
 
         if (dto.getMood() != null) {
@@ -221,10 +212,6 @@ public class DiaryServiceImpl implements DiaryService {
             replaceMetrics(entry, dto.getMetrics());
         }
 
-        if (dto.getDescription() != null) {
-            entry.setTags(tagResolverService.resolveFromDescription(userId, dto.getDescription()));
-        }
-
         DiaryEntry saved = diaryRepository.save(entry);
 
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
@@ -235,8 +222,7 @@ public class DiaryServiceImpl implements DiaryService {
     @Override
     public void delete(Long id, Long userId) {
 
-        DiaryEntry entry = diaryRepository.findById(id)
-                .filter(e -> e.getUser().getId().equals(userId))
+        DiaryEntry entry = diaryRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
 
         entry.markDeleted();
@@ -314,5 +300,18 @@ public class DiaryServiceImpl implements DiaryService {
         }
 
         return item;
+    }
+
+    private Set<Tag> resolveRequiredTags(Long userId, String description) {
+        Set<Tag> resolvedTags = tagResolverService.resolveFromDescription(userId, description);
+        if (resolvedTags == null || resolvedTags.isEmpty()) {
+            throw new BadRequestException("At least one tag is required");
+        }
+        return resolvedTags;
+    }
+
+    private DiaryEntry getEntryGraphForUser(Long id, Long userId) {
+        return diaryRepository.findGraphByIdAndUser_Id(id, userId)
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
     }
 }
