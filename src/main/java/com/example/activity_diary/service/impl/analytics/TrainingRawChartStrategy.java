@@ -7,7 +7,6 @@ import com.example.activity_diary.dto.analytics.ChartSeriesDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.diary.EntryMetricValue;
-import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.service.analytics.ChartCalculationStrategy;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -45,7 +43,6 @@ public class TrainingRawChartStrategy implements ChartCalculationStrategy {
 
         for(DiaryEntry diaryEntry : diaryEntryList){
 
-            HashMap<DictionaryItem, Integer> total = new HashMap<>();
             List<EntryMetric> metrics = diaryEntry.getMetrics();
 
             for(EntryMetric metric : metrics) {
@@ -55,7 +52,6 @@ public class TrainingRawChartStrategy implements ChartCalculationStrategy {
 
                 for (EntryMetricValue value : values){
 
-                    total.merge(value.getUnit(), value.getValue(), Integer::sum);
                     chartPointDtoList.add(new ChartPointDto(value.getUnit().getLabel(), new BigDecimal(value.getValue())));
 
                 }
