@@ -63,13 +63,25 @@ class DiaryValidationServiceImplTest {
     }
 
     @Test
-    void validateCreate_duplicateMetricTypeId_throwsBadRequest() {
+    void validateCreate_duplicateMetricTypeId_doesNotThrow() {
         DiaryEntryCreateDto dto = validCreateDto();
         EntryMetricCreateDto metric1 = metricCreate(1L, 10L);
         EntryMetricCreateDto metric2 = metricCreate(1L, 11L);
         dto.setMetrics(List.of(metric1, metric2));
 
-        assertThrows(BadRequestException.class, () -> service.validateCreate(dto));
+        assertDoesNotThrow(() -> service.validateCreate(dto));
+    }
+
+    @Test
+    void validateUpdate_duplicateMetricTypeId_doesNotThrow() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setWhenStarted(Instant.parse("2026-02-10T10:00:00Z"));
+        dto.setWhenEnded(Instant.parse("2026-02-10T10:10:00Z"));
+        dto.setMood((short) 3);
+        dto.setDescription("ok");
+        dto.setMetrics(List.of(metricUpdate(1L, 10L), metricUpdate(1L, 11L)));
+
+        assertDoesNotThrow(() -> service.validateUpdate(dto));
     }
 
     @Test

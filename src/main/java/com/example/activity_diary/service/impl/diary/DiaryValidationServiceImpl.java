@@ -88,8 +88,6 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
     private void validateMetricsCreate(List<EntryMetricCreateDto> metrics) {
         if (metrics == null || metrics.isEmpty()) return;
 
-        Set<Long> metricTypeIds = new HashSet<>();
-
         for (EntryMetricCreateDto metric : metrics) {
             if (metric == null) {
                 throw new BadRequestException("Metric cannot be null");
@@ -100,18 +98,12 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
                 throw new BadRequestException("metricTypeId is required");
             }
 
-            if (!metricTypeIds.add(metricTypeId)) {
-                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
-            }
-
             validateMetricValues(metricTypeId, metric.getValues());
         }
     }
 
     private void validateMetricsUpdate(List<EntryMetricUpdateDto> metrics) {
         if (metrics == null || metrics.isEmpty()) return;
-
-        Set<Long> metricTypeIds = new HashSet<>();
 
         for (EntryMetricUpdateDto metric : metrics) {
             if (metric == null) {
@@ -121,10 +113,6 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             Long metricTypeId = metric.getMetricTypeId();
             if (metricTypeId == null) {
                 throw new BadRequestException("metricTypeId is required");
-            }
-
-            if (!metricTypeIds.add(metricTypeId)) {
-                throw new BadRequestException("Duplicate metricTypeId: " + metricTypeId);
             }
 
             validateMetricValues(metricTypeId, metric.getValues());
