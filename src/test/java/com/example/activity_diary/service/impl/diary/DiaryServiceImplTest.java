@@ -4,10 +4,14 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
 import com.example.activity_diary.dto.mapper.DiaryEntryMapper;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.entity.enums.UiStatus;
 import com.example.activity_diary.entity.enums.UserSyncEntityType;
@@ -207,6 +211,38 @@ class DiaryServiceImplTest {
     }
 
     @Test
+    void create_sortsMetricsByMetricTypeIdBeforeSaving() {
+        DiaryEntryCreateDto dto = validCreateDto("hello");
+        dto.setMetrics(List.of(
+                metricCreate(20L, 200L, 5),
+                metricCreate(10L, 100L, 3)
+        ));
+
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
+        when(dictionaryRepository.findById(20L)).thenReturn(Optional.of(dictionaryItem(20L, DictionaryType.METRIC_NAME)));
+        when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(dictionaryItem(10L, DictionaryType.METRIC_NAME)));
+        when(dictionaryRepository.findById(200L)).thenReturn(Optional.of(dictionaryItem(200L, DictionaryType.METRIC_UNIT)));
+        when(dictionaryRepository.findById(100L)).thenReturn(Optional.of(dictionaryItem(100L, DictionaryType.METRIC_UNIT)));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
+        verify(diaryRepository).save(entryCaptor.capture());
+
+        List<Long> metricTypeIds = entryCaptor.getValue().getMetrics().stream()
+                .map(metric -> metric.getMetricType().getId())
+                .toList();
+
+        assertEquals(List.of(10L, 20L), metricTypeIds);
+    }
+
+    @Test
     void create_futureEntry_setsScheduledStatus() {
         DiaryEntryCreateDto dto = validCreateDto(
                 "hello",
@@ -380,6 +416,26 @@ class DiaryServiceImplTest {
         User user = User.builder().username("user").build();
         user.setId(id);
         return user;
+    }
+
+    private static EntryMetricCreateDto metricCreate(Long metricTypeId, Long unitId, Integer value) {
+        EntryMetricValueCreateDto valueDto = new EntryMetricValueCreateDto();
+        valueDto.setUnitId(unitId);
+        valueDto.setValue(value);
+
+        EntryMetricCreateDto metricDto = new EntryMetricCreateDto();
+        metricDto.setMetricTypeId(metricTypeId);
+        metricDto.setValues(List.of(valueDto));
+        return metricDto;
+    }
+
+    private static DictionaryItem dictionaryItem(Long id, DictionaryType type) {
+        DictionaryItem item = DictionaryItem.builder()
+                .type(type)
+                .label("item-" + id)
+                .build();
+        item.setId(id);
+        return item;
     }
 
     private static DiaryEntry entryForUser(User user, Instant started, Instant ended) {

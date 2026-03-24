@@ -33,6 +33,7 @@ import com.example.activity_diary.entity.enums.UserSyncEntityType;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -234,7 +235,9 @@ public class DiaryServiceImpl implements DiaryService {
     ) {
         if (metrics == null || metrics.isEmpty()) return;
 
-        for (EntryMetricCreateDto dto : metrics) {
+        for (EntryMetricCreateDto dto : metrics.stream()
+                .sorted(Comparator.comparing(EntryMetricCreateDto::getMetricTypeId))
+                .toList()) {
 
             DictionaryItem metricType = resolveDictionary(
                     dto.getMetricTypeId(),
