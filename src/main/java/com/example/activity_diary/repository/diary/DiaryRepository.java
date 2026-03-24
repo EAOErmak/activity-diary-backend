@@ -6,6 +6,7 @@ import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,6 +36,56 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     );
 
     Optional<DiaryEntry> findByIdAndUserId(Long id, Long userId);
+
+    @Query("""
+        select distinct d.user.id
+        from DiaryEntry d
+        where d.status = :currentStatus
+          and d.whenStarted <= :now
+          and d.whenEnded >= :now
+    """)
+    List<Long> findDistinctUserIdsToActivate(
+            @Param("currentStatus") EntryStatus currentStatus,
+            @Param("now") Instant now
+    );
+
+    @Modifying
+    @Query("""
+        update DiaryEntry d
+        set d.status = :newStatus
+        where d.status = :currentStatus
+          and d.whenStarted <= :now
+          and d.whenEnded >= :now
+    """)
+    int activateScheduledEntries(
+            @Param("currentStatus") EntryStatus currentStatus,
+            @Param("newStatus") EntryStatus newStatus,
+            @Param("now") Instant now
+    );
+
+    @Query("""
+        select distinct d.user.id
+        from DiaryEntry d
+        where d.status in :currentStatuses
+          and d.whenEnded < :now
+    """)
+    List<Long> findDistinctUserIdsToFinish(
+            @Param("currentStatuses") List<EntryStatus> currentStatuses,
+            @Param("now") Instant now
+    );
+
+    @Modifying
+    @Query("""
+        update DiaryEntry d
+        set d.status = :newStatus
+        where d.status in :currentStatuses
+          and d.whenEnded < :now
+    """)
+    int finishExpiredEntries(
+            @Param("currentStatuses") List<EntryStatus> currentStatuses,
+            @Param("newStatus") EntryStatus newStatus,
+            @Param("now") Instant now
+    );
 
     @Query("""
         select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
@@ -143,8 +194,8 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
             or (case
                   when :now < d.whenStarted then 'PLANNED'
                   when :now <= d.whenEnded then 'ACTIVE'
-                  when d.status = com.example.activity_diary.entity.enums.EntryStatus.WIN then 'WIN'
-                  else 'LOSE'
+                  when d.status = com.example.activity_diary.entity.enums.EntryStatus.FINISHED then 'FINISHED'
+                  else 'FAILED'
                 end) = :uiStatus
           )
     
