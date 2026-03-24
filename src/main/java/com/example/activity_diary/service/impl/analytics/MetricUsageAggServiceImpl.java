@@ -1,17 +1,21 @@
 package com.example.activity_diary.service.impl.analytics;
 
+import com.example.activity_diary.dto.analytics.MetricUsageAggDto;
+import com.example.activity_diary.dto.analytics.MetricUsageAggFilterDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.diary.EntryMetricValue;
+import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.diary.MetricUsageAggRepository;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -22,6 +26,21 @@ import static java.time.DayOfWeek.MONDAY;
 public class MetricUsageAggServiceImpl implements MetricUsageAggService {
 
     private final MetricUsageAggRepository repo;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MetricUsageAggDto> getUsage(Long userId, MetricUsageAggFilterDto filter) {
+        validateRange(filter.getDateFrom(), filter.getDateTo());
+
+        return repo.findUsage(
+                userId,
+                filter.getBucket(),
+                filter.getMetricTypeId(),
+                filter.getUnitId(),
+                filter.getDateFrom(),
+                filter.getDateTo()
+        );
+    }
 
     /**
      * Агрегируем метрики по ключу (metricTypeId, unitId):
@@ -117,5 +136,11 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
     private static final class Delta {
         private long sum = 0;
         private int count = 0;
+    }
+
+    private void validateRange(LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
+            throw new BadRequestException("dateFrom must be before or equal to dateTo");
+        }
     }
 }

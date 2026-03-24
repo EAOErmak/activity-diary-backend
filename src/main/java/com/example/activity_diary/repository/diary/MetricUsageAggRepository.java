@@ -1,15 +1,49 @@
 package com.example.activity_diary.repository.diary;
 
+import com.example.activity_diary.dto.analytics.MetricUsageAggDto;
 import com.example.activity_diary.entity.MetricUsageAgg;
 import com.example.activity_diary.entity.MetricUsageAggId;
+import com.example.activity_diary.entity.enums.TagUsageBucket;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 public interface MetricUsageAggRepository extends JpaRepository<MetricUsageAgg, MetricUsageAggId> {
+
+    @Query("""
+        select new com.example.activity_diary.dto.analytics.MetricUsageAggDto(
+            a.id.metricTypeId,
+            metricType.label,
+            a.id.unitId,
+            unit.label,
+            a.id.bucket,
+            a.id.bucketStart,
+            a.valueSum,
+            a.valueCount
+        )
+        from MetricUsageAgg a, DictionaryItem metricType, DictionaryItem unit
+        where a.id.userId = :userId
+          and a.id.bucket = :bucket
+          and metricType.id = a.id.metricTypeId
+          and unit.id = a.id.unitId
+          and (:metricTypeId is null or a.id.metricTypeId = :metricTypeId)
+          and (:unitId is null or a.id.unitId = :unitId)
+          and (:dateFrom is null or a.id.bucketStart >= :dateFrom)
+          and (:dateTo is null or a.id.bucketStart <= :dateTo)
+        order by a.id.bucketStart asc, metricType.label asc, unit.label asc
+        """)
+    List<MetricUsageAggDto> findUsage(
+            @Param("userId") Long userId,
+            @Param("bucket") TagUsageBucket bucket,
+            @Param("metricTypeId") Long metricTypeId,
+            @Param("unitId") Long unitId,
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo
+    );
 
     @Modifying
     @Query(value = """

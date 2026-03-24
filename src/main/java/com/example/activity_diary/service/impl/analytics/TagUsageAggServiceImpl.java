@@ -1,15 +1,19 @@
 package com.example.activity_diary.service.impl.analytics;
 
+import com.example.activity_diary.dto.analytics.TagUsageAggDto;
+import com.example.activity_diary.dto.analytics.TagUsageAggFilterDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.tag.TagUsageAggRepository;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 
 import static java.time.DayOfWeek.MONDAY;
 
@@ -18,6 +22,20 @@ import static java.time.DayOfWeek.MONDAY;
 public class TagUsageAggServiceImpl implements TagUsageAggService {
 
     private final TagUsageAggRepository repo;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TagUsageAggDto> getUsage(Long userId, TagUsageAggFilterDto filter) {
+        validateRange(filter.getDateFrom(), filter.getDateTo());
+
+        return repo.findUsage(
+                userId,
+                filter.getBucket(),
+                filter.getTagId(),
+                filter.getDateFrom(),
+                filter.getDateTo()
+        );
+    }
 
     @Transactional
     @Override
@@ -56,6 +74,12 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
             repo.addDelta(userId, tagId, "MONTH", monthStart, 1, durationMinutes);
             repo.addDelta(userId, tagId, "HALF_YEAR", halfYearStart, 1, durationMinutes);
             repo.addDelta(userId, tagId, "YEAR", yearStart, 1, durationMinutes);
+        }
+    }
+
+    private void validateRange(LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
+            throw new BadRequestException("dateFrom must be before or equal to dateTo");
         }
     }
 }
