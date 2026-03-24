@@ -6,6 +6,7 @@ import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.sync.GlobalSyncService;
+import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +14,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +37,36 @@ class TagServiceImplTest {
 
     @InjectMocks
     private TagServiceImpl tagService;
+
+    @Test
+    void getVisibleTags_withoutQuery_returnsAllVisibleTags() {
+        List<Tag> tags = List.of(Tag.builder().name("sport").status(TagStatus.APPROVED).build());
+        List<TagDto> expected = List.of(new TagDto());
+
+        when(tagRepository.findAllVisible(7L)).thenReturn(tags);
+        when(tagMapper.toDtoList(tags)).thenReturn(expected);
+
+        List<TagDto> actual = tagService.getVisibleTags(7L, null);
+
+        assertSame(expected, actual);
+        verify(tagRepository).findAllVisible(7L);
+        verify(tagMapper).toDtoList(tags);
+    }
+
+    @Test
+    void getVisibleTags_withQuery_searchesVisibleTags() {
+        List<Tag> tags = List.of(Tag.builder().name("sport").status(TagStatus.APPROVED).build());
+        List<TagDto> expected = List.of(new TagDto());
+
+        when(tagRepository.searchVisible(7L, "sport")).thenReturn(tags);
+        when(tagMapper.toDtoList(tags)).thenReturn(expected);
+
+        List<TagDto> actual = tagService.getVisibleTags(7L, "  Sport  ");
+
+        assertSame(expected, actual);
+        verify(tagRepository).searchVisible(7L, "sport");
+        verify(tagMapper).toDtoList(tags);
+    }
 
     @Test
     void approve_updatesStatusAndBumpsSync() {
