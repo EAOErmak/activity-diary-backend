@@ -11,21 +11,17 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.service.analytics.ChartCalculationStrategy;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-@Service
-@Transactional
-public class TrainingDetailedChartStrategy implements ChartCalculationStrategy {
+public class TrainingMetrcisChartStrategy implements ChartCalculationStrategy {
 
     private final DiaryRepository diaryRepository;
 
-    public TrainingDetailedChartStrategy(
+    public TrainingMetrcisChartStrategy(
             DiaryRepository diaryRepository
     ) {
         this.diaryRepository = diaryRepository;
@@ -33,7 +29,7 @@ public class TrainingDetailedChartStrategy implements ChartCalculationStrategy {
 
     @Override
     public ChartType getChartType(){
-        return ChartType.TRAINING_PROGRESS_DETAILED;
+        return ChartType.TRAINING_METRICS;
     }
 
     @Override
@@ -51,18 +47,23 @@ public class TrainingDetailedChartStrategy implements ChartCalculationStrategy {
             for(EntryMetric metric : metrics) {
 
                 List<EntryMetricValue> values = metric.getValues();
-                List<ChartPointDto> chartPointDtoList = new ArrayList<>();
+
 
                 for (EntryMetricValue value : values){
-
                     total.merge(value.getUnit(), value.getValue(), Integer::sum);
-                    chartPointDtoList.add(new ChartPointDto(value.getUnit().getLabel(), new BigDecimal(value.getValue())));
-
                 }
 
-                ChartSeriesDto chartSeriesDto = new ChartSeriesDto(chartPointDtoList);
-                chartSeriesDtoList.add(chartSeriesDto);
             }
+
+            List<ChartPointDto> chartPointDtoList = new ArrayList<>();
+
+            for (HashMap.Entry<DictionaryItem, Integer> entry : total.entrySet()) {
+
+                chartPointDtoList.add(new ChartPointDto(entry.getKey().getLabel(), new BigDecimal(entry.getValue())));
+
+            }
+            ChartSeriesDto chartSeriesDto = new ChartSeriesDto(chartPointDtoList);
+            chartSeriesDtoList.add(chartSeriesDto);
         }
 
         return new ChartResponseDto(getChartType(), chartSeriesDtoList);
