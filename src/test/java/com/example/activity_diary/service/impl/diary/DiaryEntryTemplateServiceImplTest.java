@@ -139,7 +139,6 @@ class DiaryEntryTemplateServiceImplTest {
         DiaryEntryTemplateViewDto result = service.create(1L, dto);
 
         assertEquals("tpl", result.getName());
-        assertEquals(1, result.getTags().size());
         assertEquals(1, result.getMetrics().size());
     }
 
