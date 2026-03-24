@@ -111,7 +111,7 @@ public class DiaryEntry extends BaseEntity {
                 .duration(duration)
                 .mood(mood)
                 .description(null)
-                .status(EntryStatus.LOSE)
+                .status(EntryStatus.FAILED)
                 .build();
 
         entry.updateMood(mood);
@@ -124,10 +124,12 @@ public class DiaryEntry extends BaseEntity {
     public void autoUpdateStatusByTime(Instant now) {
         if (this.status == EntryStatus.DELETED) return;
 
-        if (whenEnded.isAfter(now)) {
-            this.status = EntryStatus.LOSE;
+        if (now.isBefore(whenStarted)) {
+            this.status = EntryStatus.SCHEDULED;
+        } else if (!now.isAfter(whenEnded)) {
+            this.status = EntryStatus.ACTIVE;
         } else {
-            this.status = EntryStatus.WIN;
+            this.status = EntryStatus.FINISHED;
         }
     }
 
@@ -135,14 +137,10 @@ public class DiaryEntry extends BaseEntity {
         if (this.status == EntryStatus.DELETED) {
             throw new IllegalStateException("Deleted entry cannot change status");
         }
-        this.status = EntryStatus.WIN;
+        this.status = EntryStatus.FINISHED;
     }
 
     public void updateTime(Instant started, Instant ended) {
-        if (this.whenEnded.isBefore(Instant.now())) {
-            throw new IllegalStateException("Cannot modify entry after it has ended");
-        }
-
         if (started == null || ended == null || !ended.isAfter(started)) {
             throw new IllegalArgumentException("Invalid time range");
         }
@@ -160,12 +158,6 @@ public class DiaryEntry extends BaseEntity {
 
         if (this.status == EntryStatus.DELETED) {
             throw new IllegalStateException("Deleted entry cannot change status");
-        }
-
-        if (this.status == EntryStatus.LOSE
-                && newStatus == EntryStatus.WIN
-                && this.whenEnded.isBefore(Instant.now())) {
-            throw new IllegalStateException("Cannot change LOSE to WIN for past entry");
         }
 
         this.status = newStatus;
@@ -203,10 +195,10 @@ public class DiaryEntry extends BaseEntity {
     }
 
     public boolean isWin() {
-        return this.status == EntryStatus.WIN;
+        return this.status == EntryStatus.FINISHED;
     }
 
     public boolean isLose() {
-        return this.status == EntryStatus.LOSE;
+        return this.status == EntryStatus.FAILED;
     }
 }

@@ -207,16 +207,115 @@ class DiaryServiceImplTest {
     }
 
     @Test
-    void update_pastEntry_throwsBadRequest() {
+    void create_futureEntry_setsScheduledStatus() {
+        DiaryEntryCreateDto dto = validCreateDto(
+                "hello",
+                Instant.now().plusSeconds(600),
+                Instant.now().plusSeconds(1200)
+        );
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
+        verify(diaryRepository).save(entryCaptor.capture());
+        assertEquals(EntryStatus.SCHEDULED, entryCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void create_currentEntry_setsActiveStatus() {
+        DiaryEntryCreateDto dto = validCreateDto(
+                "hello",
+                Instant.now().minusSeconds(300),
+                Instant.now().plusSeconds(300)
+        );
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
+        verify(diaryRepository).save(entryCaptor.capture());
+        assertEquals(EntryStatus.ACTIVE, entryCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void create_pastEntry_setsFinishedStatus() {
+        DiaryEntryCreateDto dto = validCreateDto(
+                "hello",
+                Instant.now().minusSeconds(1200),
+                Instant.now().minusSeconds(600)
+        );
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
+        verify(diaryRepository).save(entryCaptor.capture());
+        assertEquals(EntryStatus.FINISHED, entryCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void update_pastEntry_allowsTimeChange() {
         DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setWhenStarted(Instant.now().minusSeconds(900));
+        dto.setWhenEnded(Instant.now().minusSeconds(300));
+
+        User user = userWithId(10L);
+        DiaryEntry entry = entryForUser(user,
+                Instant.now().minusSeconds(1200),
+                Instant.now().minusSeconds(600));
+
+        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.of(entry));
+        when(diaryRepository.save(entry)).thenReturn(entry);
+        DiaryEntryDto mapped = new DiaryEntryDto();
+        when(mapper.toDto(entry)).thenReturn(mapped);
+
+        DiaryEntryDto result = service.update(1L, dto, 10L);
+
+        assertEquals(mapped, result);
+        assertEquals(dto.getWhenStarted(), entry.getWhenStarted());
+        assertEquals(dto.getWhenEnded(), entry.getWhenEnded());
+        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
+    }
+
+    @Test
+    void update_pastEntry_allowsStatusChange() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setStatus(EntryStatus.FINISHED);
+
         User user = userWithId(10L);
         DiaryEntry entry = entryForUser(user,
                 Instant.now().minusSeconds(600),
                 Instant.now().minusSeconds(300));
 
         when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.of(entry));
+        when(diaryRepository.save(entry)).thenReturn(entry);
+        DiaryEntryDto mapped = new DiaryEntryDto();
+        when(mapper.toDto(entry)).thenReturn(mapped);
 
-        assertThrows(BadRequestException.class, () -> service.update(1L, dto, 10L));
+        DiaryEntryDto result = service.update(1L, dto, 10L);
+
+        assertEquals(mapped, result);
+        assertEquals(EntryStatus.FINISHED, entry.getStatus());
+        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     @Test
@@ -260,9 +359,17 @@ class DiaryServiceImplTest {
     }
 
     private static DiaryEntryCreateDto validCreateDto(String description) {
+        return validCreateDto(
+                description,
+                Instant.parse("2026-02-10T10:00:00Z"),
+                Instant.parse("2026-02-10T10:10:00Z")
+        );
+    }
+
+    private static DiaryEntryCreateDto validCreateDto(String description, Instant started, Instant ended) {
         DiaryEntryCreateDto dto = new DiaryEntryCreateDto();
-        dto.setWhenStarted(Instant.parse("2026-02-10T10:00:00Z"));
-        dto.setWhenEnded(Instant.parse("2026-02-10T10:10:00Z"));
+        dto.setWhenStarted(started);
+        dto.setWhenEnded(ended);
         dto.setMood((short) 3);
         dto.setDescription(description);
         dto.setMetrics(null);
@@ -281,7 +388,7 @@ class DiaryServiceImplTest {
                 .whenStarted(started)
                 .whenEnded(ended)
                 .duration(10)
-                .status(EntryStatus.LOSE)
+                .status(EntryStatus.FAILED)
                 .description("old")
                 .build();
         entry.setId(1L);

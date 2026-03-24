@@ -187,10 +187,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         DiaryEntry entry = getEntryGraphForUser(id, userId);
 
-        if (entry.getWhenEnded().isBefore(Instant.now())) {
-            throw new BadRequestException("Past entry cannot be modified");
-        }
-
         if (dto.getWhenStarted() != null && dto.getWhenEnded() != null) {
             entry.updateTime(dto.getWhenStarted(), dto.getWhenEnded());
         }
