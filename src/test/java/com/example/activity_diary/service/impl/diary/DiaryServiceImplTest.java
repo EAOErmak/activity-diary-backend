@@ -243,6 +243,46 @@ class DiaryServiceImplTest {
     }
 
     @Test
+    void create_sortsMetricValuesByUnitIdBeforeSaving() {
+        DiaryEntryCreateDto dto = validCreateDto("hello");
+
+        EntryMetricValueCreateDto firstValue = new EntryMetricValueCreateDto();
+        firstValue.setUnitId(200L);
+        firstValue.setValue(5);
+
+        EntryMetricValueCreateDto secondValue = new EntryMetricValueCreateDto();
+        secondValue.setUnitId(100L);
+        secondValue.setValue(3);
+
+        EntryMetricCreateDto metricDto = new EntryMetricCreateDto();
+        metricDto.setMetricTypeId(10L);
+        metricDto.setValues(List.of(firstValue, secondValue));
+        dto.setMetrics(List.of(metricDto));
+
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
+        when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(dictionaryItem(10L, DictionaryType.METRIC_NAME)));
+        when(dictionaryRepository.findById(200L)).thenReturn(Optional.of(dictionaryItem(200L, DictionaryType.METRIC_UNIT)));
+        when(dictionaryRepository.findById(100L)).thenReturn(Optional.of(dictionaryItem(100L, DictionaryType.METRIC_UNIT)));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
+        verify(diaryRepository).save(entryCaptor.capture());
+
+        List<Long> unitIds = entryCaptor.getValue().getMetrics().getFirst().getValues().stream()
+                .map(value -> value.getUnit().getId())
+                .toList();
+
+        assertEquals(List.of(100L, 200L), unitIds);
+    }
+
+    @Test
     void create_futureEntry_setsScheduledStatus() {
         DiaryEntryCreateDto dto = validCreateDto(
                 "hello",

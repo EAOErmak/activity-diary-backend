@@ -246,7 +246,9 @@ public class DiaryServiceImpl implements DiaryService {
 
             EntryMetric metric = EntryMetric.create(entry, metricType);
 
-            for (EntryMetricValueCreateDto valueDto : dto.getValues()) {
+            for (EntryMetricValueCreateDto valueDto : dto.getValues().stream()
+                    .sorted(Comparator.comparing(EntryMetricValueCreateDto::getUnitId))
+                    .toList()) {
 
                 DictionaryItem unit = resolveDictionary(
                         valueDto.getUnitId(),
@@ -275,7 +277,9 @@ public class DiaryServiceImpl implements DiaryService {
 
             EntryMetric metric = EntryMetric.create(entry, metricType);
 
-            for (EntryMetricValueUpdateDto valueDto : dto.getValues()) {
+            for (EntryMetricValueUpdateDto valueDto : dto.getValues().stream()
+                    .sorted(Comparator.comparing(EntryMetricValueUpdateDto::getUnitId))
+                    .toList()) {
 
                 DictionaryItem unit = resolveDictionary(
                         valueDto.getUnitId(),
