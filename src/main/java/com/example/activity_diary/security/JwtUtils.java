@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtils {
@@ -46,6 +47,7 @@ public class JwtUtils {
         long now = System.currentTimeMillis();
         JwtBuilder b = Jwts.builder()
                 .setSubject(username)
+                .setId(UUID.randomUUID().toString())
                 .claim("type", type)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + ttlMs))
@@ -88,6 +90,10 @@ public class JwtUtils {
         Claims claims = extractAllClaims(token);
         Object r = claims.get("role");
         return r == null ? null : r.toString();
+    }
+
+    public Date extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration();
     }
 
     public boolean isAccessTokenValid(String token) {

@@ -4,6 +4,7 @@ import com.example.activity_diary.entity.RefreshToken;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.repository.RefreshTokenRepository;
+import com.example.activity_diary.security.JwtUtils;
 import com.example.activity_diary.service.auth.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Base64;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +21,7 @@ import java.util.UUID;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository repository;
+    private final JwtUtils jwtUtils;
 
     @Override
     public void save(User user, String rawToken) {
@@ -31,7 +31,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken token = RefreshToken.builder()
                 .user(user)
                 .tokenHash(hashed)
-                .expiresAt(Instant.now().plus(30, ChronoUnit.DAYS))
+                .expiresAt(jwtUtils.extractExpiration(rawToken).toInstant())
                 .build();
 
         repository.save(token);
@@ -40,16 +40,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     @Transactional(readOnly = true)
     public RefreshToken verify(String rawToken) {
+        if (!jwtUtils.isRefreshTokenValid(rawToken)) {
+            throw new ForbiddenException("Invalid or expired refresh token");
+        }
 
         String hashed = hash(rawToken);
 
-        RefreshToken token = repository
+        return repository
                 .findActiveByTokenHash(hashed, Instant.now())
                 .orElseThrow(() ->
                         new ForbiddenException("Invalid or expired refresh token")
                 );
-
-        return token;
     }
 
     @Override
@@ -83,9 +84,5 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         } catch (Exception e) {
             throw new IllegalStateException("Refresh token hashing failed", e);
         }
-    }
-
-    private String generateRawToken() {
-        return UUID.randomUUID().toString();
     }
 }
