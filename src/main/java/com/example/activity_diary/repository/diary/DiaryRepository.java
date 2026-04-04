@@ -28,6 +28,22 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
     List<DiaryEntry> findAllByUserIdAndTags_Id(Long userId, Long tagId);
 
+    @Query("""
+        select distinct d
+        from DiaryEntry d
+        join d.tags t
+        where d.user.id = :userId
+          and t.id = :tagId
+          and (:dateFrom is null or d.whenStarted >= :dateFrom)
+          and (:dateTo is null or d.whenStarted <= :dateTo)
+    """)
+    List<DiaryEntry> findAllByUserIdAndTagIdAndWhenStartedRange(
+            @Param("userId") Long userId,
+            @Param("tagId") Long tagId,
+            @Param("dateFrom") Instant dateFrom,
+            @Param("dateTo") Instant dateTo
+    );
+
     List<DiaryEntry> findAllByUserIdAndWhenStartedBetweenAndStatusNotOrderByWhenStartedAsc(
             Long userId,
             Instant from,
