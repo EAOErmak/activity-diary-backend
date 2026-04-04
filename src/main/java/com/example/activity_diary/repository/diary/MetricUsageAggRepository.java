@@ -1,6 +1,5 @@
 package com.example.activity_diary.repository.diary;
 
-import com.example.activity_diary.dto.analytics.MetricUsageAggDto;
 import com.example.activity_diary.entity.MetricUsageAgg;
 import com.example.activity_diary.entity.MetricUsageAggId;
 import com.example.activity_diary.entity.enums.TagUsageBucket;
@@ -15,16 +14,15 @@ import java.util.List;
 public interface MetricUsageAggRepository extends JpaRepository<MetricUsageAgg, MetricUsageAggId> {
 
     @Query("""
-        select new com.example.activity_diary.dto.analytics.MetricUsageAggDto(
-            a.id.metricTypeId,
-            metricType.label,
-            a.id.unitId,
-            unit.label,
-            a.id.bucket,
-            a.id.bucketStart,
-            a.valueSum,
-            a.valueCount
-        )
+        select
+            a.id.metricTypeId as metricTypeId,
+            metricType.label as metricTypeLabel,
+            a.id.unitId as unitId,
+            unit.label as unitLabel,
+            a.id.bucket as bucket,
+            a.id.bucketStart as bucketStart,
+            a.valueSum as valueSum,
+            a.valueCount as valueCount
         from MetricUsageAgg a, DictionaryItem metricType, DictionaryItem unit
         where a.id.userId = :userId
           and a.id.bucket = :bucket
@@ -36,7 +34,7 @@ public interface MetricUsageAggRepository extends JpaRepository<MetricUsageAgg, 
           and (:dateTo is null or a.id.bucketStart <= :dateTo)
         order by a.id.bucketStart asc, metricType.label asc, unit.label asc
         """)
-    List<MetricUsageAggDto> findUsage(
+    List<MetricUsageAggRow> findUsageRows(
             @Param("userId") Long userId,
             @Param("bucket") TagUsageBucket bucket,
             @Param("metricTypeId") Long metricTypeId,

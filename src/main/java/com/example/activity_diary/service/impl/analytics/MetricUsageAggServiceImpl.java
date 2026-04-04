@@ -7,6 +7,7 @@ import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.diary.EntryMetricValue;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.diary.MetricUsageAggRepository;
+import com.example.activity_diary.repository.diary.MetricUsageAggRow;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,14 +33,16 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
     public List<MetricUsageAggDto> getUsage(Long userId, MetricUsageAggFilterDto filter) {
         validateRange(filter.getDateFrom(), filter.getDateTo());
 
-        return repo.findUsage(
-                userId,
-                filter.getBucket(),
-                filter.getMetricTypeId(),
-                filter.getUnitId(),
-                filter.getDateFrom(),
-                filter.getDateTo()
-        );
+        return repo.findUsageRows(
+                        userId,
+                        filter.getBucket(),
+                        filter.getMetricTypeId(),
+                        filter.getUnitId(),
+                        filter.getDateFrom(),
+                        filter.getDateTo()
+                ).stream()
+                .map(this::toDto)
+                .toList();
     }
 
     /**
@@ -152,5 +155,18 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
         if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
             throw new BadRequestException("dateFrom must be before or equal to dateTo");
         }
+    }
+
+    private MetricUsageAggDto toDto(MetricUsageAggRow row) {
+        return new MetricUsageAggDto(
+                row.getMetricTypeId(),
+                row.getMetricTypeLabel(),
+                row.getUnitId(),
+                row.getUnitLabel(),
+                row.getBucket(),
+                row.getBucketStart(),
+                row.getValueSum(),
+                row.getValueCount()
+        );
     }
 }
