@@ -187,6 +187,8 @@ public class DiaryServiceImpl implements DiaryService {
         validationService.validateUpdate(dto);
 
         DiaryEntry entry = getEntryGraphForUser(id, userId);
+        metricUsageAggService.onEntryDeleted(entry);
+        tagUsageAggService.onEntryDeleted(entry);
 
         if (dto.getWhenStarted() != null && dto.getWhenEnded() != null) {
             entry.updateTime(dto.getWhenStarted(), dto.getWhenEnded());
@@ -211,6 +213,8 @@ public class DiaryServiceImpl implements DiaryService {
 
         DiaryEntry saved = diaryRepository.save(entry);
 
+        metricUsageAggService.onEntryCreated(saved);
+        tagUsageAggService.onEntryCreated(saved);
         userSyncService.bump(userId, UserSyncEntityType.DIARY);
 
         return mapper.toDto(saved);
@@ -222,6 +226,8 @@ public class DiaryServiceImpl implements DiaryService {
         DiaryEntry entry = diaryRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
 
+        metricUsageAggService.onEntryDeleted(entry);
+        tagUsageAggService.onEntryDeleted(entry);
         entry.markDeleted();
 
         diaryRepository.save(entry);
