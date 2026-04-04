@@ -56,6 +56,9 @@ class GoalCalendarProgressServiceTest {
     @Mock
     private GoalMapper goalMapper;
 
+    @Mock
+    private GoalDiaryEntryCommandFactory goalDiaryEntryCommandFactory;
+
     @InjectMocks
     private GoalCalendarProgressService service;
 
@@ -77,10 +80,12 @@ class GoalCalendarProgressServiceTest {
         DiaryEntry updatedEntry = entry(entryId, user, EntryStatus.FINISHED);
         DiaryEntryDto updatedDto = new DiaryEntryDto();
         updatedDto.setId(entryId);
+        DiaryEntryUpdateDto mappedUpdate = new DiaryEntryUpdateDto();
 
         DiaryEntryGoalDetailDto mapped = new DiaryEntryGoalDetailDto();
 
         when(diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)).thenReturn(Optional.of(goal));
+        when(goalDiaryEntryCommandFactory.toUpdateDto(createDto)).thenReturn(mappedUpdate);
         when(diaryService.update(eq(entryId), any(DiaryEntryUpdateDto.class), eq(userId))).thenReturn(updatedDto);
         when(diaryRepository.findGraphByIdAndUser_Id(entryId, userId)).thenReturn(Optional.of(updatedEntry));
         when(goalMapper.toEntryView(goal)).thenReturn(mapped);
@@ -92,18 +97,10 @@ class GoalCalendarProgressServiceTest {
 
         ArgumentCaptor<DiaryEntryUpdateDto> updateCaptor = ArgumentCaptor.forClass(DiaryEntryUpdateDto.class);
         verify(diaryService).update(eq(entryId), updateCaptor.capture(), eq(userId));
-        DiaryEntryUpdateDto sentUpdate = updateCaptor.getValue();
-        assertEquals(createDto.getWhenStarted(), sentUpdate.getWhenStarted());
-        assertEquals(createDto.getWhenEnded(), sentUpdate.getWhenEnded());
-        assertEquals(createDto.getMood(), sentUpdate.getMood());
-        assertEquals(createDto.getDescription(), sentUpdate.getDescription());
-        assertEquals(EntryStatus.FINISHED, sentUpdate.getStatus());
-        assertEquals(1, sentUpdate.getMetrics().size());
-        assertEquals(100L, sentUpdate.getMetrics().getFirst().getMetricTypeId());
-        assertEquals(200L, sentUpdate.getMetrics().getFirst().getValues().getFirst().getUnitId());
-        assertEquals(12, sentUpdate.getMetrics().getFirst().getValues().getFirst().getValue());
+        assertEquals(mappedUpdate, updateCaptor.getValue());
 
         verify(diaryService, never()).create(any(), eq(userId), any());
+        verify(goalDiaryEntryCommandFactory).toUpdateDto(createDto);
     }
 
     @Test
