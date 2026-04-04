@@ -1,7 +1,4 @@
 package com.example.activity_diary.security;
-
-import com.example.activity_diary.dto.ApiResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -24,7 +20,7 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
-    private final ObjectMapper objectMapper;
+    private final SecurityErrorWriter securityErrorWriter;
 
     @Override
     protected void doFilterInternal(
@@ -44,7 +40,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             if (!jwtUtils.isAccessTokenValid(token)) {
-                sendUnauthorized(response, "Invalid or expired token");
+                securityErrorWriter.writeUnauthorized(response, "Invalid or expired token");
                 return;
             }
 
@@ -53,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
             String role = jwtUtils.extractRole(token);
 
             if (username == null) {
-                sendUnauthorized(response, "Invalid token payload");
+                securityErrorWriter.writeUnauthorized(response, "Invalid token payload");
                 return;
             }
 
@@ -72,18 +68,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
         } catch (Exception e) {
             log.warn("JWT authentication failed: {}", e.getMessage());
-            sendUnauthorized(response, "JWT authentication failed");
+            securityErrorWriter.writeUnauthorized(response, "JWT authentication failed");
             return;
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private void sendUnauthorized(HttpServletResponse response, String message)
-            throws IOException {
-
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), ApiResponse.error(message));
     }
 }

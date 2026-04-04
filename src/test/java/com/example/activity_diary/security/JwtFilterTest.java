@@ -25,11 +25,12 @@ class JwtFilterTest {
     @Mock
     private JwtUtils jwtUtils;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final SecurityErrorWriter securityErrorWriter =
+            new SecurityErrorWriter(new ObjectMapper());
 
     @Test
     void doFilterInternal_invalidToken_returnsApiResponseError() throws ServletException, IOException {
-        JwtFilter filter = new JwtFilter(jwtUtils, objectMapper);
+        JwtFilter filter = new JwtFilter(jwtUtils, securityErrorWriter);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer invalid-token");
@@ -43,7 +44,7 @@ class JwtFilterTest {
         assertEquals(401, response.getStatus());
         assertEquals("application/json", response.getContentType());
 
-        JsonNode body = objectMapper.readTree(response.getContentAsString());
+        JsonNode body = new ObjectMapper().readTree(response.getContentAsString());
         assertFalse(body.get("success").asBoolean());
         assertEquals("Invalid or expired token", body.get("message").asText());
         assertEquals(true, body.get("data").isNull());
@@ -51,7 +52,7 @@ class JwtFilterTest {
 
     @Test
     void doFilterInternal_missingAuthorizationHeader_passesThrough() throws ServletException, IOException {
-        JwtFilter filter = new JwtFilter(jwtUtils, objectMapper);
+        JwtFilter filter = new JwtFilter(jwtUtils, securityErrorWriter);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
