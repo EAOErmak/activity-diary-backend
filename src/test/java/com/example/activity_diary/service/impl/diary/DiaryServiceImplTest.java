@@ -5,7 +5,9 @@ import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.dto.mapper.DiaryEntryMapper;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.diary.DiaryEntry;
@@ -223,10 +225,12 @@ class DiaryServiceImplTest {
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(user));
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
-        when(dictionaryRepository.findById(20L)).thenReturn(Optional.of(dictionaryItem(20L, DictionaryType.METRIC_NAME)));
-        when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(dictionaryItem(10L, DictionaryType.METRIC_NAME)));
-        when(dictionaryRepository.findById(200L)).thenReturn(Optional.of(dictionaryItem(200L, DictionaryType.METRIC_UNIT)));
-        when(dictionaryRepository.findById(100L)).thenReturn(Optional.of(dictionaryItem(100L, DictionaryType.METRIC_UNIT)));
+        when(dictionaryRepository.findAllById(Set.of(20L, 10L, 200L, 100L))).thenReturn(List.of(
+                dictionaryItem(20L, DictionaryType.METRIC_NAME),
+                dictionaryItem(10L, DictionaryType.METRIC_NAME),
+                dictionaryItem(200L, DictionaryType.METRIC_UNIT),
+                dictionaryItem(100L, DictionaryType.METRIC_UNIT)
+        ));
         when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
 
@@ -240,6 +244,8 @@ class DiaryServiceImplTest {
                 .toList();
 
         assertEquals(List.of(10L, 20L), metricTypeIds);
+        verify(dictionaryRepository).findAllById(Set.of(20L, 10L, 200L, 100L));
+        verify(dictionaryRepository, never()).findById(anyLong());
     }
 
     @Test
@@ -264,9 +270,11 @@ class DiaryServiceImplTest {
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(user));
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
-        when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(dictionaryItem(10L, DictionaryType.METRIC_NAME)));
-        when(dictionaryRepository.findById(200L)).thenReturn(Optional.of(dictionaryItem(200L, DictionaryType.METRIC_UNIT)));
-        when(dictionaryRepository.findById(100L)).thenReturn(Optional.of(dictionaryItem(100L, DictionaryType.METRIC_UNIT)));
+        when(dictionaryRepository.findAllById(Set.of(10L, 200L, 100L))).thenReturn(List.of(
+                dictionaryItem(10L, DictionaryType.METRIC_NAME),
+                dictionaryItem(200L, DictionaryType.METRIC_UNIT),
+                dictionaryItem(100L, DictionaryType.METRIC_UNIT)
+        ));
         when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
 
@@ -280,6 +288,39 @@ class DiaryServiceImplTest {
                 .toList();
 
         assertEquals(List.of(100L, 200L), unitIds);
+        verify(dictionaryRepository).findAllById(Set.of(10L, 200L, 100L));
+        verify(dictionaryRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    void update_metrics_prefetchesDictionaryInSingleBatch() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setMetrics(List.of(
+                metricUpdate(20L, 200L, 5),
+                metricUpdate(10L, 100L, 3)
+        ));
+
+        User user = userWithId(10L);
+        DiaryEntry entry = entryForUser(
+                user,
+                Instant.now().minusSeconds(1200),
+                Instant.now().minusSeconds(600)
+        );
+
+        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.of(entry));
+        when(dictionaryRepository.findAllById(Set.of(20L, 10L, 200L, 100L))).thenReturn(List.of(
+                dictionaryItem(20L, DictionaryType.METRIC_NAME),
+                dictionaryItem(10L, DictionaryType.METRIC_NAME),
+                dictionaryItem(200L, DictionaryType.METRIC_UNIT),
+                dictionaryItem(100L, DictionaryType.METRIC_UNIT)
+        ));
+        when(diaryRepository.save(entry)).thenReturn(entry);
+        when(mapper.toDto(entry)).thenReturn(new DiaryEntryDto());
+
+        service.update(1L, dto, 10L);
+
+        verify(dictionaryRepository).findAllById(Set.of(20L, 10L, 200L, 100L));
+        verify(dictionaryRepository, never()).findById(anyLong());
     }
 
     @Test
@@ -486,6 +527,17 @@ class DiaryServiceImplTest {
         valueDto.setValue(value);
 
         EntryMetricCreateDto metricDto = new EntryMetricCreateDto();
+        metricDto.setMetricTypeId(metricTypeId);
+        metricDto.setValues(List.of(valueDto));
+        return metricDto;
+    }
+
+    private static EntryMetricUpdateDto metricUpdate(Long metricTypeId, Long unitId, Integer value) {
+        EntryMetricValueUpdateDto valueDto = new EntryMetricValueUpdateDto();
+        valueDto.setUnitId(unitId);
+        valueDto.setValue(value);
+
+        EntryMetricUpdateDto metricDto = new EntryMetricUpdateDto();
         metricDto.setMetricTypeId(metricTypeId);
         metricDto.setValues(List.of(valueDto));
         return metricDto;

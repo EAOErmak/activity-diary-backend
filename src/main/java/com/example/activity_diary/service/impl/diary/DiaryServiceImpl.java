@@ -34,8 +34,11 @@ import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -226,12 +229,14 @@ public class DiaryServiceImpl implements DiaryService {
             DiaryEntry entry
     ) {
         if (metrics == null || metrics.isEmpty()) return;
+        Map<Long, DictionaryItem> dictionaryItems = loadDictionaryItems(collectDictionaryIdsForCreate(metrics));
 
         for (EntryMetricCreateDto dto : metrics.stream()
                 .sorted(Comparator.comparing(EntryMetricCreateDto::getMetricTypeId))
                 .toList()) {
 
             DictionaryItem metricType = resolveDictionary(
+                    dictionaryItems,
                     dto.getMetricTypeId(),
                     DictionaryType.METRIC_NAME
             );
@@ -243,6 +248,7 @@ public class DiaryServiceImpl implements DiaryService {
                     .toList()) {
 
                 DictionaryItem unit = resolveDictionary(
+                        dictionaryItems,
                         valueDto.getUnitId(),
                         DictionaryType.METRIC_UNIT
                 );
@@ -259,10 +265,12 @@ public class DiaryServiceImpl implements DiaryService {
             List<EntryMetricUpdateDto> metrics
     ) {
         entry.getMetrics().clear();
+        Map<Long, DictionaryItem> dictionaryItems = loadDictionaryItems(collectDictionaryIdsForUpdate(metrics));
 
         for (EntryMetricUpdateDto dto : metrics) {
 
             DictionaryItem metricType = resolveDictionary(
+                    dictionaryItems,
                     dto.getMetricTypeId(),
                     DictionaryType.METRIC_NAME
             );
@@ -274,6 +282,7 @@ public class DiaryServiceImpl implements DiaryService {
                     .toList()) {
 
                 DictionaryItem unit = resolveDictionary(
+                        dictionaryItems,
                         valueDto.getUnitId(),
                         DictionaryType.METRIC_UNIT
                 );
@@ -285,10 +294,43 @@ public class DiaryServiceImpl implements DiaryService {
         }
     }
 
-    private DictionaryItem resolveDictionary(Long id, DictionaryType type) {
+    private Set<Long> collectDictionaryIdsForCreate(List<EntryMetricCreateDto> metrics) {
+        Set<Long> ids = new HashSet<>();
+        for (EntryMetricCreateDto metric : metrics) {
+            ids.add(metric.getMetricTypeId());
+            for (EntryMetricValueCreateDto value : metric.getValues()) {
+                ids.add(value.getUnitId());
+            }
+        }
+        return ids;
+    }
 
-        DictionaryItem item = dictionaryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
+    private Set<Long> collectDictionaryIdsForUpdate(List<EntryMetricUpdateDto> metrics) {
+        Set<Long> ids = new HashSet<>();
+        for (EntryMetricUpdateDto metric : metrics) {
+            ids.add(metric.getMetricTypeId());
+            for (EntryMetricValueUpdateDto value : metric.getValues()) {
+                ids.add(value.getUnitId());
+            }
+        }
+        return ids;
+    }
+
+    private Map<Long, DictionaryItem> loadDictionaryItems(Set<Long> ids) {
+        return dictionaryRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(DictionaryItem::getId, item -> item));
+    }
+
+    private DictionaryItem resolveDictionary(
+            Map<Long, DictionaryItem> dictionaryItems,
+            Long id,
+            DictionaryType type
+    ) {
+
+        DictionaryItem item = dictionaryItems.get(id);
+        if (item == null) {
+            throw new NotFoundException("Dictionary item not found");
+        }
 
         if (item.getType() != type) {
             throw new BadRequestException("Invalid dictionary type");
