@@ -5,7 +5,6 @@ import com.example.activity_diary.dto.goal.WeekGoalDetailDto;
 import com.example.activity_diary.entity.goal.DayGoal;
 import com.example.activity_diary.entity.goal.DiaryEntryGoal;
 import com.example.activity_diary.entity.goal.WeekGoal;
-import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.goal.DayGoalRepository;
 import com.example.activity_diary.repository.goal.DiaryEntryGoalRepository;
@@ -31,7 +30,6 @@ public class GoalCalendarMutationService {
 
     public void deleteWeekGoal(Long userId, LocalDate targetDate) {
         WeekGoal week = findWeekGoalByDate(userId, targetDate);
-        assertNotStarted(week.getWhenStarted(), "Week already started");
         weekGoalRepository.delete(week);
     }
 
@@ -39,7 +37,6 @@ public class GoalCalendarMutationService {
         Instant weekStart = weekStartInstant(targetDate);
 
         weekGoalRepository.findByUser_IdAndWhenStarted(userId, weekStart).ifPresent(week -> {
-            assertNotStarted(week.getWhenStarted(), "Week already started");
             weekGoalRepository.delete(week);
         });
 
@@ -52,7 +49,6 @@ public class GoalCalendarMutationService {
         DayGoal day = dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)
                 .orElseThrow(() -> new NotFoundException("DayGoal not found"));
 
-        assertNotStarted(day.getWhenStarted(), "Day already started");
         dayGoalRepository.delete(day);
 
         deleteWeekIfEmpty(week);
@@ -62,7 +58,6 @@ public class GoalCalendarMutationService {
         WeekGoal week = findWeekGoalByDate(userId, targetDate);
 
         dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate).ifPresent(day -> {
-            assertNotStarted(day.getWhenStarted(), "Day already started");
             dayGoalRepository.delete(day);
             deleteWeekIfEmpty(week);
         });
@@ -74,15 +69,12 @@ public class GoalCalendarMutationService {
         DiaryEntryGoal goal = diaryEntryGoalRepository.findByIdAndUser_Id(entryGoalId, userId)
                 .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
 
-        assertNotStarted(goal.getWhenStarted(), "EntryGoal already started");
-
         DayGoal day = goal.getDayGoal();
         WeekGoal week = day.getWeekGoal();
 
         diaryEntryGoalRepository.delete(goal);
 
         if (diaryEntryGoalRepository.countByDayGoal_Id(day.getId()) == 0) {
-            assertNotStarted(day.getWhenStarted(), "Day already started");
             dayGoalRepository.delete(day);
             deleteWeekIfEmpty(week);
         }
@@ -95,7 +87,6 @@ public class GoalCalendarMutationService {
 
     private void deleteWeekIfEmpty(WeekGoal week) {
         if (dayGoalRepository.countByWeekGoal_Id(week.getId()) == 0) {
-            assertNotStarted(week.getWhenStarted(), "Week already started");
             weekGoalRepository.delete(week);
         }
     }
@@ -104,11 +95,5 @@ public class GoalCalendarMutationService {
         ZoneId zone = ZoneId.systemDefault();
         LocalDate monday = anyDateInWeek.with(DayOfWeek.MONDAY);
         return monday.atStartOfDay(zone).toInstant();
-    }
-
-    private void assertNotStarted(Instant whenStarted, String message) {
-        if (!Instant.now().isBefore(whenStarted)) {
-            throw new BadRequestException(message);
-        }
     }
 }

@@ -4,12 +4,15 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
+import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.dto.goal.DayGoalDetailDto;
 import com.example.activity_diary.dto.goal.DiaryEntryGoalDetailDto;
 import com.example.activity_diary.dto.mapper.GoalMapper;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
+import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.entity.goal.DayGoal;
 import com.example.activity_diary.entity.goal.DiaryEntryGoal;
 import com.example.activity_diary.entity.goal.EntryMetricGoal;
@@ -26,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,37 +47,20 @@ public class GoalCalendarProgressService {
 
     public DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, DiaryEntryCreateDto dto) {
         DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
-        validateGoalCanBeConfirmed(goal);
+        DiaryEntry entry = upsertConfirmedEntry(userId, goal, dto);
 
-        DiaryEntry createdEntry = createEntry(userId, dto);
-
-        goal.setCurrentEntry(createdEntry);
-        recalcUp(goal, createdEntry);
-
-        diaryEntryGoalRepository.save(goal);
+        goal.setCurrentEntry(entry);
+        recalcUp(goal, entry);
 
         return goalMapper.toEntryView(goal);
     }
 
     public DiaryEntryGoalDetailDto confirmEntryGoalSimple(Long userId, Long goalId) {
         DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
-        validateGoalCanBeConfirmed(goal);
+        DiaryEntry entry = upsertConfirmedEntry(userId, goal, buildCreateDtoFromGoal(goal));
 
-        DiaryEntry createdEntry = createEntry(userId, buildCreateDtoFromGoal(goal));
-
-        goal.setCurrentEntry(createdEntry);
-        goal.setCompleteness(100);
-
-        DayGoal day = goal.getDayGoal();
-        GoalCompletenessCalculator.recalcDayGoal(day);
-
-        WeekGoal week = weekGoalRepository.findGraphById(day.getWeekGoal().getId())
-                .orElseThrow(() -> new NotFoundException("WeekGoal not found"));
-        GoalCompletenessCalculator.recalcWeekGoal(week);
-
-        diaryEntryGoalRepository.save(goal);
-        dayGoalRepository.save(day);
-        weekGoalRepository.save(week);
+        goal.setCurrentEntry(entry);
+        recalcUp(goal, entry);
 
         return goalMapper.toEntryView(goal);
     }
@@ -86,15 +71,12 @@ public class GoalCalendarProgressService {
         if (goal.getCurrentEntry() == null) {
             throw new BadRequestException("Goal not confirmed yet");
         }
-        assertDeadlineNotPassed(goal.getWhenEnded(), "Goal deadline has passed");
 
         DiaryEntryDto updatedDto = diaryService.update(goal.getCurrentEntry().getId(), dto, userId);
         DiaryEntry updatedEntry = getCreatedEntry(userId, updatedDto.getId());
 
         goal.setCurrentEntry(updatedEntry);
         recalcUp(goal, updatedEntry);
-
-        diaryEntryGoalRepository.save(goal);
 
         return goalMapper.toEntryView(goal);
     }
@@ -106,8 +88,6 @@ public class GoalCalendarProgressService {
         if (!day.getWeekGoal().getUser().getId().equals(userId)) {
             throw new NotFoundException("DayGoal not found");
         }
-
-        assertDeadlineNotPassed(day.getWhenEnded(), "Day goal deadline has passed");
 
         for (DiaryEntryGoal goal : day.getEntryGoals()) {
             if (goal.getCurrentEntry() != null) {
@@ -137,17 +117,14 @@ public class GoalCalendarProgressService {
                 .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
     }
 
-    private void validateGoalCanBeConfirmed(DiaryEntryGoal goal) {
-        if (goal.getCurrentEntry() != null) {
-            throw new BadRequestException("Goal already confirmed");
+    private DiaryEntry upsertConfirmedEntry(Long userId, DiaryEntryGoal goal, DiaryEntryCreateDto dto) {
+        DiaryEntry currentEntry = goal.getCurrentEntry();
+        if (currentEntry == null || currentEntry.getStatus() == EntryStatus.DELETED) {
+            return createEntry(userId, dto);
         }
-        assertDeadlineNotPassed(goal.getWhenEnded(), "Goal deadline has passed");
-    }
 
-    private void assertDeadlineNotPassed(Instant whenEnded, String message) {
-        if (!Instant.now().isBefore(whenEnded)) {
-            throw new BadRequestException(message);
-        }
+        DiaryEntryDto updatedDto = diaryService.update(currentEntry.getId(), toUpdateDto(dto), userId);
+        return getCreatedEntry(userId, updatedDto.getId());
     }
 
     private DiaryEntry createEntry(Long userId, DiaryEntryCreateDto dto) {
@@ -158,6 +135,49 @@ public class GoalCalendarProgressService {
     private DiaryEntry getCreatedEntry(Long userId, Long entryId) {
         return diaryRepository.findGraphByIdAndUser_Id(entryId, userId)
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
+    }
+
+    private DiaryEntryUpdateDto toUpdateDto(DiaryEntryCreateDto dto) {
+        DiaryEntryUpdateDto updateDto = new DiaryEntryUpdateDto();
+        updateDto.setWhenStarted(dto.getWhenStarted());
+        updateDto.setWhenEnded(dto.getWhenEnded());
+        updateDto.setMood(dto.getMood());
+        updateDto.setDescription(dto.getDescription());
+        updateDto.setStatus(EntryStatus.FINISHED);
+        updateDto.setMetrics(toMetricUpdateDtos(dto.getMetrics()));
+        return updateDto;
+    }
+
+    private List<EntryMetricUpdateDto> toMetricUpdateDtos(List<EntryMetricCreateDto> createDtos) {
+        if (createDtos == null) {
+            return null;
+        }
+
+        List<EntryMetricUpdateDto> updateDtos = new ArrayList<>(createDtos.size());
+        for (EntryMetricCreateDto createDto : createDtos) {
+            EntryMetricUpdateDto updateDto = new EntryMetricUpdateDto();
+            updateDto.setMetricTypeId(createDto.getMetricTypeId());
+            updateDto.setValues(toMetricValueUpdateDtos(createDto.getValues()));
+            updateDtos.add(updateDto);
+        }
+
+        return updateDtos;
+    }
+
+    private List<EntryMetricValueUpdateDto> toMetricValueUpdateDtos(List<EntryMetricValueCreateDto> createDtos) {
+        if (createDtos == null) {
+            return null;
+        }
+
+        List<EntryMetricValueUpdateDto> updateDtos = new ArrayList<>(createDtos.size());
+        for (EntryMetricValueCreateDto createDto : createDtos) {
+            EntryMetricValueUpdateDto updateDto = new EntryMetricValueUpdateDto();
+            updateDto.setUnitId(createDto.getUnitId());
+            updateDto.setValue(createDto.getValue());
+            updateDtos.add(updateDto);
+        }
+
+        return updateDtos;
     }
 
     private void recalcUp(DiaryEntryGoal goal, DiaryEntry entry) {
