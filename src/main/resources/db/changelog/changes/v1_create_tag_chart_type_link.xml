@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-46-create-tag-chart-type-link" author="diary">
+        <createTable tableName="tag_chart_type_link">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="tag_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="chart_type" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="tag_chart_type_link"
+                columnNames="tag_id, chart_type"
+                constraintName="uk_tag_chart_type_link_tag_chart_type"/>
+
+        <createIndex indexName="idx_tag_chart_type_link_tag" tableName="tag_chart_type_link">
+            <column name="tag_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="tag_chart_type_link"
+                baseColumnNames="tag_id"
+                referencedTableName="tag"
+                referencedColumnNames="id"
+                constraintName="fk_tag_chart_type_link_tag"/>
+    </changeSet>
+
+    <changeSet id="v1-47-seed-tag-chart-type-links" author="diary">
+        <sql>
+            INSERT INTO tag (created_at, updated_at, name, status)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Food', 'APPROVED'
+            WHERE NOT EXISTS (
+                SELECT 1 FROM tag WHERE name = 'Food'
+            );
+
+            INSERT INTO tag (created_at, updated_at, name, status)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Training', 'APPROVED'
+            WHERE NOT EXISTS (
+                SELECT 1 FROM tag WHERE name = 'Training'
+            );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'CALORIES_PER_DAY'
+            FROM tag t
+            WHERE t.name = 'Food'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'CALORIES_PER_DAY'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_DAY'
+            FROM tag t
+            WHERE t.name = 'Food'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'PFC_PER_DAY'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'CALORIES_PER_EATING'
+            FROM tag t
+            WHERE t.name = 'Food'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'CALORIES_PER_EATING'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_EATING'
+            FROM tag t
+            WHERE t.name = 'Food'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'PFC_PER_EATING'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'TRAINING_COMPUTED'
+            FROM tag t
+            WHERE t.name = 'Training'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'TRAINING_COMPUTED'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'TRAINING_METRICS'
+            FROM tag t
+            WHERE t.name = 'Training'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'TRAINING_METRICS'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'TRAINING_RAW'
+            FROM tag t
+            WHERE t.name = 'Training'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'TRAINING_RAW'
+              );
+        </sql>
+    </changeSet>
+</databaseChangeLog>
