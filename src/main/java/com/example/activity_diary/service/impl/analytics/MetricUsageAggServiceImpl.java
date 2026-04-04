@@ -52,6 +52,16 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
     @Transactional
     @Override
     public void onEntryCreated(DiaryEntry entry) {
+        applyEntryDelta(entry, 1);
+    }
+
+    @Transactional
+    @Override
+    public void onEntryDeleted(DiaryEntry entry) {
+        applyEntryDelta(entry, -1);
+    }
+
+    private void applyEntryDelta(DiaryEntry entry, int direction) {
         if (entry == null) return;
         if (entry.getUser() == null || entry.getUser().getId() == null) return;
         if (entry.getWhenStarted() == null) return;
@@ -88,8 +98,8 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
 
                 Key key = new Key(metricTypeId, unitId);
                 Delta d = deltas.computeIfAbsent(key, k -> new Delta());
-                d.sum += value;
-                d.count += 1;
+                d.sum += (long) value * direction;
+                d.count += direction;
             }
         }
 

@@ -414,6 +414,10 @@ class DiaryServiceImplTest {
         DiaryEntryDto result = service.update(1L, dto, 10L);
 
         assertEquals(mapped, result);
+        verify(metricUsageAggService).onEntryDeleted(entry);
+        verify(tagUsageAggService).onEntryDeleted(entry);
+        verify(metricUsageAggService).onEntryCreated(entry);
+        verify(tagUsageAggService).onEntryCreated(entry);
         verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
@@ -432,6 +436,24 @@ class DiaryServiceImplTest {
 
         assertThrows(BadRequestException.class, () -> service.update(1L, dto, 10L));
         verify(diaryRepository, never()).save(any(DiaryEntry.class));
+    }
+
+    @Test
+    void delete_marksDeletedAdjustsAggregatesAndBumps() {
+        User user = userWithId(10L);
+        DiaryEntry entry = entryForUser(user,
+                Instant.now().minusSeconds(1200),
+                Instant.now().minusSeconds(600));
+
+        when(diaryRepository.findByIdAndUserId(1L, 10L)).thenReturn(Optional.of(entry));
+        when(diaryRepository.save(entry)).thenReturn(entry);
+
+        service.delete(1L, 10L);
+
+        assertEquals(EntryStatus.DELETED, entry.getStatus());
+        verify(metricUsageAggService).onEntryDeleted(entry);
+        verify(tagUsageAggService).onEntryDeleted(entry);
+        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     private static DiaryEntryCreateDto validCreateDto(String description) {

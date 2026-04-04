@@ -10,4 +10,6 @@ public interface TagUsageAggService {
     List<TagUsageAggDto> getUsage(Long userId, TagUsageAggFilterDto filter);
 
     void onEntryCreated(DiaryEntry entry);
+
+    void onEntryDeleted(DiaryEntry entry);
 }

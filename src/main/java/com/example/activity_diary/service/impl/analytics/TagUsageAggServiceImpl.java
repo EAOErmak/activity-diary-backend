@@ -40,6 +40,16 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
     @Transactional
     @Override
     public void onEntryCreated(DiaryEntry entry) {
+        applyEntryDelta(entry, 1);
+    }
+
+    @Transactional
+    @Override
+    public void onEntryDeleted(DiaryEntry entry) {
+        applyEntryDelta(entry, -1);
+    }
+
+    private void applyEntryDelta(DiaryEntry entry, int direction) {
         if (entry == null) return;
         if (entry.getUser() == null || entry.getUser().getId() == null) return;
         if (entry.getWhenStarted() == null) return;
@@ -49,7 +59,7 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
         Instant startedAt = entry.getWhenStarted();
 
         // у тебя duration уже в минутах
-        long durationMinutes = entry.getDuration() == null ? 0L : entry.getDuration().longValue();
+        long durationMinutes = entry.getDuration() == null ? 0L : entry.getDuration().longValue() * direction;
 
         // UTC
         LocalDate day = startedAt.atZone(ZoneOffset.UTC).toLocalDate();
@@ -69,11 +79,11 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
             Long tagId = tag.getId();
 
             // +1 запись и +duration минут в 5 бакетов
-            repo.addDelta(userId, tagId, "DAY", day, 1, durationMinutes);
-            repo.addDelta(userId, tagId, "WEEK", weekStart, 1, durationMinutes);
-            repo.addDelta(userId, tagId, "MONTH", monthStart, 1, durationMinutes);
-            repo.addDelta(userId, tagId, "HALF_YEAR", halfYearStart, 1, durationMinutes);
-            repo.addDelta(userId, tagId, "YEAR", yearStart, 1, durationMinutes);
+            repo.addDelta(userId, tagId, "DAY", day, direction, durationMinutes);
+            repo.addDelta(userId, tagId, "WEEK", weekStart, direction, durationMinutes);
+            repo.addDelta(userId, tagId, "MONTH", monthStart, direction, durationMinutes);
+            repo.addDelta(userId, tagId, "HALF_YEAR", halfYearStart, direction, durationMinutes);
+            repo.addDelta(userId, tagId, "YEAR", yearStart, direction, durationMinutes);
         }
     }
 

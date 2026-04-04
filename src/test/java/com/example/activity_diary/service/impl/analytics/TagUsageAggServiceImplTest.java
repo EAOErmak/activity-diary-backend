@@ -2,6 +2,10 @@ package com.example.activity_diary.service.impl.analytics;
 
 import com.example.activity_diary.dto.analytics.TagUsageAggDto;
 import com.example.activity_diary.dto.analytics.TagUsageAggFilterDto;
+import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.diary.DiaryEntry;
+import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.entity.enums.TagUsageBucket;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.tag.TagUsageAggRepository;
@@ -12,7 +16,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -59,5 +65,38 @@ class TagUsageAggServiceImplTest {
         );
 
         assertThrows(BadRequestException.class, () -> service.getUsage(1L, filter));
+    }
+
+    @Test
+    void onEntryDeleted_appliesNegativeDelta() {
+        DiaryEntry entry = DiaryEntry.builder()
+                .user(userWithId(7L))
+                .whenStarted(Instant.parse("2026-03-18T08:00:00Z"))
+                .duration(45)
+                .tags(Set.of(tagWithId(11L)))
+                .build();
+
+        service.onEntryDeleted(entry);
+
+        verify(repo).addDelta(7L, 11L, "DAY", LocalDate.parse("2026-03-18"), -1, -45L);
+        verify(repo).addDelta(7L, 11L, "WEEK", LocalDate.parse("2026-03-16"), -1, -45L);
+        verify(repo).addDelta(7L, 11L, "MONTH", LocalDate.parse("2026-03-01"), -1, -45L);
+        verify(repo).addDelta(7L, 11L, "HALF_YEAR", LocalDate.parse("2026-01-01"), -1, -45L);
+        verify(repo).addDelta(7L, 11L, "YEAR", LocalDate.parse("2026-01-01"), -1, -45L);
+    }
+
+    private static User userWithId(Long id) {
+        User user = User.builder().username("user").build();
+        user.setId(id);
+        return user;
+    }
+
+    private static Tag tagWithId(Long id) {
+        Tag tag = Tag.builder()
+                .name("sport")
+                .status(TagStatus.APPROVED)
+                .build();
+        tag.setId(id);
+        return tag;
     }
 }

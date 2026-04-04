@@ -10,4 +10,6 @@ public interface MetricUsageAggService {
     List<MetricUsageAggDto> getUsage(Long userId, MetricUsageAggFilterDto filter);
 
     void onEntryCreated(DiaryEntry entry);
+
+    void onEntryDeleted(DiaryEntry entry);
 }
