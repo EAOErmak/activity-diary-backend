@@ -1,13 +1,13 @@
 package com.example.activity_diary.service.impl.diary;
 
+import com.example.activity_diary.dto.diary.TagDto;
+import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.sync.GlobalSyncService;
-import com.example.activity_diary.dto.diary.TagDto;
-import com.example.activity_diary.dto.mapper.TagMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

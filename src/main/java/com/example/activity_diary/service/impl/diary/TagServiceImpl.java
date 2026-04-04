@@ -59,22 +59,6 @@ public class TagServiceImpl implements TagService {
         globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
-    private Tag findOrCreate(String name) {
-        return tagRepository.findByName(name)
-                .orElseGet(() -> {
-                    Tag tag = tagRepository.save(
-                            Tag.builder()
-                                    .name(name)
-                                    .status(TagStatus.PROPOSED)
-                                    .build()
-                    );
-
-                    globalSyncService.bump(GlobalSyncEntityType.TAG);
-
-                    return tag;
-                });
-    }
-
     private Tag get(Long id) {
         return tagRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Tag not found"));
@@ -85,9 +69,5 @@ public class TagServiceImpl implements TagService {
         String s = q.trim();
         if (s.isEmpty()) return null;
         return s.toLowerCase();
-    }
-
-    private String normalize(String raw) {
-        return raw.trim().toLowerCase();
     }
 }

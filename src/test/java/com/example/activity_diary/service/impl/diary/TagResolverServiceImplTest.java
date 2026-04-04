@@ -4,10 +4,12 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.UserTag;
 import com.example.activity_diary.entity.UserTagId;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.repository.tag.UserTagRepository;
+import com.example.activity_diary.service.sync.GlobalSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +45,9 @@ class TagResolverServiceImplTest {
 
     @Mock
     private UserTagRepository userTagRepository;
+
+    @Mock
+    private GlobalSyncService globalSyncService;
 
     @InjectMocks
     private TagResolverServiceImpl service;
@@ -76,6 +82,7 @@ class TagResolverServiceImplTest {
 
         LinkedHashSet<String> names = namesCaptor.getValue();
         assertEquals(List.of("sport", "test_1"), List.copyOf(names));
+        verify(globalSyncService, times(2)).bump(GlobalSyncEntityType.TAG);
     }
 
     @Test
