@@ -23,14 +23,14 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminTagController {
 
-    private final AdminTagService admintagService;
+    private final AdminTagService adminTagService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<TagDto>> create(
             @Valid @RequestBody TagCreateDto dto
     ) {
         return ResponseEntity.ok(
-                ApiResponse.ok(admintagService.create(dto))
+                ApiResponse.ok(adminTagService.create(dto))
         );
     }
 
@@ -47,22 +47,22 @@ public class AdminTagController {
         );
 
         return ResponseEntity.ok(ApiResponse.success(
-                admintagService.getTags(q, pageable)
+                adminTagService.getTags(q, pageable)
         ));
     }
 
     @PostMapping("/{id}/approve")
     public void approve(@PathVariable Long id) {
-        admintagService.approve(id);
+        adminTagService.approve(id);
     }
 
     @PostMapping("/{id}/reject")
     public void reject(@PathVariable Long id) {
-        admintagService.reject(id);
+        adminTagService.reject(id);
     }
 
     @PostMapping("/{id}/deprecate")
     public void deprecate(@PathVariable Long id) {
-        admintagService.deprecate(id);
+        adminTagService.deprecate(id);
     }
 }
