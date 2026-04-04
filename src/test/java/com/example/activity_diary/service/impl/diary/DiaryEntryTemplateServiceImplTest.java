@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +43,9 @@ class DiaryEntryTemplateServiceImplTest {
 
     @Mock
     private DictionaryRepository dictionaryRepository;
+
+    @Spy
+    private DiaryDescriptionTagPolicy diaryDescriptionTagPolicy = new DiaryDescriptionTagPolicy();
 
     @InjectMocks
     private DiaryEntryTemplateServiceImpl service;
@@ -90,8 +94,17 @@ class DiaryEntryTemplateServiceImplTest {
     }
 
     @Test
-    void create_success_withMetrics_returnsView() {
+    void create_descriptionWithoutTags_throwsBadRequest() {
         DiaryEntryTemplateCreateDto dto = validCreateDto("tpl", "desc");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(userWithId(1L)));
+        when(diaryEntryTemplateRepository.existsByUser_IdAndNameIgnoreCase(1L, "tpl")).thenReturn(false);
+
+        assertThrows(BadRequestException.class, () -> service.create(1L, dto));
+    }
+
+    @Test
+    void create_success_withMetrics_returnsView() {
+        DiaryEntryTemplateCreateDto dto = validCreateDto("tpl", "#desc");
         dto.setMetrics(List.of(metric(10L, 20L, 5)));
 
         User user = userWithId(1L);
@@ -122,7 +135,7 @@ class DiaryEntryTemplateServiceImplTest {
         DiaryEntryTemplate template = DiaryEntryTemplate.builder()
                 .user(userWithId(1L))
                 .name("tpl")
-                .description("desc")
+                .description("#desc")
                 .build();
         template.setId(11L);
 
@@ -145,7 +158,7 @@ class DiaryEntryTemplateServiceImplTest {
         DiaryEntryTemplate template = DiaryEntryTemplate.builder()
                 .user(userWithId(1L))
                 .name("tpl")
-                .description("desc")
+                .description("#desc")
                 .build();
         template.setId(5L);
 
@@ -161,6 +174,24 @@ class DiaryEntryTemplateServiceImplTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service.delete(1L, 7L));
+    }
+
+    @Test
+    void update_descriptionWithoutTags_throwsBadRequest() {
+        DiaryEntryTemplate template = DiaryEntryTemplate.builder()
+                .user(userWithId(1L))
+                .name("tpl")
+                .description("#desc")
+                .build();
+        template.setId(11L);
+
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(11L, 1L))
+                .thenReturn(Optional.of(template));
+
+        DiaryEntryTemplateUpdateDto dto = new DiaryEntryTemplateUpdateDto();
+        dto.setDescription("plain text");
+
+        assertThrows(BadRequestException.class, () -> service.update(1L, 11L, dto));
     }
 
     private static DiaryEntryTemplateCreateDto validCreateDto(String name, String desc) {
