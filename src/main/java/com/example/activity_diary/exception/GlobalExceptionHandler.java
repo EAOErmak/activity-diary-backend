@@ -1,15 +1,20 @@
 package com.example.activity_diary.exception;
 
 import com.example.activity_diary.dto.ApiResponse;
-import com.example.activity_diary.exception.types.*;
+import com.example.activity_diary.exception.types.BadRequestException;
+import com.example.activity_diary.exception.types.ForbiddenException;
+import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.exception.types.UnauthorizedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.validation.FieldError;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
@@ -65,7 +70,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleOther(Exception ex) {
-        ex.printStackTrace(); // при желании заменить логированием
+        log.error("Unhandled exception in API layer", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Internal server error"));
