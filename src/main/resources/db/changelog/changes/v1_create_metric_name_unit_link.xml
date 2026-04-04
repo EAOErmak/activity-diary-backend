@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-42-create-metric-name-unit-link" author="diary">
+        <createTable tableName="metric_name_unit_link">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="metric_name_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="metric_unit_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="metric_name_unit_link"
+                columnNames="metric_name_id, metric_unit_id"
+                constraintName="uk_metric_name_unit_link_metric_name_metric_unit"/>
+
+        <createIndex indexName="idx_metric_name_unit_link_metric_name" tableName="metric_name_unit_link">
+            <column name="metric_name_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_metric_name_unit_link_metric_unit" tableName="metric_name_unit_link">
+            <column name="metric_unit_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="metric_name_unit_link"
+                baseColumnNames="metric_name_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"
+                constraintName="fk_metric_name_unit_link_metric_name"/>
+
+        <addForeignKeyConstraint
+                baseTableName="metric_name_unit_link"
+                baseColumnNames="metric_unit_id"
+                referencedTableName="dictionary_item"
+                referencedColumnNames="id"
+                constraintName="fk_metric_name_unit_link_metric_unit"/>
+    </changeSet>
+
+    <changeSet id="v1-43-backfill-metric-name-unit-link" author="diary">
+        <sql>
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, unit.parent_id, unit.id
+            FROM dictionary_item unit
+            JOIN dictionary_item metric_name ON metric_name.id = unit.parent_id
+            WHERE unit.parent_id IS NOT NULL
+              AND unit.type = 'METRIC_UNIT'
+              AND metric_name.type = 'METRIC_NAME'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = unit.parent_id
+                    AND link.metric_unit_id = unit.id
+              );
+        </sql>
+    </changeSet>
+
+    <changeSet id="v1-44-drop-dictionary-parent-relation" author="diary">
+        <dropForeignKeyConstraint
+                baseTableName="dictionary_item"
+                constraintName="fk_dictionary_parent"/>
+
+        <dropIndex indexName="idx_dict_type_parent" tableName="dictionary_item"/>
+
+        <dropColumn tableName="dictionary_item" columnName="parent_id"/>
+    </changeSet>
+
+    <changeSet id="v1-45-seed-metric-name-unit-links" author="diary">
+        <sql>
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_NAME', 'Weight', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_NAME' AND label = 'Weight'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_NAME', 'Distance', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_NAME' AND label = 'Distance'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_NAME', 'Time', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_NAME' AND label = 'Time'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_NAME', 'Repetitions', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_NAME' AND label = 'Repetitions'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_NAME', 'Sets', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_NAME' AND label = 'Sets'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'kg', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'kg'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'lb', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'lb'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'm', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'm'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'km', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'km'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'sec', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'sec'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'min', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'min'
+            );
+
+            INSERT INTO dictionary_item (created_at, updated_at, type, label, active)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'METRIC_UNIT', 'reps', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_item WHERE type = 'METRIC_UNIT' AND label = 'reps'
+            );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Weight'
+              AND metric_unit.label = 'kg'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Weight'
+              AND metric_unit.label = 'lb'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Distance'
+              AND metric_unit.label = 'm'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Distance'
+              AND metric_unit.label = 'km'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Time'
+              AND metric_unit.label = 'sec'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Time'
+              AND metric_unit.label = 'min'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Repetitions'
+              AND metric_unit.label = 'reps'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+
+            INSERT INTO metric_name_unit_link (created_at, updated_at, metric_name_id, metric_unit_id)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, metric_name.id, metric_unit.id
+            FROM dictionary_item metric_name
+            JOIN dictionary_item metric_unit ON metric_unit.type = 'METRIC_UNIT'
+            WHERE metric_name.type = 'METRIC_NAME'
+              AND metric_name.label = 'Sets'
+              AND metric_unit.label = 'reps'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM metric_name_unit_link link
+                  WHERE link.metric_name_id = metric_name.id
+                    AND link.metric_unit_id = metric_unit.id
+              );
+        </sql>
+    </changeSet>
+</databaseChangeLog>
