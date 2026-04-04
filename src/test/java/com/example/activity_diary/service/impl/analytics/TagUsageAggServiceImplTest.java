@@ -9,6 +9,7 @@ import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.entity.enums.TagUsageBucket;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.tag.TagUsageAggRepository;
+import com.example.activity_diary.repository.tag.TagUsageAggRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,14 +46,23 @@ class TagUsageAggServiceImplTest {
         List<TagUsageAggDto> expected = List.of(
                 new TagUsageAggDto(11L, "sport", TagUsageBucket.MONTH, LocalDate.parse("2026-02-01"), 3, 90)
         );
+        List<TagUsageAggRow> rows = List.of(
+                row(11L, "sport", TagUsageBucket.MONTH, LocalDate.parse("2026-02-01"), 3, 90L)
+        );
 
-        when(repo.findUsage(7L, filter.getBucket(), filter.getTagId(), filter.getDateFrom(), filter.getDateTo()))
-                .thenReturn(expected);
+        when(repo.findUsageRows(7L, filter.getBucket(), filter.getTagId(), filter.getDateFrom(), filter.getDateTo()))
+                .thenReturn(rows);
 
         List<TagUsageAggDto> actual = service.getUsage(7L, filter);
 
-        assertSame(expected, actual);
-        verify(repo).findUsage(7L, filter.getBucket(), filter.getTagId(), filter.getDateFrom(), filter.getDateTo());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.size(), actual.size());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.getFirst().getTagId(), actual.getFirst().getTagId());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.getFirst().getTagName(), actual.getFirst().getTagName());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.getFirst().getBucket(), actual.getFirst().getBucket());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.getFirst().getBucketStart(), actual.getFirst().getBucketStart());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.getFirst().getUsageCount(), actual.getFirst().getUsageCount());
+        org.junit.jupiter.api.Assertions.assertEquals(expected.getFirst().getTotalDurationMinutes(), actual.getFirst().getTotalDurationMinutes());
+        verify(repo).findUsageRows(7L, filter.getBucket(), filter.getTagId(), filter.getDateFrom(), filter.getDateTo());
     }
 
     @Test
@@ -98,5 +108,46 @@ class TagUsageAggServiceImplTest {
                 .build();
         tag.setId(id);
         return tag;
+    }
+
+    private static TagUsageAggRow row(
+            Long tagId,
+            String tagName,
+            TagUsageBucket bucket,
+            LocalDate bucketStart,
+            int usageCount,
+            long totalDurationMinutes
+    ) {
+        return new TagUsageAggRow() {
+            @Override
+            public Long getTagId() {
+                return tagId;
+            }
+
+            @Override
+            public String getTagName() {
+                return tagName;
+            }
+
+            @Override
+            public TagUsageBucket getBucket() {
+                return bucket;
+            }
+
+            @Override
+            public LocalDate getBucketStart() {
+                return bucketStart;
+            }
+
+            @Override
+            public int getUsageCount() {
+                return usageCount;
+            }
+
+            @Override
+            public long getTotalDurationMinutes() {
+                return totalDurationMinutes;
+            }
+        };
     }
 }

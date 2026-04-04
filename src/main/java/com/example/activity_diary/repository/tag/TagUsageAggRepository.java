@@ -1,6 +1,5 @@
 package com.example.activity_diary.repository.tag;
 
-import com.example.activity_diary.dto.analytics.TagUsageAggDto;
 import com.example.activity_diary.entity.TagUsageAgg;
 import com.example.activity_diary.entity.TagUsageAggId;
 import com.example.activity_diary.entity.enums.TagUsageBucket;
@@ -15,14 +14,13 @@ import java.util.List;
 public interface TagUsageAggRepository extends JpaRepository<TagUsageAgg, TagUsageAggId> {
 
     @Query("""
-        select new com.example.activity_diary.dto.analytics.TagUsageAggDto(
-            a.id.tagId,
-            t.name,
-            a.id.bucket,
-            a.id.bucketStart,
-            a.usageCount,
-            a.totalDurationMinutes
-        )
+        select
+            a.id.tagId as tagId,
+            t.name as tagName,
+            a.id.bucket as bucket,
+            a.id.bucketStart as bucketStart,
+            a.usageCount as usageCount,
+            a.totalDurationMinutes as totalDurationMinutes
         from TagUsageAgg a, Tag t
         where a.id.userId = :userId
           and a.id.bucket = :bucket
@@ -32,7 +30,7 @@ public interface TagUsageAggRepository extends JpaRepository<TagUsageAgg, TagUsa
           and (:dateTo is null or a.id.bucketStart <= :dateTo)
         order by a.id.bucketStart asc, t.name asc
         """)
-    List<TagUsageAggDto> findUsage(
+    List<TagUsageAggRow> findUsageRows(
             @Param("userId") Long userId,
             @Param("bucket") TagUsageBucket bucket,
             @Param("tagId") Long tagId,

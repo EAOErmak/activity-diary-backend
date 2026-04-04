@@ -6,6 +6,7 @@ import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.tag.TagUsageAggRepository;
+import com.example.activity_diary.repository.tag.TagUsageAggRow;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,13 +29,15 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
     public List<TagUsageAggDto> getUsage(Long userId, TagUsageAggFilterDto filter) {
         validateRange(filter.getDateFrom(), filter.getDateTo());
 
-        return repo.findUsage(
-                userId,
-                filter.getBucket(),
-                filter.getTagId(),
-                filter.getDateFrom(),
-                filter.getDateTo()
-        );
+        return repo.findUsageRows(
+                        userId,
+                        filter.getBucket(),
+                        filter.getTagId(),
+                        filter.getDateFrom(),
+                        filter.getDateTo()
+                ).stream()
+                .map(this::toDto)
+                .toList();
     }
 
     @Transactional
@@ -91,5 +94,16 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
         if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
             throw new BadRequestException("dateFrom must be before or equal to dateTo");
         }
+    }
+
+    private TagUsageAggDto toDto(TagUsageAggRow row) {
+        return new TagUsageAggDto(
+                row.getTagId(),
+                row.getTagName(),
+                row.getBucket(),
+                row.getBucketStart(),
+                row.getUsageCount(),
+                row.getTotalDurationMinutes()
+        );
     }
 }
