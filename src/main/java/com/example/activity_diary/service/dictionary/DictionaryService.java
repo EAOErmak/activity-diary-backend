@@ -2,6 +2,7 @@
 package com.example.activity_diary.service.dictionary;
 
 import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
+import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.entity.enums.DictionaryType;
@@ -15,9 +16,10 @@ public interface DictionaryService {
 
     List<DictionaryResponseDto> getForUser(
             DictionaryType type,
-            Long parentId,
             Role role
     );
+
+    List<DictionaryOptionDto> getUnitsByMetricNameId(Long metricNameId, Role role);
 
     List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type);
 

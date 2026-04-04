@@ -28,10 +28,6 @@ public class DictionaryItem extends BaseEntity {
     @Column(nullable = false)
     private String label;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
-    private DictionaryItem parent;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "chart_type")
     private ChartType chartType;

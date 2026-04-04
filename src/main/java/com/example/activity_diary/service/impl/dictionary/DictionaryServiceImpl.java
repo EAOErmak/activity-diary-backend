@@ -2,10 +2,10 @@
 package com.example.activity_diary.service.impl.dictionary;
 
 import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
+import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
-import com.example.activity_diary.entity.diary.EntryFieldConfig;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
@@ -13,7 +13,7 @@ import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
-import com.example.activity_diary.repository.diary.EntryFieldConfigRepository;
+import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ import java.util.List;
 public class DictionaryServiceImpl implements DictionaryService {
 
     private final DictionaryRepository dictionaryRepository;
-    private final EntryFieldConfigRepository entryFieldConfigRepository;
+    private final MetricNameUnitLinkRepository metricNameUnitLinkRepository;
     private final DictionaryMapper mapper;
     private final GlobalSyncService globalSyncService;
 
@@ -46,18 +46,13 @@ public class DictionaryServiceImpl implements DictionaryService {
         if (dictionaryRepository.existsByTypeAndLabelIgnoreCase(dto.getType(), cleanLabel))
             throw new BadRequestException("Dictionary item already exists");
 
-        DictionaryItem parent = null;
-
-        EntryFieldConfig config = null;
-
         DictionaryItem item = DictionaryItem.builder()
                 .type(dto.getType())
                 .label(cleanLabel)
                 .allowedRole(dto.getAllowedRole())
                 .chartType(dto.getChartType())
                 .active(true)
-                .parent(parent)
-                .entryFieldConfig(config)
+                .entryFieldConfig(null)
                 .build();
 
         globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
@@ -71,13 +66,28 @@ public class DictionaryServiceImpl implements DictionaryService {
     @Transactional(readOnly = true)
     public List<DictionaryResponseDto> getForUser(
             DictionaryType type,
-            Long parentId,
             Role role
     ) {
         return dictionaryRepository
-                .findByTypeAndVisibleForUser(type, parentId, role)
+                .findByTypeAndVisibleForUser(type, role)
                 .stream()
                 .map(mapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DictionaryOptionDto> getUnitsByMetricNameId(Long metricNameId, Role role) {
+        DictionaryItem metricName = dictionaryRepository.findById(metricNameId)
+                .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
+
+        if (metricName.getType() != DictionaryType.METRIC_NAME) {
+            throw new BadRequestException("Dictionary item is not a metric name");
+        }
+
+        return metricNameUnitLinkRepository.findUnitsByMetricNameId(metricNameId).stream()
+                .filter(item -> isVisibleForRole(item, role))
+                .map(mapper::toOptionDto)
                 .toList();
     }
 
@@ -169,6 +179,10 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .stream()
                 .map(mapper::toDto)
                 .toList();
+    }
+
+    private boolean isVisibleForRole(DictionaryItem item, Role role) {
+        return item.getAllowedRole() == null || item.getAllowedRole() == role;
     }
 }
 

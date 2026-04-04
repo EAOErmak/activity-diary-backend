@@ -26,11 +26,6 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
             DictionaryType type
     );
 
-    List<DictionaryItem> findAllByTypeAndParentIdAndActiveTrueOrderByLabelAsc(
-            DictionaryType type,
-            Long parentId
-    );
-
     List<DictionaryItem> findAllByTypeOrderByLabelAsc(
             DictionaryType type
     );
@@ -48,12 +43,10 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
         WHERE d.type = :type
         AND d.active = true
         AND (d.allowedRole IS NULL OR d.allowedRole = :role)
-        AND (:parentId IS NULL OR d.parent.id = :parentId)
         ORDER BY d.label ASC
     """)
     List<DictionaryItem> findByTypeAndVisibleForUser(
             DictionaryType type,
-            Long parentId,
             Role role
     );
 

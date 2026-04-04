@@ -12,8 +12,6 @@ public class DictionaryResponseDto {
 
     private String label;
 
-    private Long parentId;
-
     private boolean active;
 
     private String allowedRole;

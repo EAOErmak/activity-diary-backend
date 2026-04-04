@@ -10,7 +10,6 @@ public class DictionaryCreateDto {
     private DictionaryType type;
     private String label;
     private Role allowedRole;
-    private Long parentId;
     private ChartType chartType;
     private Long entryFieldConfigId;
 }

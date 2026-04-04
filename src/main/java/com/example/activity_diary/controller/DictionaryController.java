@@ -38,14 +38,13 @@ public class DictionaryController {
     @GetMapping("/{type}")
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getForUser(
             @PathVariable DictionaryType type,
-            @RequestParam(required = false) Long parentId,
             @AuthenticationPrincipal LightUserDetails user
     ) {
         Role role = user.getRole();
 
         return ResponseEntity.ok(
                 ApiResponse.ok(
-                        dictionaryService.getForUser(type, parentId, role)
+                        dictionaryService.getForUser(type, role)
                 )
         );
     }
