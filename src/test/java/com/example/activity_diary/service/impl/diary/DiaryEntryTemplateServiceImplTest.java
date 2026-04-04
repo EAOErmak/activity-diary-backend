@@ -6,7 +6,6 @@ import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricUpsertDto;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueUpsertDto;
 import com.example.activity_diary.entity.User;
-import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.template.DiaryEntryTemplate;
@@ -14,9 +13,7 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
-import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
-import com.example.activity_diary.service.diary.TagResolverService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,8 +29,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,13 +41,7 @@ class DiaryEntryTemplateServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
-    private TagRepository tagRepository;
-
-    @Mock
     private DictionaryRepository dictionaryRepository;
-
-    @Mock
-    private TagResolverService tagResolverService;
 
     @InjectMocks
     private DiaryEntryTemplateServiceImpl service;
@@ -98,16 +87,6 @@ class DiaryEntryTemplateServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(userWithId(1L)));
 
         assertThrows(BadRequestException.class, () -> service.create(1L, dto));
-        verify(tagResolverService, never()).resolveFromDescription(any(), any());
-    }
-
-    @Test
-    void create_noTags_throwsBadRequest() {
-        DiaryEntryTemplateCreateDto dto = validCreateDto("tpl", "desc");
-        when(userRepository.findById(1L)).thenReturn(Optional.of(userWithId(1L)));
-        when(tagResolverService.resolveFromDescription(1L, "desc")).thenReturn(Set.of());
-
-        assertThrows(BadRequestException.class, () -> service.create(1L, dto));
     }
 
     @Test
@@ -116,13 +95,9 @@ class DiaryEntryTemplateServiceImplTest {
         dto.setMetrics(List.of(metric(10L, 20L, 5)));
 
         User user = userWithId(1L);
-        Tag tag = Tag.builder().name("t").build();
-        tag.setId(100L);
-        Set<Tag> tags = Set.of(tag);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(diaryEntryTemplateRepository.existsByUser_IdAndNameIgnoreCase(1L, "tpl")).thenReturn(false);
-        when(tagResolverService.resolveFromDescription(1L, "desc")).thenReturn(tags);
 
         DictionaryItem metricType = dictItem(10L, DictionaryType.METRIC_NAME, "m");
         DictionaryItem unit = dictItem(20L, DictionaryType.METRIC_UNIT, "u");
