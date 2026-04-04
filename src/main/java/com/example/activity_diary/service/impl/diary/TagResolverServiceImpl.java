@@ -15,8 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +25,7 @@ public class TagResolverServiceImpl implements TagResolverService {
     private final UserRepository userRepository;
     private final UserTagRepository userTagRepository;
     private final GlobalSyncService globalSyncService;
+    private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
 
     /**
      * Правило:
@@ -35,24 +34,16 @@ public class TagResolverServiceImpl implements TagResolverService {
      * - тег заканчивается пробелом/переводом строки/концом текста/знаком пунктуации
      * - '#' должен быть в начале строки или после пробела (не "тест#спорт")
      */
-    private static final Pattern TAG_PATTERN =
-            Pattern.compile("(?<!\\S)#([\\p{L}\\p{N}_-]+)(?=\\s|$|\\p{P})");
-
     @Transactional
     @Override
     public Set<Tag> resolveFromDescription(Long userId, String description) {
         if (userId == null) throw new IllegalArgumentException("userId is required");
         if (description == null || description.isBlank()) return Collections.emptySet();
 
-        LinkedHashSet<String> rawNames = new LinkedHashSet<>();
-        Matcher m = TAG_PATTERN.matcher(description);
-
-        while (m.find()) {
-            String raw = m.group(1);
-            rawNames.add(raw);
-        }
-
-        return resolveForUser(userId, rawNames);
+        return resolveForUser(
+                userId,
+                diaryDescriptionTagPolicy.extractValidTagNames(description)
+        );
     }
 
     /**

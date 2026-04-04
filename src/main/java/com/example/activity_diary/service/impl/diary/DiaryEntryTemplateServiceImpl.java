@@ -36,6 +36,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
     private final DiaryEntryTemplateRepository diaryEntryTemplateRepository;
     private final UserRepository userRepository;
     private final DictionaryRepository dictionaryRepository;
+    private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
 
     @Override
     public DiaryEntryTemplateViewDto create(Long userId, DiaryEntryTemplateCreateDto dto) {
@@ -56,6 +57,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         if (desc == null || desc.isBlank()) {
             throw new BadRequestException("Description is required");
         }
+        diaryDescriptionTagPolicy.ensureContainsAtLeastOneValidTag(desc);
 
         validateTime(dto.getTimeStart(), dto.getTimeEnd());
 
@@ -103,6 +105,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
             if (desc.isBlank()) {
                 throw new BadRequestException("Description is required");
             }
+            diaryDescriptionTagPolicy.ensureContainsAtLeastOneValidTag(desc);
             template.updateDescription(desc);
         }
 
