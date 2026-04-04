@@ -82,29 +82,15 @@ public class DiaryServiceImpl implements DiaryService {
         Instant effectiveNow = (now != null) ? now : Instant.now();
 
         // ВАЖНО: список всегда должен быть НЕ null
-        List<String> tagNames = List.of();
-        boolean hasTags = false;
-        int tagCount = 0;
-
-        if (tags != null && !tags.isEmpty()) {
-            tagNames = tags.stream()
-                    .filter(s -> s != null && !s.isBlank())
-                    .map(String::trim)
-                    .map(String::toLowerCase)
-                    .distinct()
-                    .toList();
-
-            hasTags = !tagNames.isEmpty();
-            tagCount = tagNames.size();
-        }
+        var normalizedTags = DiaryEntryTagFilterNormalizer.normalize(tags);
 
         return diaryRepository.findListByUserIdFilteredAndTags(
                 userId,
                 uiStatus == null ? null : uiStatus.name(),
                 effectiveNow,
-                hasTags,
-                tagNames,
-                tagCount,
+                normalizedTags.hasTags(),
+                normalizedTags.tagNames(),
+                normalizedTags.tagCount(),
                 from,
                 to,
                 pageable
