@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,11 +29,14 @@ class AnalyticsServiceImplTest {
     @Mock
     private TagChartTypeService tagChartTypeService;
 
+    @Mock
+    private ChartFilterValidator chartFilterValidator;
+
     @Test
     void getChart_validatesAllowedChartTypeBeforeCalculation() {
         when(strategy.getChartType()).thenReturn(ChartType.TRAINING_RAW);
 
-        AnalyticsServiceImpl service = new AnalyticsServiceImpl(List.of(strategy), tagChartTypeService);
+        AnalyticsServiceImpl service = new AnalyticsServiceImpl(List.of(strategy), tagChartTypeService, chartFilterValidator);
         ChartFilterDto filter = new ChartFilterDto(
                 7L,
                 Instant.parse("2026-01-01T00:00:00Z"),
@@ -46,13 +50,14 @@ class AnalyticsServiceImplTest {
         ChartResponseDto result = service.getChart(11L, filter);
 
         assertSame(response, result);
+        verify(chartFilterValidator).validate(filter);
         verify(tagChartTypeService).validateChartTypeAllowed(7L, ChartType.TRAINING_RAW);
         verify(strategy).calculate(11L, filter);
     }
 
     @Test
     void getChart_withoutSupportedStrategy_throwsBadRequest() {
-        AnalyticsServiceImpl service = new AnalyticsServiceImpl(List.of(), tagChartTypeService);
+        AnalyticsServiceImpl service = new AnalyticsServiceImpl(List.of(), tagChartTypeService, chartFilterValidator);
         ChartFilterDto filter = new ChartFilterDto(
                 7L,
                 Instant.parse("2026-01-01T00:00:00Z"),
@@ -61,18 +66,23 @@ class AnalyticsServiceImplTest {
         );
 
         assertThrows(BadRequestException.class, () -> service.getChart(11L, filter));
+        verify(chartFilterValidator).validate(filter);
         verify(tagChartTypeService).validateChartTypeAllowed(7L, ChartType.CALORIES_PER_DAY);
     }
 
     @Test
     void getChart_withoutTagId_throwsBadRequest() {
-        AnalyticsServiceImpl service = new AnalyticsServiceImpl(List.of(), tagChartTypeService);
+        AnalyticsServiceImpl service = new AnalyticsServiceImpl(List.of(), tagChartTypeService, chartFilterValidator);
         ChartFilterDto filter = new ChartFilterDto(
                 null,
                 Instant.parse("2026-01-01T00:00:00Z"),
                 Instant.parse("2026-01-02T00:00:00Z"),
                 ChartType.TRAINING_RAW
         );
+
+        doThrow(new BadRequestException("tagId is required"))
+                .when(chartFilterValidator)
+                .validate(filter);
 
         assertThrows(BadRequestException.class, () -> service.getChart(11L, filter));
     }
