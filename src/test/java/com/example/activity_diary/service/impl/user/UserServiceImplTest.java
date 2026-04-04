@@ -9,7 +9,6 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.UserAccount;
 import com.example.activity_diary.entity.enums.ProviderType;
 import com.example.activity_diary.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -44,11 +42,6 @@ class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl service;
-
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(service, "passwordEncoder", passwordEncoder);
-    }
 
     @Test
     void changePassword_userMissing_throwsUsernameNotFound() {
