@@ -1,8 +1,6 @@
 package com.example.activity_diary.service.impl.goal;
 
-import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
-import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.goal.DayGoalDetailDto;
 import com.example.activity_diary.dto.goal.DiaryEntryGoalDetailDto;
 import com.example.activity_diary.dto.mapper.GoalMapper;
@@ -37,9 +35,9 @@ public class GoalCalendarProgressService {
     private final GoalMapper goalMapper;
     private final GoalDiaryEntryCommandFactory goalDiaryEntryCommandFactory;
 
-    public DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, DiaryEntryCreateDto dto) {
+    public DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, GoalDiaryEntryCommand command) {
         DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
-        DiaryEntry entry = upsertConfirmedEntry(userId, goal, dto);
+        DiaryEntry entry = upsertConfirmedEntry(userId, goal, command);
 
         goal.setCurrentEntry(entry);
         recalcUp(goal, entry);
@@ -49,7 +47,7 @@ public class GoalCalendarProgressService {
 
     public DiaryEntryGoalDetailDto confirmEntryGoalSimple(Long userId, Long goalId) {
         DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
-        DiaryEntry entry = upsertConfirmedEntry(userId, goal, goalDiaryEntryCommandFactory.toCreateDto(goal));
+        DiaryEntry entry = upsertConfirmedEntry(userId, goal, goalDiaryEntryCommandFactory.fromGoal(goal));
 
         goal.setCurrentEntry(entry);
         recalcUp(goal, entry);
@@ -57,14 +55,18 @@ public class GoalCalendarProgressService {
         return goalMapper.toEntryView(goal);
     }
 
-    public DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, DiaryEntryUpdateDto dto) {
+    public DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, GoalDiaryEntryCommand command) {
         DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
 
         if (goal.getCurrentEntry() == null) {
             throw new BadRequestException("Goal not confirmed yet");
         }
 
-        DiaryEntryDto updatedDto = diaryService.update(goal.getCurrentEntry().getId(), dto, userId);
+        DiaryEntryDto updatedDto = diaryService.update(
+                goal.getCurrentEntry().getId(),
+                goalDiaryEntryCommandFactory.toUpdateDto(command),
+                userId
+        );
         DiaryEntry updatedEntry = getCreatedEntry(userId, updatedDto.getId());
 
         goal.setCurrentEntry(updatedEntry);
@@ -86,7 +88,7 @@ public class GoalCalendarProgressService {
                 continue;
             }
 
-            DiaryEntry createdEntry = createEntry(userId, goalDiaryEntryCommandFactory.toCreateDto(goal));
+            DiaryEntry createdEntry = createEntry(userId, goalDiaryEntryCommandFactory.fromGoal(goal));
 
             goal.setCurrentEntry(createdEntry);
             goal.setCompleteness(100);
@@ -109,22 +111,26 @@ public class GoalCalendarProgressService {
                 .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
     }
 
-    private DiaryEntry upsertConfirmedEntry(Long userId, DiaryEntryGoal goal, DiaryEntryCreateDto dto) {
+    private DiaryEntry upsertConfirmedEntry(Long userId, DiaryEntryGoal goal, GoalDiaryEntryCommand command) {
         DiaryEntry currentEntry = goal.getCurrentEntry();
         if (currentEntry == null || currentEntry.getStatus() == EntryStatus.DELETED) {
-            return createEntry(userId, dto);
+            return createEntry(userId, command);
         }
 
         DiaryEntryDto updatedDto = diaryService.update(
                 currentEntry.getId(),
-                goalDiaryEntryCommandFactory.toUpdateDto(dto),
+                goalDiaryEntryCommandFactory.toFinishedUpdateDto(command),
                 userId
         );
         return getCreatedEntry(userId, updatedDto.getId());
     }
 
-    private DiaryEntry createEntry(Long userId, DiaryEntryCreateDto dto) {
-        DiaryEntryDto createdDto = diaryService.create(dto, userId, DiaryEntryCreateMode.CONFIRM_GOAL);
+    private DiaryEntry createEntry(Long userId, GoalDiaryEntryCommand command) {
+        DiaryEntryDto createdDto = diaryService.create(
+                goalDiaryEntryCommandFactory.toCreateDto(command),
+                userId,
+                DiaryEntryCreateMode.CONFIRM_GOAL
+        );
         return getCreatedEntry(userId, createdDto.getId());
     }
 
