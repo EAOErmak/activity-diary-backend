@@ -18,6 +18,7 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
     private final GoalCalendarCreateService goalCalendarCreateService;
     private final GoalCalendarProgressService goalCalendarProgressService;
     private final GoalCalendarMutationService goalCalendarMutationService;
+    private final GoalDiaryEntryCommandFactory goalDiaryEntryCommandFactory;
 
     @Override
     public DiaryEntryGoalDetailDto createEntryGoal(Long userId, Long templateId, LocalDate targetDate) {
@@ -36,7 +37,11 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     public DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, DiaryEntryCreateDto dto) {
-        return goalCalendarProgressService.confirmEntryGoal(userId, goalId, dto);
+        return goalCalendarProgressService.confirmEntryGoal(
+                userId,
+                goalId,
+                goalDiaryEntryCommandFactory.fromCreateDto(dto)
+        );
     }
 
     @Override
@@ -46,7 +51,11 @@ public class GoalCalendarServiceImpl implements GoalCalendarService {
 
     @Override
     public DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, DiaryEntryUpdateDto dto) {
-        return goalCalendarProgressService.updateConfirmedEntryGoal(userId, goalId, dto);
+        return goalCalendarProgressService.updateConfirmedEntryGoal(
+                userId,
+                goalId,
+                goalDiaryEntryCommandFactory.fromUpdateDto(dto)
+        );
     }
 
     @Override

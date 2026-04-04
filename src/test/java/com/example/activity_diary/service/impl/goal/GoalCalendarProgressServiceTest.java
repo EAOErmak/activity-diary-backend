@@ -1,6 +1,5 @@
 package com.example.activity_diary.service.impl.goal;
 
-import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.dto.goal.DiaryEntryGoalDetailDto;
@@ -76,7 +75,7 @@ class GoalCalendarProgressServiceTest {
         day.setEntryGoals(List.of(goal));
         week.setDays(List.of(day));
 
-        DiaryEntryCreateDto createDto = createDto();
+        GoalDiaryEntryCommand command = createCommand();
         DiaryEntry updatedEntry = entry(entryId, user, EntryStatus.FINISHED);
         DiaryEntryDto updatedDto = new DiaryEntryDto();
         updatedDto.setId(entryId);
@@ -85,12 +84,12 @@ class GoalCalendarProgressServiceTest {
         DiaryEntryGoalDetailDto mapped = new DiaryEntryGoalDetailDto();
 
         when(diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)).thenReturn(Optional.of(goal));
-        when(goalDiaryEntryCommandFactory.toUpdateDto(createDto)).thenReturn(mappedUpdate);
+        when(goalDiaryEntryCommandFactory.toFinishedUpdateDto(command)).thenReturn(mappedUpdate);
         when(diaryService.update(eq(entryId), any(DiaryEntryUpdateDto.class), eq(userId))).thenReturn(updatedDto);
         when(diaryRepository.findGraphByIdAndUser_Id(entryId, userId)).thenReturn(Optional.of(updatedEntry));
         when(goalMapper.toEntryView(goal)).thenReturn(mapped);
 
-        DiaryEntryGoalDetailDto result = service.confirmEntryGoal(userId, goalId, createDto);
+        DiaryEntryGoalDetailDto result = service.confirmEntryGoal(userId, goalId, command);
 
         assertEquals(mapped, result);
         assertEquals(updatedEntry, goal.getCurrentEntry());
@@ -100,7 +99,7 @@ class GoalCalendarProgressServiceTest {
         assertEquals(mappedUpdate, updateCaptor.getValue());
 
         verify(diaryService, never()).create(any(), eq(userId), any());
-        verify(goalDiaryEntryCommandFactory).toUpdateDto(createDto);
+        verify(goalDiaryEntryCommandFactory).toFinishedUpdateDto(command);
     }
 
     @Test
@@ -117,41 +116,48 @@ class GoalCalendarProgressServiceTest {
         day.setEntryGoals(List.of(goal));
         week.setDays(List.of(day));
 
-        DiaryEntryUpdateDto updateDto = new DiaryEntryUpdateDto();
-        updateDto.setDescription("updated #tag");
+        GoalDiaryEntryCommand command = new GoalDiaryEntryCommand(
+                null,
+                null,
+                null,
+                "updated #tag",
+                EntryStatus.FINISHED,
+                null
+        );
+        DiaryEntryUpdateDto mappedUpdate = new DiaryEntryUpdateDto();
         DiaryEntryDto updatedDto = new DiaryEntryDto();
         updatedDto.setId(entryId);
         DiaryEntry updatedEntry = entry(entryId, user, EntryStatus.FINISHED);
         DiaryEntryGoalDetailDto mapped = new DiaryEntryGoalDetailDto();
 
         when(diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)).thenReturn(Optional.of(goal));
-        when(diaryService.update(entryId, updateDto, userId)).thenReturn(updatedDto);
+        when(goalDiaryEntryCommandFactory.toUpdateDto(command)).thenReturn(mappedUpdate);
+        when(diaryService.update(entryId, mappedUpdate, userId)).thenReturn(updatedDto);
         when(diaryRepository.findGraphByIdAndUser_Id(entryId, userId)).thenReturn(Optional.of(updatedEntry));
         when(goalMapper.toEntryView(goal)).thenReturn(mapped);
 
-        DiaryEntryGoalDetailDto result = service.updateConfirmedEntryGoal(userId, goalId, updateDto);
+        DiaryEntryGoalDetailDto result = service.updateConfirmedEntryGoal(userId, goalId, command);
 
         assertEquals(mapped, result);
-        verify(diaryService).update(entryId, updateDto, userId);
+        verify(goalDiaryEntryCommandFactory).toUpdateDto(command);
+        verify(diaryService).update(entryId, mappedUpdate, userId);
     }
 
-    private static DiaryEntryCreateDto createDto() {
-        DiaryEntryCreateDto dto = new DiaryEntryCreateDto();
-        dto.setWhenStarted(Instant.parse("2026-04-01T08:00:00Z"));
-        dto.setWhenEnded(Instant.parse("2026-04-01T09:00:00Z"));
-        dto.setMood((short) 4);
-        dto.setDescription("updated #tag");
-
-        var valueDto = new com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto();
-        valueDto.setUnitId(200L);
-        valueDto.setValue(12);
-
-        var metricDto = new com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto();
-        metricDto.setMetricTypeId(100L);
-        metricDto.setValues(List.of(valueDto));
-
-        dto.setMetrics(List.of(metricDto));
-        return dto;
+    private static GoalDiaryEntryCommand createCommand() {
+        return new GoalDiaryEntryCommand(
+                Instant.parse("2026-04-01T08:00:00Z"),
+                Instant.parse("2026-04-01T09:00:00Z"),
+                (short) 4,
+                "updated #tag",
+                null,
+                List.of(
+                        new GoalDiaryEntryCommand.Metric(
+                                null,
+                                100L,
+                                List.of(new GoalDiaryEntryCommand.Value(200L, 12))
+                        )
+                )
+        );
     }
 
     private static User userWithId(Long id) {
