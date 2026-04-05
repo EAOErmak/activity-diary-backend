@@ -46,6 +46,7 @@ import java.util.Objects;
 public class GoalCalendarCreateService {
 
     private static final int DEFAULT_TEMPLATE_DURATION_MIN = 60;
+    private static final LocalTime END_OF_DAY = LocalTime.of(23, 59, 59);
 
     private final UserRepository userRepository;
 
@@ -70,17 +71,17 @@ public class GoalCalendarCreateService {
         WeekGoal week = findOrCreateWeekGoal(user, targetDate);
         DayGoal day = findOrCreateDayGoal(week, targetDate);
 
-        int expectedDurationMin = calculateDurationMinutes(template);
+        GoalSchedule schedule = resolveGoalSchedule(template, targetDate, true);
 
-        if (alreadyHasSnapshot(day, template, expectedDurationMin)) {
+        if (alreadyHasSnapshot(day, template, schedule)) {
             DiaryEntryGoal existing = day.getEntryGoals().stream()
-                    .filter(goal -> sameSnapshot(goal, template, expectedDurationMin))
+                    .filter(goal -> sameSnapshot(goal, template, schedule))
                     .findFirst()
                     .orElseThrow();
             return goalMapper.toEntryView(existing);
         }
 
-        DiaryEntryGoal created = createEntryGoalFromTemplate(user, day, template, targetDate, expectedDurationMin);
+        DiaryEntryGoal created = createEntryGoalFromTemplate(user, day, template, schedule);
         diaryEntryGoalRepository.save(created);
 
         return goalMapper.toEntryView(created);
@@ -99,8 +100,9 @@ public class GoalCalendarCreateService {
 
         for (TemplateEntryItem item : template.getItems()) {
             DiaryEntryTemplate entryTemplate = item.getEntryTemplate();
+            GoalSchedule schedule = resolveGoalSchedule(entryTemplate, targetDate, false);
 
-            if (alreadyHasSnapshot(day, entryTemplate, DEFAULT_TEMPLATE_DURATION_MIN)) {
+            if (alreadyHasSnapshot(day, entryTemplate, schedule)) {
                 continue;
             }
 
@@ -108,8 +110,7 @@ public class GoalCalendarCreateService {
                     user,
                     day,
                     entryTemplate,
-                    targetDate,
-                    DEFAULT_TEMPLATE_DURATION_MIN
+                    schedule
             );
             diaryEntryGoalRepository.save(created);
         }
@@ -135,8 +136,9 @@ public class GoalCalendarCreateService {
             DayTemplate dayTemplate = dayItem.getDayTemplate();
             for (TemplateEntryItem entryItem : dayTemplate.getItems()) {
                 DiaryEntryTemplate entryTemplate = entryItem.getEntryTemplate();
+                GoalSchedule schedule = resolveGoalSchedule(entryTemplate, date, false);
 
-                if (alreadyHasSnapshot(day, entryTemplate, DEFAULT_TEMPLATE_DURATION_MIN)) {
+                if (alreadyHasSnapshot(day, entryTemplate, schedule)) {
                     continue;
                 }
 
@@ -144,8 +146,7 @@ public class GoalCalendarCreateService {
                         user,
                         day,
                         entryTemplate,
-                        date,
-                        DEFAULT_TEMPLATE_DURATION_MIN
+                        schedule
                 );
                 diaryEntryGoalRepository.save(created);
             }
@@ -199,13 +200,8 @@ public class GoalCalendarCreateService {
             User user,
             DayGoal day,
             DiaryEntryTemplate template,
-            LocalDate date,
-            int expectedDurationMin
+            GoalSchedule schedule
     ) {
-        ZoneId zone = ZoneId.systemDefault();
-        Instant start = date.atStartOfDay(zone).toInstant();
-        Instant end = date.atTime(23, 59, 59).atZone(zone).toInstant();
-
         int position = day.getEntryGoals().stream()
                 .map(DiaryEntryGoal::getPosition)
                 .max(Integer::compareTo)
@@ -215,9 +211,9 @@ public class GoalCalendarCreateService {
                 .user(user)
                 .dayGoal(day)
                 .position(position)
-                .whenStarted(start)
-                .whenEnded(end)
-                .expectedDurationMin(expectedDurationMin)
+                .whenStarted(schedule.whenStarted())
+                .whenEnded(schedule.whenEnded())
+                .expectedDurationMin(schedule.expectedDurationMin())
                 .name(template.getName())
                 .mood(template.getMood())
                 .description(template.getDescription())
@@ -231,15 +227,8 @@ public class GoalCalendarCreateService {
     }
 
     private void copyMetricsFromTemplate(DiaryEntryGoal goal, DiaryEntryTemplate template) {
-        Map<Long, Integer> positionByMetricType = new HashMap<>();
-
         for (EntryTemplateMetric templateMetric : template.getMetrics()) {
-            Long typeId = templateMetric.getMetricType().getId();
-
-            int position = positionByMetricType.getOrDefault(typeId, 0) + 1;
-            positionByMetricType.put(typeId, position);
-
-            EntryMetricGoal metricGoal = EntryMetricGoal.create(goal, templateMetric.getMetricType(), position);
+            EntryMetricGoal metricGoal = EntryMetricGoal.create(goal, templateMetric.getMetricType());
 
             for (EntryTemplateMetricValue templateValue : templateMetric.getValues()) {
                 metricGoal.addValue(templateValue.getUnit(), templateValue.getValue());
@@ -249,16 +238,16 @@ public class GoalCalendarCreateService {
         }
     }
 
-    private boolean alreadyHasSnapshot(DayGoal day, DiaryEntryTemplate template, Integer expectedDurationMin) {
+    private boolean alreadyHasSnapshot(DayGoal day, DiaryEntryTemplate template, GoalSchedule schedule) {
         for (DiaryEntryGoal goal : day.getEntryGoals()) {
-            if (sameSnapshot(goal, template, expectedDurationMin)) {
+            if (sameSnapshot(goal, template, schedule)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean sameSnapshot(DiaryEntryGoal goal, DiaryEntryTemplate template, Integer expectedDurationMin) {
+    private boolean sameSnapshot(DiaryEntryGoal goal, DiaryEntryTemplate template, GoalSchedule schedule) {
         if (!eq(goal.getName(), template.getName())) {
             return false;
         }
@@ -268,7 +257,13 @@ public class GoalCalendarCreateService {
         if (!eq(norm(goal.getDescription()), norm(template.getDescription()))) {
             return false;
         }
-        if (!eq(goal.getExpectedDurationMin(), expectedDurationMin)) {
+        if (!eq(goal.getWhenStarted(), schedule.whenStarted())) {
+            return false;
+        }
+        if (!eq(goal.getWhenEnded(), schedule.whenEnded())) {
+            return false;
+        }
+        if (!eq(goal.getExpectedDurationMin(), schedule.expectedDurationMin())) {
             return false;
         }
 
@@ -301,20 +296,43 @@ public class GoalCalendarCreateService {
         return result;
     }
 
-    private int calculateDurationMinutes(DiaryEntryTemplate template) {
-
-        if (template.getTimeStart() == null || template.getTimeEnd() == null) {
-            throw new BadRequestException("Template timeStart and timeEnd must be set");
-        }
-
+    private GoalSchedule resolveGoalSchedule(DiaryEntryTemplate template, LocalDate date, boolean requireTemplateTime) {
         LocalTime start = template.getTimeStart();
         LocalTime end = template.getTimeEnd();
+
+        if (start == null && end == null) {
+            if (requireTemplateTime) {
+                throw new BadRequestException("Template timeStart and timeEnd must be set");
+            }
+            return defaultGoalSchedule(date);
+        }
+
+        if (start == null || end == null) {
+            throw new BadRequestException("Template timeStart and timeEnd must both be set");
+        }
 
         if (!end.isAfter(start)) {
             throw new BadRequestException("Template timeEnd must be after timeStart");
         }
 
-        return (int) Duration.between(start, end).toMinutes();
+        ZoneId zone = ZoneId.systemDefault();
+        Instant whenStarted = date.atTime(start).atZone(zone).toInstant();
+        Instant whenEnded = date.atTime(end).atZone(zone).toInstant();
+
+        return new GoalSchedule(
+                whenStarted,
+                whenEnded,
+                (int) Duration.between(start, end).toMinutes()
+        );
+    }
+
+    private GoalSchedule defaultGoalSchedule(LocalDate date) {
+        ZoneId zone = ZoneId.systemDefault();
+        return new GoalSchedule(
+                date.atStartOfDay(zone).toInstant(),
+                date.atTime(END_OF_DAY).atZone(zone).toInstant(),
+                DEFAULT_TEMPLATE_DURATION_MIN
+        );
     }
 
     private static String norm(String value) {
@@ -323,5 +341,12 @@ public class GoalCalendarCreateService {
 
     private static <T> boolean eq(T left, T right) {
         return Objects.equals(left, right);
+    }
+
+    private record GoalSchedule(
+            Instant whenStarted,
+            Instant whenEnded,
+            int expectedDurationMin
+    ) {
     }
 }

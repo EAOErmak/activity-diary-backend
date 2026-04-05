@@ -15,12 +15,6 @@ import java.util.Objects;
         indexes = {
                 @Index(name = "idx_metric_goal_entry_goal", columnList = "entry_goal_id"),
                 @Index(name = "idx_metric_goal_type", columnList = "metric_type_id")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_metric_goal_entry_pos",
-                        columnNames = {"entry_goal_id", "position"}
-                )
         }
 )
 @Getter
@@ -37,9 +31,6 @@ public class EntryMetricGoal extends BaseEntity {
     @JoinColumn(name = "metric_type_id", nullable = false)
     private DictionaryItem metricType;
 
-    @Column(nullable = false)
-    private Integer position;
-
     @OneToMany(
             mappedBy = "metricGoal",
             cascade = CascadeType.ALL,
@@ -48,14 +39,12 @@ public class EntryMetricGoal extends BaseEntity {
     @Builder.Default
     private List<EntryMetricValueGoal> values = new ArrayList<>();
 
-    public static EntryMetricGoal create(DiaryEntryGoal goal, DictionaryItem metricType, int position) {
+    public static EntryMetricGoal create(DiaryEntryGoal goal, DictionaryItem metricType) {
         if (goal == null) throw new IllegalArgumentException("DiaryEntryGoal is required");
         if (metricType == null) throw new IllegalArgumentException("Metric type is required");
-        if (position <= 0) throw new IllegalArgumentException("Position must be positive");
 
         EntryMetricGoal mg = new EntryMetricGoal();
         mg.metricType = metricType;
-        mg.position = position;
         mg.attachTo(goal);
         return mg;
     }

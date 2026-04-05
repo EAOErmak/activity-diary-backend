@@ -191,7 +191,7 @@ class GoalDiaryEntryCommandFactoryTest {
                 .build();
         unit.setId(unitId);
 
-        EntryMetricGoal metricGoal = EntryMetricGoal.create(goal, metricType, 1);
+        EntryMetricGoal metricGoal = EntryMetricGoal.create(goal, metricType);
         metricGoal.addValue(unit, value);
         return metricGoal;
     }
