@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +39,16 @@ public class FoodChartSupportService {
     private static final String PROTEIN_LABEL = "protein";
     private static final String FAT_LABEL = "fat";
     private static final String CARBS_LABEL = "carbs";
+    private static final Set<String> GRAM_UNIT_LABELS = Set.of(
+            "g",
+            "gram",
+            "grams",
+            "гр",
+            "г",
+            "грамм",
+            "грамма",
+            "граммы"
+    );
     private static final Comparator<DiaryEntry> ENTRY_ORDER = Comparator
             .comparing(DiaryEntry::getWhenStarted, Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(DiaryEntry::getId, Comparator.nullsLast(Comparator.naturalOrder()));
@@ -223,18 +234,34 @@ public class FoodChartSupportService {
             return Optional.empty();
         }
 
-        List<EntryMetricValue> values = metric.getValues() == null ? List.of() : metric.getValues();
-        BigDecimal totalAmount = values.stream()
+        BigDecimal grams = extractGrams(metric.getValues());
+        if (grams.compareTo(BigDecimal.ZERO) <= 0) {
+            return Optional.empty();
+        }
+
+        return Optional.of(foodProfile.multiplyBy(grams));
+    }
+
+    private BigDecimal extractGrams(List<EntryMetricValue> values) {
+        if (values == null || values.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return values.stream()
+                .filter(this::isGramValue)
                 .map(EntryMetricValue::getValue)
                 .filter(value -> value != null && value > 0)
                 .map(BigDecimal::valueOf)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
-        if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            return Optional.empty();
+    private boolean isGramValue(EntryMetricValue value) {
+        if (value == null || value.getUnit() == null || value.getUnit().getLabel() == null) {
+            return false;
         }
 
-        return Optional.of(foodProfile.multiplyBy(totalAmount));
+        String normalizedLabel = value.getUnit().getLabel().trim().toLowerCase(Locale.ROOT);
+        return GRAM_UNIT_LABELS.contains(normalizedLabel);
     }
 
     private List<EntryMetric> sortMetrics(Collection<EntryMetric> metrics) {

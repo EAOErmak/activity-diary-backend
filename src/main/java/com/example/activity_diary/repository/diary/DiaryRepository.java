@@ -34,8 +34,8 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         join d.tags t
         where d.user.id = :userId
           and t.id = :tagId
-          and (:dateFrom is null or d.whenStarted >= :dateFrom)
-          and (:dateTo is null or d.whenStarted <= :dateTo)
+          and d.whenStarted >= coalesce(:dateFrom, d.whenStarted)
+          and d.whenStarted <= coalesce(:dateTo, d.whenStarted)
     """)
     List<DiaryEntry> findAllByUserIdAndTagIdAndWhenStartedRange(
             @Param("userId") Long userId,

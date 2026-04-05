@@ -45,10 +45,8 @@ class FoodChartStrategiesTest {
 
     private CaloriesPerDayChartStrategy caloriesPerDayChartStrategy;
     private CaloriesPerDiaryChartStrategy caloriesPerDiaryChartStrategy;
-    private CaloriesPerEatingChartStrategy caloriesPerEatingChartStrategy;
     private PfcPerDayChartStrategy pfcPerDayChartStrategy;
     private PfcPerDiaryChartStrategy pfcPerDiaryChartStrategy;
-    private PfcPerEatingChartStrategy pfcPerEatingChartStrategy;
     private PfcPerMetricChartStrategy pfcPerMetricChartStrategy;
 
     @BeforeEach
@@ -61,10 +59,8 @@ class FoodChartStrategiesTest {
 
         caloriesPerDayChartStrategy = new CaloriesPerDayChartStrategy(supportService);
         caloriesPerDiaryChartStrategy = new CaloriesPerDiaryChartStrategy(supportService);
-        caloriesPerEatingChartStrategy = new CaloriesPerEatingChartStrategy(supportService);
         pfcPerDayChartStrategy = new PfcPerDayChartStrategy(supportService);
         pfcPerDiaryChartStrategy = new PfcPerDiaryChartStrategy(supportService);
-        pfcPerEatingChartStrategy = new PfcPerEatingChartStrategy(supportService);
         pfcPerMetricChartStrategy = new PfcPerMetricChartStrategy(supportService);
     }
 
@@ -96,9 +92,9 @@ class FoodChartStrategiesTest {
     void caloriesPerDiary_returnsOneSeriesPerEntryAndKeepsZeroWhenFoodIsMissing() {
         ChartFilterDto filter = filter(ChartType.CALORIES_PER_DIARY);
         DiaryEntry first = diaryEntry(101L, "2026-02-01T10:00:00Z",
-                metricSpec(1L, "Apple", 100));
+                metricSpec(1L, "Apple", grams(100)));
         DiaryEntry second = diaryEntry(102L, "2026-02-01T12:00:00Z",
-                metricSpec(3L, "Unknown", 25));
+                metricSpec(3L, "Unknown", grams(25)));
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(first, second));
@@ -165,9 +161,9 @@ class FoodChartStrategiesTest {
     void pfcPerMetric_skipsMetricsWithoutFood() {
         ChartFilterDto filter = filter(ChartType.PFC_PER_METRIC);
         DiaryEntry entry = diaryEntry(201L, "2026-02-01T10:00:00Z",
-                metricSpec(1L, "Apple", 100),
-                metricSpec(3L, "Unknown", 50),
-                metricSpec(2L, "Banana", 20));
+                metricSpec(1L, "Apple", grams(100)),
+                metricSpec(3L, "Unknown", grams(50)),
+                metricSpec(2L, "Banana", grams(20)));
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(entry));
@@ -187,32 +183,45 @@ class FoodChartStrategiesTest {
     }
 
     @Test
-    void eatingAliasesReuseDiaryStrategies() {
-        ChartFilterDto caloriesFilter = filter(ChartType.CALORIES_PER_EATING);
-        ChartFilterDto pfcFilter = filter(ChartType.PFC_PER_EATING);
+    void caloriesPerDiary_usesOnlyGramValuesWhenMetricContainsOtherUnits() {
+        ChartFilterDto filter = filter(ChartType.CALORIES_PER_DIARY);
+        DiaryEntry entry = diaryEntry(301L, "2026-02-03T10:00:00Z",
+                metricSpec(1L, "Apple", grams(100), unit("kg", 2), unit("pieces", 5)));
 
-        when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, caloriesFilter.getDateFrom(), caloriesFilter.getDateTo()))
-                .thenReturn(sampleEntries());
+        when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
+                .thenReturn(List.of(entry));
+        when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
+                .thenReturn(List.of(generalFood(1L, "Apple", "2.00", "0.10", "0.20", "0.30")));
+        when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
+                .thenReturn(List.of());
+
+        ChartResponseDto response = caloriesPerDiaryChartStrategy.calculate(11L, filter);
+
+        assertEquals(1, response.getSeries().size());
+        assertSinglePoint(response.getSeries().get(0), "calories", "200.00");
+    }
+
+    @Test
+    void pfcPerMetric_skipsMetricWithoutGramUnit() {
+        ChartFilterDto filter = filter(ChartType.PFC_PER_METRIC);
+        DiaryEntry entry = diaryEntry(302L, "2026-02-03T10:00:00Z",
+                metricSpec(1L, "Apple", unit("pieces", 2)),
+                metricSpec(2L, "Banana", grams(20)));
+
+        when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
+                .thenReturn(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
-                        generalFood(1L, "Apple", "1.00", "9.99", "9.99", "9.99"),
+                        generalFood(1L, "Apple", "2.00", "0.10", "0.20", "0.30"),
                         generalFood(2L, "Banana", "4.00", "0.40", "0.50", "0.60")
                 ));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
-                .thenReturn(List.of(
-                        userFood(11L, 1L, "Apple", "2.00", "0.10", "0.20", "0.30")
-                ));
+                .thenReturn(List.of());
 
-        ChartResponseDto caloriesResponse = caloriesPerEatingChartStrategy.calculate(11L, caloriesFilter);
-        ChartResponseDto pfcResponse = pfcPerEatingChartStrategy.calculate(11L, pfcFilter);
+        ChartResponseDto response = pfcPerMetricChartStrategy.calculate(11L, filter);
 
-        assertEquals(ChartType.CALORIES_PER_EATING, caloriesResponse.getChartType());
-        assertEquals(3, caloriesResponse.getSeries().size());
-        assertSinglePoint(caloriesResponse.getSeries().get(1), "calories", "180.00");
-
-        assertEquals(ChartType.PFC_PER_EATING, pfcResponse.getChartType());
-        assertEquals(3, pfcResponse.getSeries().size());
-        assertPfcSeries(pfcResponse.getSeries().get(1), "13.00", "20.00", "27.00");
+        assertEquals(1, response.getSeries().size());
+        assertPfcSeries(response.getSeries().get(0), "8.00", "10.00", "12.00");
     }
 
     @Test
@@ -242,12 +251,12 @@ class FoodChartStrategiesTest {
     private static List<DiaryEntry> sampleEntries() {
         return List.of(
                 diaryEntry(101L, "2026-02-01T10:00:00Z",
-                        metricSpec(1L, "Apple", 100)),
+                        metricSpec(1L, "Apple", grams(100))),
                 diaryEntry(102L, "2026-02-01T12:00:00Z",
-                        metricSpec(1L, "Apple", 50),
-                        metricSpec(2L, "Banana", 20)),
+                        metricSpec(1L, "Apple", grams(50)),
+                        metricSpec(2L, "Banana", grams(20))),
                 diaryEntry(103L, "2026-02-02T01:00:00Z",
-                        metricSpec(2L, "Banana", 30))
+                        metricSpec(2L, "Banana", grams(30)))
         );
     }
 
@@ -259,8 +268,12 @@ class FoodChartStrategiesTest {
 
         for (MetricSpec spec : metrics) {
             EntryMetric metric = EntryMetric.create(entry, dictionaryItem(spec.dictionaryItemId(), spec.label()));
-            for (int i = 0; i < spec.amounts().length; i++) {
-                metric.addValue(dictionaryItem(1000L + spec.dictionaryItemId() + i, "g-" + i), spec.amounts()[i]);
+            for (int i = 0; i < spec.values().length; i++) {
+                ValueSpec value = spec.values()[i];
+                metric.addValue(
+                        dictionaryItem(1000L + spec.dictionaryItemId() + i, value.unitLabel()),
+                        value.value()
+                );
             }
             entry.addMetric(metric);
         }
@@ -268,8 +281,16 @@ class FoodChartStrategiesTest {
         return entry;
     }
 
-    private static MetricSpec metricSpec(Long dictionaryItemId, String label, int... amounts) {
-        return new MetricSpec(dictionaryItemId, label, amounts);
+    private static MetricSpec metricSpec(Long dictionaryItemId, String label, ValueSpec... values) {
+        return new MetricSpec(dictionaryItemId, label, values);
+    }
+
+    private static ValueSpec grams(int value) {
+        return unit("граммы", value);
+    }
+
+    private static ValueSpec unit(String unitLabel, int value) {
+        return new ValueSpec(unitLabel, value);
     }
 
     private static GeneralFood generalFood(
@@ -338,6 +359,9 @@ class FoodChartStrategiesTest {
         assertEquals(new BigDecimal(expectedValue), point.getValue());
     }
 
-    private record MetricSpec(Long dictionaryItemId, String label, int[] amounts) {
+    private record MetricSpec(Long dictionaryItemId, String label, ValueSpec[] values) {
+    }
+
+    private record ValueSpec(String unitLabel, int value) {
     }
 }

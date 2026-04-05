@@ -26,8 +26,8 @@ public interface TagUsageAggRepository extends JpaRepository<TagUsageAgg, TagUsa
           and a.id.bucket = :bucket
           and t.id = a.id.tagId
           and (:tagId is null or a.id.tagId = :tagId)
-          and (:dateFrom is null or a.id.bucketStart >= :dateFrom)
-          and (:dateTo is null or a.id.bucketStart <= :dateTo)
+          and a.id.bucketStart >= coalesce(:dateFrom, a.id.bucketStart)
+          and a.id.bucketStart <= coalesce(:dateTo, a.id.bucketStart)
         order by a.id.bucketStart asc, t.name asc
         """)
     List<TagUsageAggRow> findUsageRows(

@@ -30,8 +30,8 @@ public interface MetricUsageAggRepository extends JpaRepository<MetricUsageAgg, 
           and unit.id = a.id.unitId
           and (:metricTypeId is null or a.id.metricTypeId = :metricTypeId)
           and (:unitId is null or a.id.unitId = :unitId)
-          and (:dateFrom is null or a.id.bucketStart >= :dateFrom)
-          and (:dateTo is null or a.id.bucketStart <= :dateTo)
+          and a.id.bucketStart >= coalesce(:dateFrom, a.id.bucketStart)
+          and a.id.bucketStart <= coalesce(:dateTo, a.id.bucketStart)
         order by a.id.bucketStart asc, metricType.label asc, unit.label asc
         """)
     List<MetricUsageAggRow> findUsageRows(
