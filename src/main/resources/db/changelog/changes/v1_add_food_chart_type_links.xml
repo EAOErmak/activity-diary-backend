@@ -9,15 +9,15 @@
     <changeSet id="v1-add-food-chart-type-links" author="codex">
         <sql>
             INSERT INTO tag (created_at, updated_at, name, status)
-            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Food', 'APPROVED'
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'food', 'APPROVED'
             WHERE NOT EXISTS (
-                SELECT 1 FROM tag WHERE name = 'Food'
+                SELECT 1 FROM tag WHERE name = 'food'
             );
 
             INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
             SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'CALORIES_PER_DIARY'
             FROM tag t
-            WHERE t.name = 'Food'
+            WHERE t.name = 'food'
               AND NOT EXISTS (
                   SELECT 1
                   FROM tag_chart_type_link link
@@ -28,7 +28,7 @@
             INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
             SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_DIARY'
             FROM tag t
-            WHERE t.name = 'Food'
+            WHERE t.name = 'food'
               AND NOT EXISTS (
                   SELECT 1
                   FROM tag_chart_type_link link
@@ -39,7 +39,7 @@
             INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
             SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_METRIC'
             FROM tag t
-            WHERE t.name = 'Food'
+            WHERE t.name = 'food'
               AND NOT EXISTS (
                   SELECT 1
                   FROM tag_chart_type_link link

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-remove-legacy-food-chart-type-links" author="codex">
+        <sql>
+            DELETE FROM tag_chart_type_link
+            WHERE chart_type IN ('CALORIES_PER_EATING', 'PFC_PER_EATING');
+        </sql>
+    </changeSet>
+</databaseChangeLog>
