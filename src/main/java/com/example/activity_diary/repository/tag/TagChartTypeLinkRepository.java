@@ -13,9 +13,17 @@ public interface TagChartTypeLinkRepository extends JpaRepository<TagChartTypeLi
         select link
         from TagChartTypeLink link
         where link.tag.id = :tagId
-        order by link.chartType asc
     """)
     List<TagChartTypeLink> findByTagId(Long tagId);
 
+    @Query("""
+        select link.chartType
+        from TagChartTypeLink link
+        where link.tag.id = :tagId
+    """)
+    List<ChartType> findChartTypesByTagId(Long tagId);
+
     boolean existsByTagIdAndChartType(Long tagId, ChartType chartType);
+
+    void deleteByTagIdAndChartType(Long tagId, ChartType chartType);
 }

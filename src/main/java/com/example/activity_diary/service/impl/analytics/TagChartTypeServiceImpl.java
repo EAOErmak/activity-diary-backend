@@ -1,7 +1,6 @@
 package com.example.activity_diary.service.impl.analytics;
 
 import com.example.activity_diary.entity.diary.Tag;
-import com.example.activity_diary.entity.diary.TagChartTypeLink;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -26,8 +26,8 @@ public class TagChartTypeServiceImpl implements TagChartTypeService {
     public List<ChartType> getChartTypesByTagId(Long tagId) {
         getTag(tagId);
 
-        return tagChartTypeLinkRepository.findByTagId(tagId).stream()
-                .map(TagChartTypeLink::getChartType)
+        return tagChartTypeLinkRepository.findChartTypesByTagId(tagId).stream()
+                .sorted(Comparator.comparingInt(ChartType::ordinal))
                 .toList();
     }
 
