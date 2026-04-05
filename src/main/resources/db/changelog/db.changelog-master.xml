@@ -44,5 +44,6 @@
     <include file="db/changelog/changes/v1_insertion_test_user.xml"/>
     <include file="db/changelog/changes/v1_create_metric_name_unit_link.xml"/>
     <include file="db/changelog/changes/v1_create_tag_chart_type_link.xml"/>
+    <include file="db/changelog/changes/v1_add_food_chart_type_links.xml"/>
 
 </databaseChangeLog>

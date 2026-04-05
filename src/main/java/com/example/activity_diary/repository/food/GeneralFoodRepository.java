@@ -3,7 +3,9 @@ package com.example.activity_diary.repository.food;
 import com.example.activity_diary.entity.food.GeneralFood;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface GeneralFoodRepository extends JpaRepository<GeneralFood, Long> {
@@ -28,4 +30,12 @@ public interface GeneralFoodRepository extends JpaRepository<GeneralFood, Long> 
         ORDER BY di.label ASC, gf.id ASC
     """)
     List<GeneralFood> searchByDictionaryLabel(String query);
+
+    @Query("""
+        SELECT gf
+        FROM GeneralFood gf
+        JOIN FETCH gf.dictionaryItem di
+        WHERE di.id IN :dictionaryItemIds
+    """)
+    List<GeneralFood> findAllByDictionaryItemIdIn(@Param("dictionaryItemIds") Collection<Long> dictionaryItemIds);
 }

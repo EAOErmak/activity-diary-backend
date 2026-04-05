@@ -40,6 +40,9 @@ class TagChartTypeServiceImplTest {
 
         when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
         when(tagChartTypeLinkRepository.findChartTypesByTagId(7L)).thenReturn(List.of(
+                ChartType.PFC_PER_METRIC,
+                ChartType.PFC_PER_DIARY,
+                ChartType.CALORIES_PER_DIARY,
                 ChartType.PFC_PER_EATING,
                 ChartType.CALORIES_PER_EATING,
                 ChartType.PFC_PER_DAY,
@@ -52,6 +55,9 @@ class TagChartTypeServiceImplTest {
                 List.of(
                         ChartType.CALORIES_PER_DAY,
                         ChartType.PFC_PER_DAY,
+                        ChartType.CALORIES_PER_DIARY,
+                        ChartType.PFC_PER_DIARY,
+                        ChartType.PFC_PER_METRIC,
                         ChartType.CALORIES_PER_EATING,
                         ChartType.PFC_PER_EATING
                 ),
