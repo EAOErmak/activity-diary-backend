@@ -52,4 +52,8 @@ public class UserFood extends BaseEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal carbs = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal callories = BigDecimal.ZERO;
 }

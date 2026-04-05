@@ -53,9 +53,10 @@ public class UserFoodServiceImpl implements UserFoodService {
         UserFood userFood = UserFood.builder()
                 .user(getUser(userId))
                 .dictionaryItem(getDictionaryItem(dto.getDictionaryItemId()))
-                .protein(normalizeMacro(dto.getProtein(), "Protein"))
-                .fat(normalizeMacro(dto.getFat(), "Fat"))
-                .carbs(normalizeMacro(dto.getCarbs(), "Carbs"))
+                .protein(normalizeValue(dto.getProtein(), "Protein"))
+                .fat(normalizeValue(dto.getFat(), "Fat"))
+                .carbs(normalizeValue(dto.getCarbs(), "Carbs"))
+                .callories(normalizeValue(dto.getCallories(), "Callories"))
                 .build();
 
         return foodMapper.toDto(userFoodRepository.save(userFood));
@@ -68,9 +69,10 @@ public class UserFoodServiceImpl implements UserFoodService {
         validateUniqueDictionaryItem(userId, dto.getDictionaryItemId(), id);
 
         userFood.setDictionaryItem(getDictionaryItem(dto.getDictionaryItemId()));
-        userFood.setProtein(normalizeMacro(dto.getProtein(), "Protein"));
-        userFood.setFat(normalizeMacro(dto.getFat(), "Fat"));
-        userFood.setCarbs(normalizeMacro(dto.getCarbs(), "Carbs"));
+        userFood.setProtein(normalizeValue(dto.getProtein(), "Protein"));
+        userFood.setFat(normalizeValue(dto.getFat(), "Fat"));
+        userFood.setCarbs(normalizeValue(dto.getCarbs(), "Carbs"));
+        userFood.setCallories(normalizeValue(dto.getCallories(), "Callories"));
 
         return foodMapper.toDto(userFoodRepository.save(userFood));
     }
@@ -106,7 +108,7 @@ public class UserFoodServiceImpl implements UserFoodService {
         }
     }
 
-    private BigDecimal normalizeMacro(BigDecimal value, String fieldName) {
+    private BigDecimal normalizeValue(BigDecimal value, String fieldName) {
         if (value == null) {
             throw new BadRequestException(fieldName + " is required");
         }

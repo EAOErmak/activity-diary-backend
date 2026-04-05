@@ -11,6 +11,7 @@
     <include file="db/changelog/changes/v1_create_dictionary_item.xml"/>
     <include file="db/changelog/changes/v1_create_general_food.xml"/>
     <include file="db/changelog/changes/v1_create_user_food.xml"/>
+    <include file="db/changelog/changes/v1_add_callories_to_food.xml"/>
     <include file="db/changelog/changes/v1_create_diary_entry.xml"/>
     <include file="db/changelog/changes/v1_create_entry_metric.xml"/>
     <include file="db/changelog/changes/v1_create_entry_metric_value.xml"/>

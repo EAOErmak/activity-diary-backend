@@ -29,4 +29,9 @@ public class FoodUpsertDto {
     @DecimalMin(value = "0.00")
     @Digits(integer = 8, fraction = 2)
     private BigDecimal carbs;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Digits(integer = 8, fraction = 2)
+    private BigDecimal callories;
 }

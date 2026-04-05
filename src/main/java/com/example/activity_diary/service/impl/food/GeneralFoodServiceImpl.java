@@ -51,9 +51,10 @@ public class GeneralFoodServiceImpl implements GeneralFoodService {
 
         GeneralFood generalFood = GeneralFood.builder()
                 .dictionaryItem(dictionaryItem)
-                .protein(normalizeMacro(dto.getProtein(), "Protein"))
-                .fat(normalizeMacro(dto.getFat(), "Fat"))
-                .carbs(normalizeMacro(dto.getCarbs(), "Carbs"))
+                .protein(normalizeValue(dto.getProtein(), "Protein"))
+                .fat(normalizeValue(dto.getFat(), "Fat"))
+                .carbs(normalizeValue(dto.getCarbs(), "Carbs"))
+                .callories(normalizeValue(dto.getCallories(), "Callories"))
                 .build();
 
         return foodMapper.toDto(generalFoodRepository.save(generalFood));
@@ -66,9 +67,10 @@ public class GeneralFoodServiceImpl implements GeneralFoodService {
         validateUniqueDictionaryItem(dto.getDictionaryItemId(), id);
 
         generalFood.setDictionaryItem(getDictionaryItem(dto.getDictionaryItemId()));
-        generalFood.setProtein(normalizeMacro(dto.getProtein(), "Protein"));
-        generalFood.setFat(normalizeMacro(dto.getFat(), "Fat"));
-        generalFood.setCarbs(normalizeMacro(dto.getCarbs(), "Carbs"));
+        generalFood.setProtein(normalizeValue(dto.getProtein(), "Protein"));
+        generalFood.setFat(normalizeValue(dto.getFat(), "Fat"));
+        generalFood.setCarbs(normalizeValue(dto.getCarbs(), "Carbs"));
+        generalFood.setCallories(normalizeValue(dto.getCallories(), "Callories"));
 
         return foodMapper.toDto(generalFoodRepository.save(generalFood));
     }
@@ -99,7 +101,7 @@ public class GeneralFoodServiceImpl implements GeneralFoodService {
         }
     }
 
-    private BigDecimal normalizeMacro(BigDecimal value, String fieldName) {
+    private BigDecimal normalizeValue(BigDecimal value, String fieldName) {
         if (value == null) {
             throw new BadRequestException(fieldName + " is required");
         }

@@ -13,4 +13,5 @@ public class UserFoodResponseDto {
     private BigDecimal protein;
     private BigDecimal fat;
     private BigDecimal carbs;
+    private BigDecimal callories;
 }
