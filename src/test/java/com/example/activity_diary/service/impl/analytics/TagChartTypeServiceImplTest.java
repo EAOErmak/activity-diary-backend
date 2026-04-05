@@ -1,7 +1,6 @@
 package com.example.activity_diary.service.impl.analytics;
 
 import com.example.activity_diary.entity.diary.Tag;
-import com.example.activity_diary.entity.diary.TagChartTypeLink;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
@@ -37,22 +36,24 @@ class TagChartTypeServiceImplTest {
 
     @Test
     void getChartTypesByTagId_returnsLinkedChartTypes() {
-        Tag tag = tag(7L, "Training");
+        Tag tag = tag(7L, "food");
 
         when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
-        when(tagChartTypeLinkRepository.findByTagId(7L)).thenReturn(List.of(
-                link(tag, ChartType.TRAINING_COMPUTED),
-                link(tag, ChartType.TRAINING_METRICS),
-                link(tag, ChartType.TRAINING_RAW)
+        when(tagChartTypeLinkRepository.findChartTypesByTagId(7L)).thenReturn(List.of(
+                ChartType.PFC_PER_EATING,
+                ChartType.CALORIES_PER_EATING,
+                ChartType.PFC_PER_DAY,
+                ChartType.CALORIES_PER_DAY
         ));
 
         List<ChartType> result = service.getChartTypesByTagId(7L);
 
         assertEquals(
                 List.of(
-                        ChartType.TRAINING_COMPUTED,
-                        ChartType.TRAINING_METRICS,
-                        ChartType.TRAINING_RAW
+                        ChartType.CALORIES_PER_DAY,
+                        ChartType.PFC_PER_DAY,
+                        ChartType.CALORIES_PER_EATING,
+                        ChartType.PFC_PER_EATING
                 ),
                 result
         );
@@ -103,12 +104,5 @@ class TagChartTypeServiceImplTest {
                 .build();
         tag.setId(id);
         return tag;
-    }
-
-    private static TagChartTypeLink link(Tag tag, ChartType chartType) {
-        return TagChartTypeLink.builder()
-                .tag(tag)
-                .chartType(chartType)
-                .build();
     }
 }

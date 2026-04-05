@@ -10,6 +10,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -45,4 +47,29 @@ public class TagChartTypeLink extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "chart_type", nullable = false, length = 64)
     private ChartType chartType;
+
+    public static TagChartTypeLink create(Tag tag, ChartType chartType) {
+        validate(tag, chartType);
+
+        TagChartTypeLink link = new TagChartTypeLink();
+        link.tag = tag;
+        link.chartType = chartType;
+        return link;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void validateLink() {
+        validate(tag, chartType);
+    }
+
+    private static void validate(Tag tag, ChartType chartType) {
+        if (tag == null) {
+            throw new IllegalArgumentException("Tag is required");
+        }
+
+        if (chartType == null) {
+            throw new IllegalArgumentException("Chart type is required");
+        }
+    }
 }
