@@ -8,7 +8,6 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.goal.DayGoal;
 import com.example.activity_diary.entity.goal.DiaryEntryGoal;
 import com.example.activity_diary.entity.goal.EntryMetricGoal;
-import com.example.activity_diary.entity.goal.EntryMetricValueGoal;
 import com.example.activity_diary.entity.goal.WeekGoal;
 import com.example.activity_diary.entity.template.DayTemplate;
 import com.example.activity_diary.entity.template.DiaryEntryTemplate;
@@ -36,9 +35,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -73,14 +69,6 @@ public class GoalCalendarCreateService {
 
         GoalSchedule schedule = resolveGoalSchedule(template, targetDate, true);
 
-        if (alreadyHasSnapshot(day, template, schedule)) {
-            DiaryEntryGoal existing = day.getEntryGoals().stream()
-                    .filter(goal -> sameSnapshot(goal, template, schedule))
-                    .findFirst()
-                    .orElseThrow();
-            return goalMapper.toEntryView(existing);
-        }
-
         DiaryEntryGoal created = createEntryGoalFromTemplate(user, day, template, schedule);
         diaryEntryGoalRepository.save(created);
 
@@ -101,10 +89,6 @@ public class GoalCalendarCreateService {
         for (TemplateEntryItem item : template.getItems()) {
             DiaryEntryTemplate entryTemplate = item.getEntryTemplate();
             GoalSchedule schedule = resolveGoalSchedule(entryTemplate, targetDate, false);
-
-            if (alreadyHasSnapshot(day, entryTemplate, schedule)) {
-                continue;
-            }
 
             DiaryEntryGoal created = createEntryGoalFromTemplate(
                     user,
@@ -137,10 +121,6 @@ public class GoalCalendarCreateService {
             for (TemplateEntryItem entryItem : dayTemplate.getItems()) {
                 DiaryEntryTemplate entryTemplate = entryItem.getEntryTemplate();
                 GoalSchedule schedule = resolveGoalSchedule(entryTemplate, date, false);
-
-                if (alreadyHasSnapshot(day, entryTemplate, schedule)) {
-                    continue;
-                }
 
                 DiaryEntryGoal created = createEntryGoalFromTemplate(
                         user,
@@ -238,64 +218,6 @@ public class GoalCalendarCreateService {
         }
     }
 
-    private boolean alreadyHasSnapshot(DayGoal day, DiaryEntryTemplate template, GoalSchedule schedule) {
-        for (DiaryEntryGoal goal : day.getEntryGoals()) {
-            if (sameSnapshot(goal, template, schedule)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean sameSnapshot(DiaryEntryGoal goal, DiaryEntryTemplate template, GoalSchedule schedule) {
-        if (!eq(goal.getName(), template.getName())) {
-            return false;
-        }
-        if (!eq(goal.getMood(), template.getMood())) {
-            return false;
-        }
-        if (!eq(norm(goal.getDescription()), norm(template.getDescription()))) {
-            return false;
-        }
-        if (!eq(goal.getWhenStarted(), schedule.whenStarted())) {
-            return false;
-        }
-        if (!eq(goal.getWhenEnded(), schedule.whenEnded())) {
-            return false;
-        }
-        if (!eq(goal.getExpectedDurationMin(), schedule.expectedDurationMin())) {
-            return false;
-        }
-
-        return goalMetricsMap(goal).equals(templateMetricsMap(template));
-    }
-
-    private Map<Long, Map<Long, Integer>> goalMetricsMap(DiaryEntryGoal goal) {
-        Map<Long, Map<Long, Integer>> result = new HashMap<>();
-        for (EntryMetricGoal metricGoal : goal.getMetricGoals()) {
-            Long typeId = metricGoal.getMetricType().getId();
-            Map<Long, Integer> units = new HashMap<>();
-            for (EntryMetricValueGoal valueGoal : metricGoal.getValues()) {
-                units.put(valueGoal.getUnit().getId(), valueGoal.getExpectedValue());
-            }
-            result.put(typeId, units);
-        }
-        return result;
-    }
-
-    private Map<Long, Map<Long, Integer>> templateMetricsMap(DiaryEntryTemplate template) {
-        Map<Long, Map<Long, Integer>> result = new HashMap<>();
-        for (EntryTemplateMetric metric : template.getMetrics()) {
-            Long typeId = metric.getMetricType().getId();
-            Map<Long, Integer> units = new HashMap<>();
-            for (EntryTemplateMetricValue value : metric.getValues()) {
-                units.put(value.getUnit().getId(), value.getValue());
-            }
-            result.put(typeId, units);
-        }
-        return result;
-    }
-
     private GoalSchedule resolveGoalSchedule(DiaryEntryTemplate template, LocalDate date, boolean requireTemplateTime) {
         LocalTime start = template.getTimeStart();
         LocalTime end = template.getTimeEnd();
@@ -337,10 +259,6 @@ public class GoalCalendarCreateService {
 
     private static String norm(String value) {
         return value == null ? null : value.trim();
-    }
-
-    private static <T> boolean eq(T left, T right) {
-        return Objects.equals(left, right);
     }
 
     private record GoalSchedule(

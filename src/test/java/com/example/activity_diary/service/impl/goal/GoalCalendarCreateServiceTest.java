@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -172,6 +174,46 @@ class GoalCalendarCreateServiceTest {
         assertEquals(targetDate.atTime(12, 15).atZone(ZoneId.systemDefault()).toInstant(), saved.getWhenStarted());
         assertEquals(targetDate.atTime(13, 45).atZone(ZoneId.systemDefault()).toInstant(), saved.getWhenEnded());
         assertEquals(90, saved.getExpectedDurationMin());
+    }
+
+    @Test
+    void createEntryGoal_sameTemplateSameDay_createsAnotherGoal() {
+        Long userId = 10L;
+        Long templateId = 22L;
+        LocalDate targetDate = LocalDate.parse("2026-04-05");
+
+        User user = user(userId);
+        DiaryEntryTemplate template = template(user);
+        addTemplateMetric(template, metricType(103L, "Tea"), unit(203L, "ml"), 250);
+
+        WeekGoal week = weekGoal(user);
+        DayGoal day = dayGoal(week, targetDate);
+        day.setEntryGoals(new ArrayList<>());
+
+        DiaryEntryGoalDetailDto firstMapped = new DiaryEntryGoalDetailDto();
+        DiaryEntryGoalDetailDto secondMapped = new DiaryEntryGoalDetailDto();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
+        when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
+        when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(goalMapper.toEntryView(any(DiaryEntryGoal.class))).thenReturn(firstMapped, secondMapped);
+
+        DiaryEntryGoalDetailDto first = service.createEntryGoal(userId, templateId, targetDate);
+        DiaryEntryGoalDetailDto second = service.createEntryGoal(userId, templateId, targetDate);
+
+        assertSame(firstMapped, first);
+        assertSame(secondMapped, second);
+
+        ArgumentCaptor<DiaryEntryGoal> goalCaptor = ArgumentCaptor.forClass(DiaryEntryGoal.class);
+        verify(diaryEntryGoalRepository, times(2)).save(goalCaptor.capture());
+
+        List<DiaryEntryGoal> savedGoals = goalCaptor.getAllValues();
+        assertEquals(2, savedGoals.size());
+        assertEquals(1, savedGoals.get(0).getPosition());
+        assertEquals(2, savedGoals.get(1).getPosition());
+        assertEquals(2, day.getEntryGoals().size());
     }
 
     private static User user(Long id) {
