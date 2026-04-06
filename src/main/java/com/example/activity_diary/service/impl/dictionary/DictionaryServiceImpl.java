@@ -52,7 +52,6 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .allowedRole(dto.getAllowedRole())
                 .chartType(dto.getChartType())
                 .active(true)
-                .entryFieldConfig(null)
                 .build();
 
         globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);

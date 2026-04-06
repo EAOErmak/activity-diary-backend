@@ -11,5 +11,4 @@ public class DictionaryCreateDto {
     private String label;
     private Role allowedRole;
     private ChartType chartType;
-    private Long entryFieldConfigId;
 }

@@ -1,7 +1,6 @@
 package com.example.activity_diary.entity.dict;
 
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.diary.EntryFieldConfig;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
@@ -39,8 +38,4 @@ public class DictionaryItem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "allowed_role", length = 50)
     private Role allowedRole;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "entry_field_config_id")
-    private EntryFieldConfig entryFieldConfig;
 }

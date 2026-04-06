@@ -17,6 +17,4 @@ public class DictionaryResponseDto {
     private String allowedRole;
 
     private ChartType chartType;
-
-    private Long entryFieldConfigId;
 }

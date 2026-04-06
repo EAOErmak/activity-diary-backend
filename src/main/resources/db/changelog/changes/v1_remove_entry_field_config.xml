@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-remove-entry-field-config" author="codex">
+        <delete tableName="global_sync_state">
+            <where>entity_type = 'ENTRY_FIELD_CONFIG'</where>
+        </delete>
+
+        <dropForeignKeyConstraint
+                baseTableName="dictionary_item"
+                constraintName="fk_dictionary_entry_field_config"/>
+
+        <dropColumn
+                tableName="dictionary_item"
+                columnName="entry_field_config_id"/>
+
+        <dropTable
+                tableName="entry_field_config"/>
+    </changeSet>
+</databaseChangeLog>
