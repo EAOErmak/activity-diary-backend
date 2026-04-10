@@ -38,7 +38,7 @@ public class DiaryController {
     public ResponseEntity<ApiResponse<Slice<DiaryEntryViewDto>>> myEntries(
             @AuthenticationPrincipal LightUserDetails user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "9") @Min(1) @Max(100) int size,
             @RequestParam(required = false) UiStatus uiStatus,
             @RequestParam(required = false) Instant now,
             @RequestParam(required = false, name = "tags") List<String> tags,
