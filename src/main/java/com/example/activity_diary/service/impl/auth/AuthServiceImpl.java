@@ -19,7 +19,6 @@ import com.example.activity_diary.repository.UserAccountRepository;
 import com.example.activity_diary.security.JwtUtils;
 import com.example.activity_diary.service.auth.AuthService;
 import com.example.activity_diary.service.auth.RefreshTokenService;
-import com.example.activity_diary.service.auth.VerificationService;
 import com.example.activity_diary.service.login.LoginEventService;
 import com.example.activity_diary.util.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +36,6 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final VerificationService verificationService;
     private final RefreshTokenService refreshTokenService;
     private final LoginEventService loginEventService;
     private final JwtUtils jwtUtils;
@@ -78,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
         User user = User.builder()
                 .username(username)
                 .fullName(req.getFullName())
-                .enabled(false)
+                .enabled(true)
                 .role(Role.USER)
                 .build();
 
@@ -93,8 +91,6 @@ public class AuthServiceImpl implements AuthService {
 
         userAccountRepository.save(account);
 
-        verificationService.createAndSendEmailVerification(user, email);
-
         registrationEventRepository.save(
                 RegistrationEvent.builder()
                         .user(user)
@@ -103,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         return RegisterResponseDto.builder()
-                .message("Registration successful. Please verify your email.")
+                .message("Registration successful.")
                 .build();
     }
 
@@ -137,10 +133,6 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        if (!user.isEnabled()) {
-            throw new ForbiddenException("EMAIL_NOT_VERIFIED");
-        }
-
         user.unlock();
         userRepository.save(user);
 
@@ -166,10 +158,6 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken stored = refreshTokenService.verify(rawRefreshToken);
 
         User user = stored.getUser();
-
-        if (!user.isEnabled()) {
-            throw new ForbiddenException("User not verified");
-        }
 
         checkForLock(user);
 

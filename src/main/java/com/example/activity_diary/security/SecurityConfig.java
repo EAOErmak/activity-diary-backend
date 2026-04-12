@@ -61,8 +61,6 @@ public class SecurityConfig {
                         .hasAnyRole("PREMIUM", "ADMIN")
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/auth/verify/**",
-                                "/api/telegram/**",
                                 "/api/health/**"
                         ).permitAll()
                         .anyRequest().authenticated()

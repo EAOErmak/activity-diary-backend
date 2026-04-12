@@ -37,7 +37,6 @@ public enum TableType {
     TEMPLATE_ENTRY_ITEM("template_entry_item"),
     USER_FOOD("user_food"),
     USER_TAG("user_tag"),
-    VERIFICATION_CODES("verification_codes"),
     WEEK_GOAL("week_goal"),
     WEEK_TEMPLATE("week_template");
 

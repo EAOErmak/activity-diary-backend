@@ -3,7 +3,6 @@ package com.example.activity_diary.controller;
 import com.example.activity_diary.dto.*;
 import com.example.activity_diary.dto.auth.*;
 import com.example.activity_diary.service.auth.AuthService;
-import com.example.activity_diary.service.auth.VerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 public class AuthController {
 
     private final AuthService authService;
-    private final VerificationService verificationService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<RegisterResponseDto>> register(
@@ -35,12 +33,6 @@ public class AuthController {
     ) {
         AuthResponseDto result = authService.login(req, request);
         return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-    @GetMapping("/verify")
-    public ResponseEntity<ApiResponse<?>> verifyEmail(@RequestParam String token) {
-        verificationService.verifyEmailByToken(token);
-        return ResponseEntity.ok(ApiResponse.success("Email verified"));
     }
 
     @PostMapping("/refresh")
