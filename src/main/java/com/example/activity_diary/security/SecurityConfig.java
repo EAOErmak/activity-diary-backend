@@ -56,11 +56,12 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/analytics/**")   
-                        .hasAnyRole("PREMIUM", "ADMIN")
+                        .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/analytics/**", "/analytics/**").hasAnyRole("PREMIUM", "ADMIN")
                         .requestMatchers(
+                                "/auth/**",
                                 "/api/auth/**",
+                                "/health/**",
                                 "/api/health/**",
                                 "/actuator/health"
                         ).permitAll()
