@@ -30,6 +30,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "metrics", ignore = true)
+    @Mapping(target = "tags", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     DiaryEntry toEntity(DiaryEntryCreateDto dto);
@@ -39,6 +40,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "metrics", ignore = true)
+    @Mapping(target = "tags", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget DiaryEntry entry, DiaryEntryUpdateDto dto);

@@ -26,7 +26,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false, length = 64)

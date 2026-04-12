@@ -257,10 +257,6 @@ public class GoalCalendarCreateService {
         );
     }
 
-    private static String norm(String value) {
-        return value == null ? null : value.trim();
-    }
-
     private record GoalSchedule(
             Instant whenStarted,
             Instant whenEnded,

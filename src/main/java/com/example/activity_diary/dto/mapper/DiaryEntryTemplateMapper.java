@@ -18,5 +18,10 @@ public interface DiaryEntryTemplateMapper {
 
     // PATCH update: обновлять только не-null поля (включая timeStart/timeEnd)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "metrics", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     void patchBasics(@MappingTarget DiaryEntryTemplate entity, DiaryEntryTemplateUpdateDto dto);
 }
