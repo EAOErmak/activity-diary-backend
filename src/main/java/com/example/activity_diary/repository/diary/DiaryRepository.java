@@ -53,18 +53,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
     Optional<DiaryEntry> findByIdAndUserId(Long id, Long userId);
 
-    @Query("""
-        select distinct d.user.id
-        from DiaryEntry d
-        where d.status = :currentStatus
-          and d.whenStarted <= :now
-          and d.whenEnded >= :now
-    """)
-    List<Long> findDistinctUserIdsToActivate(
-            @Param("currentStatus") EntryStatus currentStatus,
-            @Param("now") Instant now
-    );
-
     @Modifying
     @Query("""
         update DiaryEntry d
@@ -76,17 +64,6 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     int activateScheduledEntries(
             @Param("currentStatus") EntryStatus currentStatus,
             @Param("newStatus") EntryStatus newStatus,
-            @Param("now") Instant now
-    );
-
-    @Query("""
-        select distinct d.user.id
-        from DiaryEntry d
-        where d.status in :currentStatuses
-          and d.whenEnded < :now
-    """)
-    List<Long> findDistinctUserIdsToFinish(
-            @Param("currentStatuses") List<EntryStatus> currentStatuses,
             @Param("now") Instant now
     );
 

@@ -16,9 +16,7 @@
     <include file="db/changelog/changes/create/v1_create_login_event.xml"/>
     <include file="db/changelog/changes/create/v1_create_registration_event.xml"/>
     <include file="db/changelog/changes/create/v1_create_refresh_token.xml"/>
-    <include file="db/changelog/changes/create/v1_create_user_sync_state.xml"/>
     <include file="db/changelog/changes/create/v1_create_verification_codes.xml"/>
-    <include file="db/changelog/changes/create/v1_create_global_sync_state.xml"/>
     <include file="db/changelog/changes/create/v1_create_user_accounts.xml"/>
     <include file="db/changelog/changes/create/v1_create_tag.xml"/>
     <include file="db/changelog/changes/create/v1_create_diary_entry_tag.xml"/>

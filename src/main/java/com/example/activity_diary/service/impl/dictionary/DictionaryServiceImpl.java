@@ -8,14 +8,12 @@ import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
 import com.example.activity_diary.service.dictionary.DictionaryService;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +28,6 @@ public class DictionaryServiceImpl implements DictionaryService {
     private final DictionaryRepository dictionaryRepository;
     private final MetricNameUnitLinkRepository metricNameUnitLinkRepository;
     private final DictionaryMapper mapper;
-    private final GlobalSyncService globalSyncService;
-
     @Override
     public DictionaryResponseDto create(DictionaryCreateDto dto) {
 
@@ -53,8 +49,6 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .chartType(dto.getChartType())
                 .active(true)
                 .build();
-
-        globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
 
         DictionaryItem saved = dictionaryRepository.save(item);
 
@@ -144,8 +138,6 @@ public class DictionaryServiceImpl implements DictionaryService {
         if (dto.getAllowedRole() != null) {
             item.setAllowedRole(dto.getAllowedRole());
         }
-
-        globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
 
         return mapper.toDto(dictionaryRepository.save(item));
     }

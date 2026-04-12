@@ -21,7 +21,6 @@ import com.example.activity_diary.service.auth.AuthService;
 import com.example.activity_diary.service.auth.RefreshTokenService;
 import com.example.activity_diary.service.auth.VerificationService;
 import com.example.activity_diary.service.login.LoginEventService;
-import com.example.activity_diary.service.sync.UserSyncService;
 import com.example.activity_diary.util.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final VerificationService verificationService;
     private final RefreshTokenService refreshTokenService;
-    private final UserSyncService userSyncService;
     private final LoginEventService loginEventService;
     private final JwtUtils jwtUtils;
     private final RegistrationEventRepository registrationEventRepository;
@@ -103,8 +101,6 @@ public class AuthServiceImpl implements AuthService {
                         .ip(ip)
                         .build()
         );
-
-        userSyncService.initUser(user.getId());
 
         return RegisterResponseDto.builder()
                 .message("Registration successful. Please verify your email.")

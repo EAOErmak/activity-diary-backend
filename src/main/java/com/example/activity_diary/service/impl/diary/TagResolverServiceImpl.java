@@ -2,13 +2,11 @@ package com.example.activity_diary.service.impl.diary;
 
 import com.example.activity_diary.entity.*;
 import com.example.activity_diary.entity.diary.Tag;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.tag.UserTagRepository;
 import com.example.activity_diary.service.diary.TagResolverService;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,7 +22,6 @@ public class TagResolverServiceImpl implements TagResolverService {
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final UserTagRepository userTagRepository;
-    private final GlobalSyncService globalSyncService;
     private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
 
     @Transactional
@@ -73,7 +70,6 @@ public class TagResolverServiceImpl implements TagResolverService {
                             .status(TagStatus.PENDING)
                             .createdBy(userRef)
                             .build());
-                    globalSyncService.bump(GlobalSyncEntityType.TAG);
                 } catch (DataIntegrityViolationException e) {
                     // кто-то создал параллельно
                     tag = tagRepository.findByName(name).orElseThrow(() -> e);

@@ -3,12 +3,10 @@ package com.example.activity_diary.service.impl.diary;
 import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.diary.TagService;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +18,6 @@ import java.util.List;
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
-    private final GlobalSyncService globalSyncService;
     private final TagMapper tagMapper;
 
     @Override
@@ -40,7 +37,6 @@ public class TagServiceImpl implements TagService {
     public void approve(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.APPROVED);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     @Override
@@ -48,7 +44,6 @@ public class TagServiceImpl implements TagService {
     public void reject(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.REJECTED);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     @Override
@@ -56,7 +51,6 @@ public class TagServiceImpl implements TagService {
     public void deprecate(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.DEPRECATED);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     private Tag get(Long id) {

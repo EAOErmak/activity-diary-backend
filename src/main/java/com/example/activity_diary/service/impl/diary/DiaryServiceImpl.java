@@ -24,12 +24,10 @@ import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import com.example.activity_diary.service.diary.*;
-import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.activity_diary.entity.enums.UserSyncEntityType;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -51,7 +49,6 @@ public class DiaryServiceImpl implements DiaryService {
     private final DictionaryRepository dictionaryRepository;
 
     private final DiaryValidationService validationService;
-    private final UserSyncService userSyncService;
     private final TagResolverService tagResolverService;
     private final DiaryEntryMapper mapper;
     private final TagUsageAggService tagUsageAggService;
@@ -165,8 +162,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         metricUsageAggService.onEntryCreated(saved);
         tagUsageAggService.onEntryCreated(saved);
-        userSyncService.bump(userId, UserSyncEntityType.DIARY);
-
         return mapper.toDto(saved);
     }
 
@@ -204,8 +199,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         metricUsageAggService.onEntryCreated(saved);
         tagUsageAggService.onEntryCreated(saved);
-        userSyncService.bump(userId, UserSyncEntityType.DIARY);
-
         return mapper.toDto(saved);
     }
 
@@ -221,7 +214,6 @@ public class DiaryServiceImpl implements DiaryService {
 
         diaryRepository.save(entry);
 
-        userSyncService.bump(userId, UserSyncEntityType.DIARY);
     }
 
     private void applyMetricsOnCreate(

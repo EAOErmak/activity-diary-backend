@@ -4,13 +4,11 @@ import com.example.activity_diary.dto.admin.TagChartTypeLinkResponseDto;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.diary.TagChartTypeLink;
 import com.example.activity_diary.entity.enums.ChartType;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.admin.AdminTagChartTypeService;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -26,8 +24,6 @@ public class AdminTagChartTypeServiceImpl implements AdminTagChartTypeService {
 
     private final TagChartTypeLinkRepository tagChartTypeLinkRepository;
     private final TagRepository tagRepository;
-    private final GlobalSyncService globalSyncService;
-
     @Override
     public TagChartTypeLinkResponseDto createLink(Long tagId, ChartType chartType) {
         Tag tag = getTag(tagId);
@@ -41,8 +37,6 @@ public class AdminTagChartTypeServiceImpl implements AdminTagChartTypeService {
             TagChartTypeLink saved = tagChartTypeLinkRepository.saveAndFlush(
                     TagChartTypeLink.create(tag, requiredChartType)
             );
-
-            globalSyncService.bump(GlobalSyncEntityType.TAG);
 
             return toDto(saved.getTag().getId(), saved.getChartType());
         } catch (DataIntegrityViolationException ex) {
@@ -60,7 +54,6 @@ public class AdminTagChartTypeServiceImpl implements AdminTagChartTypeService {
         }
 
         tagChartTypeLinkRepository.deleteByTagIdAndChartType(tagId, requiredChartType);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     @Override
