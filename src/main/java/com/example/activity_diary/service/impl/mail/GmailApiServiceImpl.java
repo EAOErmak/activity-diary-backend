@@ -18,17 +18,20 @@ public class GmailApiServiceImpl implements GmailApiService {
 
     @Override
     public void sendEmail(String to, String subject, String bodyText) throws Exception {
+        com.google.api.client.http.javanet.NetHttpTransport transport =
+                new com.google.api.client.http.javanet.NetHttpTransport();
+        com.google.api.client.json.gson.GsonFactory jsonFactory =
+                new com.google.api.client.json.gson.GsonFactory();
+
         com.google.api.client.auth.oauth2.TokenResponse tokenResponse = new com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest(
-                new com.google.api.client.http.javanet.NetHttpTransport(),
-                new com.google.api.client.json.gson.GsonFactory(),
+                transport,
+                jsonFactory,
                 refreshToken, clientId, clientSecret).execute();
 
-        com.google.api.client.googleapis.auth.oauth2.GoogleCredential credential =
-                new com.google.api.client.googleapis.auth.oauth2.GoogleCredential().setFromTokenResponse(tokenResponse);
-
         com.google.api.services.gmail.Gmail service = new com.google.api.services.gmail.Gmail.Builder(
-                new com.google.api.client.http.javanet.NetHttpTransport(),
-                new com.google.api.client.json.gson.GsonFactory(), credential)
+                transport,
+                jsonFactory,
+                request -> request.getHeaders().setAuthorization("Bearer " + tokenResponse.getAccessToken()))
                 .setApplicationName("ActivityDiary").build();
 
         jakarta.mail.internet.MimeMessage emailContent = createEmail(to, senderEmail, subject, bodyText);

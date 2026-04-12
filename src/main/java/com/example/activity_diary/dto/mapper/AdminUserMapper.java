@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface AdminUserMapper {
 
     @Mapping(source = "role", target = "role")
+    @Mapping(target = "chatId", ignore = true)
     AdminUserDto toAdminDto(User user);
 }

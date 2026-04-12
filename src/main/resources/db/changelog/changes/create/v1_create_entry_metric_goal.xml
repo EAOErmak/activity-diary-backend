@@ -44,39 +44,4 @@
                                  baseTableName="entry_metric_goal" baseColumnNames="metric_type_id"
                                  referencedTableName="dictionary_item" referencedColumnNames="id"/>
     </changeSet>
-
-    <changeSet id="v2_entry_metric_goal_allow_duplicates_by_type" author="you">
-        <!-- 1) drop old unique constraint -->
-        <dropUniqueConstraint
-                tableName="entry_metric_goal"
-                constraintName="uk_metric_goal_entry_type"/>
-
-        <!-- 2) add position -->
-        <addColumn tableName="entry_metric_goal">
-            <column name="position" type="INT">
-                <constraints nullable="true"/>
-            </column>
-        </addColumn>
-
-        <!-- 3) backfill: всем старым поставить position=1 -->
-        <update tableName="entry_metric_goal">
-            <column name="position" valueNumeric="1"/>
-            <where>position is null</where>
-        </update>
-
-        <!-- 4) make not null -->
-        <addNotNullConstraint tableName="entry_metric_goal" columnName="position" columnDataType="INT"/>
-
-        <!-- 5) new unique -->
-        <addUniqueConstraint
-                tableName="entry_metric_goal"
-                constraintName="uk_metric_goal_entry_pos"
-                columnNames="entry_goal_id,position"/>
-
-        <!-- 6) optional index -->
-        <createIndex tableName="entry_metric_goal" indexName="idx_metric_goal_entry_pos">
-            <column name="entry_goal_id"/>
-            <column name="position"/>
-        </createIndex>
-    </changeSet>
 </databaseChangeLog>

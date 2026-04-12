@@ -13,10 +13,14 @@ import java.util.List;
 public interface EntryTemplateMetricMapper {
 
     // View metric
+    @Mapping(source = "metricType.id", target = "metricTypeId")
+    @Mapping(source = "metricType.label", target = "metricTypeName")
     EntryTemplateMetricViewDto toViewDto(EntryTemplateMetric entity);
     List<EntryTemplateMetricViewDto> toViewDtos(List<EntryTemplateMetric> entities);
 
     // View value
+    @Mapping(source = "unit.id", target = "unitId")
+    @Mapping(source = "unit.label", target = "unitName")
     EntryTemplateMetricValueViewDto toValueViewDto(EntryTemplateMetricValue entity);
     List<EntryTemplateMetricValueViewDto> toValueViewDtos(List<EntryTemplateMetricValue> entities);
 }

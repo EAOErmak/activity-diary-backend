@@ -27,13 +27,6 @@ public class TagResolverServiceImpl implements TagResolverService {
     private final GlobalSyncService globalSyncService;
     private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
 
-    /**
-     * Правило:
-     * - тег начинается с '#'
-     * - внутри только буквы + '_' + '-'
-     * - тег заканчивается пробелом/переводом строки/концом текста/знаком пунктуации
-     * - '#' должен быть в начале строки или после пробела (не "тест#спорт")
-     */
     @Transactional
     @Override
     public Set<Tag> resolveFromDescription(Long userId, String description) {
@@ -46,13 +39,6 @@ public class TagResolverServiceImpl implements TagResolverService {
         );
     }
 
-    /**
-     * Делает Set<Tag> из имён:
-     * - нормализует
-     * - создаёт PENDING Tag если нет
-     * - запрещает REJECTED
-     * - гарантирует UserTag(user, tag)
-     */
     @Transactional
     @Override
     public Set<Tag> resolveForUser(Long userId, Collection<String> rawNames) {
@@ -63,9 +49,8 @@ public class TagResolverServiceImpl implements TagResolverService {
 
         // 1) нормализуем и убираем дубли (сохраняем порядок)
         LinkedHashSet<String> names = rawNames.stream()
-                .map(this::normalize)
-                .filter(s -> s != null && !s.isBlank())
-                .filter(this::isValidTagName)
+                .map(diaryDescriptionTagPolicy::normalizeTagName)
+                .filter(diaryDescriptionTagPolicy::isValidTagName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         if (names.isEmpty()) return Collections.emptySet();
@@ -116,17 +101,6 @@ public class TagResolverServiceImpl implements TagResolverService {
         }
 
         return result;
-    }
-
-    private String normalize(String raw) {
-        if (raw == null) return null;
-        String s = raw.trim().toLowerCase(Locale.ROOT);
-        s = s.replaceAll("[^\\p{L}\\p{N}_\\-]+", "");
-        return s;
-    }
-
-    private boolean isValidTagName(String s) {
-        return s.length() >= 2 && s.length() <= 32;
     }
 }
 

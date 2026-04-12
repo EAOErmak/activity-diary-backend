@@ -35,6 +35,10 @@
             <column name="carbs" type="DECIMAL(10,2)" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
+
+            <column name="callories" type="DECIMAL(10,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <addUniqueConstraint

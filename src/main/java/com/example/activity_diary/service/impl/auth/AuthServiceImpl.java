@@ -118,7 +118,13 @@ public class AuthServiceImpl implements AuthService {
 
         UserAccount account = userAccountRepository
                 .findByProviderAndProviderId(ProviderType.LOCAL, email)
-                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+                .orElse(null);
+
+        if (account == null) {
+            passwordEncoder.matches(req.getPassword(), DUMMY_PASSWORD_HASH);
+            fakeDelay();
+            throw new UnauthorizedException("Invalid email or password");
+        }
 
         User user = account.getUser();
 
@@ -200,6 +206,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             Thread.sleep(150 + (int) (Math.random() * 100));
         } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
         }
     }
 

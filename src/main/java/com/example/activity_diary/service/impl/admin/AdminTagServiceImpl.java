@@ -10,15 +10,13 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.admin.AdminTagService;
-
+import com.example.activity_diary.service.impl.diary.DiaryDescriptionTagPolicy;
 import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +25,12 @@ public class AdminTagServiceImpl implements AdminTagService {
     private final TagRepository tagRepository;
     private final GlobalSyncService globalSyncService;
     private final TagMapper tagMapper;
+    private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
 
     @Override
     @Transactional
     public TagDto create(TagCreateDto dto) {
-        String name = normalize(dto.getName());
+        String name = diaryDescriptionTagPolicy.normalizeTagName(dto.getName());
         validateName(name);
 
         if (tagRepository.findByName(name).isPresent()) {
@@ -97,19 +96,13 @@ public class AdminTagServiceImpl implements AdminTagService {
                 .orElseThrow(() -> new NotFoundException("Tag not found"));
     }
 
-    private String normalize(String raw) {
-        if (raw == null) return null;
-        String s = raw.trim().toLowerCase(Locale.ROOT);
-        return s.replaceAll("[^\\p{L}\\p{N}_\\-]+", "");
-    }
-
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
             throw new BadRequestException("Tag name is required");
         }
-        if (name.length() < 2 || name.length() > 32) {
+        if (!diaryDescriptionTagPolicy.isValidTagName(name)) {
             throw new BadRequestException(
-                    "Tag name must be 2..32 characters and contain only letters, digits, '_' or '-'"
+                    "Tag name must start with '#' and must not contain spaces"
             );
         }
     }

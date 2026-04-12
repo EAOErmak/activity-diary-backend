@@ -1,6 +1,5 @@
 package com.example.activity_diary.service.impl.diary;
 
-import com.example.activity_diary.dto.template.*;
 import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateCreateDto;
 import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto;
 import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;

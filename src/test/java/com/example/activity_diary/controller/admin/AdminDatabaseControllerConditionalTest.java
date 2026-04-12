@@ -1,5 +1,6 @@
 package com.example.activity_diary.controller.admin;
 
+import com.example.activity_diary.entity.enums.TableType;
 import com.example.activity_diary.service.admin.AdminDatabaseService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -17,9 +18,9 @@ class AdminDatabaseControllerConditionalTest {
             .withUserConfiguration(AdminDatabaseController.class, TestConfig.class);
 
     @Test
-    void controllerIsDisabledByDefault() {
+    void controllerIsEnabledByDefault() {
         contextRunner.run(context ->
-                assertThat(context).doesNotHaveBean(AdminDatabaseController.class)
+                assertThat(context).hasSingleBean(AdminDatabaseController.class)
         );
     }
 
@@ -32,12 +33,30 @@ class AdminDatabaseControllerConditionalTest {
                 );
     }
 
+    @Test
+    void controllerIsEnabledWhenPropertyIsFalse() {
+        contextRunner
+                .withPropertyValues("app.admin.database.clear.enabled=false")
+                .run(context ->
+                        assertThat(context).hasSingleBean(AdminDatabaseController.class)
+                );
+    }
+
     @Configuration
     static class TestConfig {
 
         @Bean
         AdminDatabaseService adminDatabaseService() {
-            return () -> 0;
+            return new AdminDatabaseService() {
+                @Override
+                public int clearAllTables() {
+                    return 0;
+                }
+
+                @Override
+                public void clearTable(TableType tableType) {
+                }
+            };
         }
     }
 }

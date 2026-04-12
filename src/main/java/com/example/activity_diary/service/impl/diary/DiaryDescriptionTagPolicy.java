@@ -11,15 +11,8 @@ import java.util.regex.Pattern;
 @Component
 public class DiaryDescriptionTagPolicy {
 
-    /**
-     * Правило:
-     * - тег начинается с '#'
-     * - внутри только буквы + цифры + '_' + '-'
-     * - тег заканчивается пробелом/концом текста/знаком пунктуации
-     * - '#' должен быть в начале строки или после пробела
-     */
-    private static final Pattern TAG_PATTERN =
-            Pattern.compile("(?<!\\S)#([\\p{L}\\p{N}_-]+)(?=\\s|$|\\p{P})");
+    private static final Pattern TAG_PATTERN = Pattern.compile("#\\S+");
+    private static final int MAX_TAG_NAME_LENGTH = 64;
 
     public LinkedHashSet<String> extractValidTagNames(String description) {
         LinkedHashSet<String> names = new LinkedHashSet<>();
@@ -29,8 +22,8 @@ public class DiaryDescriptionTagPolicy {
 
         Matcher matcher = TAG_PATTERN.matcher(description);
         while (matcher.find()) {
-            String normalized = normalize(matcher.group(1));
-            if (normalized != null && !normalized.isBlank() && isValidTagName(normalized)) {
+            String normalized = normalizeTagName(matcher.group());
+            if (isValidTagName(normalized)) {
                 names.add(normalized);
             }
         }
@@ -48,13 +41,19 @@ public class DiaryDescriptionTagPolicy {
         }
     }
 
-    private String normalize(String raw) {
+    public String normalizeTagName(String raw) {
         if (raw == null) return null;
-        String normalized = raw.trim().toLowerCase(Locale.ROOT);
-        return normalized.replaceAll("[^\\p{L}\\p{N}_\\-]+", "");
+        return raw.trim().toLowerCase(Locale.ROOT);
     }
 
-    private boolean isValidTagName(String value) {
-        return value.length() >= 2 && value.length() <= 32;
+    public boolean isValidTagName(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+
+        return value.startsWith("#")
+                && value.length() > 1
+                && value.length() <= MAX_TAG_NAME_LENGTH
+                && value.chars().noneMatch(Character::isWhitespace);
     }
 }

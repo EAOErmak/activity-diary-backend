@@ -47,7 +47,7 @@ class UserFoodServiceImplTest {
     void create_savesCallories() {
         User user = user(3L, "tester");
         DictionaryItem dictionaryItem = dictionaryItem(5L, "Apple");
-        FoodUpsertDto dto = upsertDto(5L, "1.11", "2.22", "3.33", "0.56");
+        FoodUpsertDto dto = upsertDto(5L, "11.10", "22.20", "33.30", "56.00");
 
         when(userFoodRepository.existsByUserIdAndDictionaryItemId(3L, 5L)).thenReturn(false);
         when(userRepository.findById(3L)).thenReturn(Optional.of(user));
@@ -63,8 +63,8 @@ class UserFoodServiceImplTest {
 
         ArgumentCaptor<UserFood> captor = ArgumentCaptor.forClass(UserFood.class);
         verify(userFoodRepository).save(captor.capture());
-        assertEquals(new BigDecimal("0.56"), captor.getValue().getCallories());
-        assertEquals(new BigDecimal("0.56"), result.getCallories());
+        assertEquals(new BigDecimal("56.00"), captor.getValue().getCallories());
+        assertEquals(new BigDecimal("56.00"), result.getCallories());
         assertEquals(70L, result.getId());
     }
 
@@ -76,14 +76,14 @@ class UserFoodServiceImplTest {
         UserFood userFood = UserFood.builder()
                 .user(user)
                 .dictionaryItem(initialDictionaryItem)
-                .protein(new BigDecimal("1.00"))
-                .fat(new BigDecimal("2.00"))
-                .carbs(new BigDecimal("3.00"))
-                .callories(new BigDecimal("0.40"))
+                .protein(new BigDecimal("10.00"))
+                .fat(new BigDecimal("20.00"))
+                .carbs(new BigDecimal("30.00"))
+                .callories(new BigDecimal("40.00"))
                 .build();
         userFood.setId(11L);
 
-        FoodUpsertDto dto = upsertDto(6L, "4.44", "5.55", "6.66", "0.79");
+        FoodUpsertDto dto = upsertDto(6L, "44.40", "55.50", "66.60", "79.00");
 
         when(userFoodRepository.findByIdAndUserId(11L, 3L)).thenReturn(Optional.of(userFood));
         when(userFoodRepository.existsByUserIdAndDictionaryItemIdAndIdNot(3L, 6L, 11L)).thenReturn(false);
@@ -94,8 +94,8 @@ class UserFoodServiceImplTest {
         UserFoodResponseDto result = service.update(3L, 11L, dto);
 
         assertEquals(6L, userFood.getDictionaryItem().getId());
-        assertEquals(new BigDecimal("0.79"), userFood.getCallories());
-        assertEquals(new BigDecimal("0.79"), result.getCallories());
+        assertEquals(new BigDecimal("79.00"), userFood.getCallories());
+        assertEquals(new BigDecimal("79.00"), result.getCallories());
     }
 
     private static FoodUpsertDto upsertDto(

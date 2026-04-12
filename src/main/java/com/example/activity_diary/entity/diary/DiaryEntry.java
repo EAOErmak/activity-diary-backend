@@ -125,7 +125,7 @@ public class DiaryEntry extends BaseEntity {
         if (this.status == EntryStatus.DELETED) return;
 
         if (now.isBefore(whenStarted)) {
-            this.status = EntryStatus.SCHEDULED;
+            this.status = EntryStatus.PLANNED;
         } else if (!now.isAfter(whenEnded)) {
             this.status = EntryStatus.ACTIVE;
         } else {

@@ -83,25 +83,36 @@
               );
 
             INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
-            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'CALORIES_PER_EATING'
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'CALORIES_PER_DIARY'
             FROM tag t
             WHERE t.name = 'food'
               AND NOT EXISTS (
                   SELECT 1
                   FROM tag_chart_type_link link
                   WHERE link.tag_id = t.id
-                    AND link.chart_type = 'CALORIES_PER_EATING'
+                    AND link.chart_type = 'CALORIES_PER_DIARY'
               );
 
             INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
-            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_EATING'
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_DIARY'
             FROM tag t
             WHERE t.name = 'food'
               AND NOT EXISTS (
                   SELECT 1
                   FROM tag_chart_type_link link
                   WHERE link.tag_id = t.id
-                    AND link.chart_type = 'PFC_PER_EATING'
+                    AND link.chart_type = 'PFC_PER_DIARY'
+              );
+
+            INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)
+            SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, t.id, 'PFC_PER_METRIC'
+            FROM tag t
+            WHERE t.name = 'food'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tag_chart_type_link link
+                  WHERE link.tag_id = t.id
+                    AND link.chart_type = 'PFC_PER_METRIC'
               );
 
             INSERT INTO tag_chart_type_link (created_at, updated_at, tag_id, chart_type)

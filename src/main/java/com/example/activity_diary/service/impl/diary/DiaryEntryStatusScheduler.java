@@ -20,7 +20,7 @@ import java.util.Set;
 public class DiaryEntryStatusScheduler {
 
     private static final List<EntryStatus> FINISHABLE_STATUSES =
-            List.of(EntryStatus.SCHEDULED, EntryStatus.ACTIVE);
+            List.of(EntryStatus.PLANNED, EntryStatus.ACTIVE);
 
     private final DiaryRepository diaryRepository;
     private final UserSyncService userSyncService;
@@ -31,10 +31,10 @@ public class DiaryEntryStatusScheduler {
         Set<Long> affectedUserIds = new HashSet<>();
 
         affectedUserIds.addAll(
-                diaryRepository.findDistinctUserIdsToActivate(EntryStatus.SCHEDULED, now)
+                diaryRepository.findDistinctUserIdsToActivate(EntryStatus.PLANNED, now)
         );
         diaryRepository.activateScheduledEntries(
-                EntryStatus.SCHEDULED,
+                EntryStatus.PLANNED,
                 EntryStatus.ACTIVE,
                 now
         );
