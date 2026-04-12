@@ -9,5 +9,7 @@ public enum ChartType {
     TRAINING_COMPUTED,
     TRAINING_METRICS,
     TRAINING_RAW,
+    SLEEP_SCORE_PER_ENTRY,
+    DURATION_PER_ENTRY,
 }
 
