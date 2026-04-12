@@ -1,5 +1,6 @@
 package com.example.activity_diary.controller.admin;
 
+import com.example.activity_diary.entity.enums.TableType;
 import com.example.activity_diary.service.admin.AdminDatabaseService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -37,7 +38,16 @@ class AdminDatabaseControllerConditionalTest {
 
         @Bean
         AdminDatabaseService adminDatabaseService() {
-            return () -> 0;
+            return new AdminDatabaseService() {
+                @Override
+                public int clearAllTables() {
+                    return 0;
+                }
+
+                @Override
+                public void clearTable(TableType tableType) {
+                }
+            };
         }
     }
 }
