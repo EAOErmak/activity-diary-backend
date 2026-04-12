@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 class DiaryEntryStatusSchedulerTest {
 
     private static final List<EntryStatus> FINISHABLE_STATUSES =
-            List.of(EntryStatus.SCHEDULED, EntryStatus.ACTIVE);
+            List.of(EntryStatus.PLANNED, EntryStatus.ACTIVE);
 
     @Mock
     private DiaryRepository diaryRepository;
@@ -38,7 +38,7 @@ class DiaryEntryStatusSchedulerTest {
 
     @Test
     void refreshStatuses_updatesEntriesAndBumpsDistinctUsers() {
-        when(diaryRepository.findDistinctUserIdsToActivate(eq(EntryStatus.SCHEDULED), any(Instant.class)))
+        when(diaryRepository.findDistinctUserIdsToActivate(eq(EntryStatus.PLANNED), any(Instant.class)))
                 .thenReturn(List.of(1L, 2L));
         when(diaryRepository.findDistinctUserIdsToFinish(eq(FINISHABLE_STATUSES), any(Instant.class)))
                 .thenReturn(List.of(2L, 3L));
@@ -46,7 +46,7 @@ class DiaryEntryStatusSchedulerTest {
         scheduler.refreshStatuses();
 
         verify(diaryRepository).activateScheduledEntries(
-                eq(EntryStatus.SCHEDULED),
+                eq(EntryStatus.PLANNED),
                 eq(EntryStatus.ACTIVE),
                 any(Instant.class)
         );
@@ -63,7 +63,7 @@ class DiaryEntryStatusSchedulerTest {
 
     @Test
     void refreshStatuses_withoutChanges_doesNotBumpSync() {
-        when(diaryRepository.findDistinctUserIdsToActivate(eq(EntryStatus.SCHEDULED), any(Instant.class)))
+        when(diaryRepository.findDistinctUserIdsToActivate(eq(EntryStatus.PLANNED), any(Instant.class)))
                 .thenReturn(List.of());
         when(diaryRepository.findDistinctUserIdsToFinish(eq(FINISHABLE_STATUSES), any(Instant.class)))
                 .thenReturn(List.of());
@@ -71,7 +71,7 @@ class DiaryEntryStatusSchedulerTest {
         scheduler.refreshStatuses();
 
         verify(diaryRepository).activateScheduledEntries(
-                eq(EntryStatus.SCHEDULED),
+                eq(EntryStatus.PLANNED),
                 eq(EntryStatus.ACTIVE),
                 any(Instant.class)
         );

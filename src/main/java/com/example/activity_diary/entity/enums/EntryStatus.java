@@ -4,6 +4,6 @@ public enum EntryStatus {
     FINISHED,        // запись успешно выполнена (whenEnded < now)
     FAILED,
     ACTIVE,// запись не выполнена (whenEnded >= now)
-    SCHEDULED,
+    PLANNED,
     DELETED     // логически удалена
 }

@@ -342,7 +342,7 @@ class DiaryServiceImplTest {
 
         ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
         verify(diaryRepository).save(entryCaptor.capture());
-        assertEquals(EntryStatus.SCHEDULED, entryCaptor.getValue().getStatus());
+        assertEquals(EntryStatus.PLANNED, entryCaptor.getValue().getStatus());
     }
 
     @Test
