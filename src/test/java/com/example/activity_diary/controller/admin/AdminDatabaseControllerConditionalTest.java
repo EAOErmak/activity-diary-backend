@@ -18,9 +18,9 @@ class AdminDatabaseControllerConditionalTest {
             .withUserConfiguration(AdminDatabaseController.class, TestConfig.class);
 
     @Test
-    void controllerIsDisabledByDefault() {
+    void controllerIsEnabledByDefault() {
         contextRunner.run(context ->
-                assertThat(context).doesNotHaveBean(AdminDatabaseController.class)
+                assertThat(context).hasSingleBean(AdminDatabaseController.class)
         );
     }
 
@@ -28,6 +28,15 @@ class AdminDatabaseControllerConditionalTest {
     void controllerIsEnabledWhenPropertyIsTrue() {
         contextRunner
                 .withPropertyValues("app.admin.database.clear.enabled=true")
+                .run(context ->
+                        assertThat(context).hasSingleBean(AdminDatabaseController.class)
+                );
+    }
+
+    @Test
+    void controllerIsEnabledWhenPropertyIsFalse() {
+        contextRunner
+                .withPropertyValues("app.admin.database.clear.enabled=false")
                 .run(context ->
                         assertThat(context).hasSingleBean(AdminDatabaseController.class)
                 );

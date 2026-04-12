@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -28,7 +29,20 @@ class AdminDatabaseControllerTest {
     private AdminDatabaseController adminDatabaseController;
 
     @Test
+    void getTableTypesReturnsAllEnumValuesWhenClearIsDisabled() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", false);
+
+        ResponseEntity<ApiResponse<List<TableType>>> response = adminDatabaseController.getTableTypes();
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().isSuccess()).isTrue();
+        assertThat(response.getBody().getData()).containsExactly(TableType.values());
+    }
+
+    @Test
     void getTableTypesReturnsAllEnumValues() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", true);
+
         ResponseEntity<ApiResponse<List<TableType>>> response = adminDatabaseController.getTableTypes();
 
         assertThat(response.getBody()).isNotNull();
@@ -38,6 +52,7 @@ class AdminDatabaseControllerTest {
 
     @Test
     void clearDatabaseReturnsClearedTableCount() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", true);
         when(adminDatabaseService.clearAllTables()).thenReturn(7);
 
         ResponseEntity<ApiResponse<Void>> response = adminDatabaseController.clearDatabase();
@@ -49,6 +64,7 @@ class AdminDatabaseControllerTest {
 
     @Test
     void clearTableMapsIncomingValueToEnum() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", true);
         ResponseEntity<ApiResponse<Void>> response = adminDatabaseController.clearTable("day_goal");
 
         verify(adminDatabaseService).clearTable(TableType.DAY_GOAL);
@@ -57,7 +73,27 @@ class AdminDatabaseControllerTest {
     }
 
     @Test
+    void clearDatabaseRejectsRequestWhenClearIsDisabled() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", false);
+
+        assertThatThrownBy(() -> adminDatabaseController.clearDatabase())
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Admin database clear operations are disabled");
+    }
+
+    @Test
+    void clearTableRejectsRequestWhenClearIsDisabled() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", false);
+
+        assertThatThrownBy(() -> adminDatabaseController.clearTable("day_goal"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Admin database clear operations are disabled");
+    }
+
+    @Test
     void clearTableRejectsUnsupportedValue() {
+        ReflectionTestUtils.setField(adminDatabaseController, "databaseClearEnabled", true);
+
         assertThatThrownBy(() -> adminDatabaseController.clearTable("unknown_table"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Unsupported table type: unknown_table");
