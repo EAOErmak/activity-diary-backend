@@ -48,5 +48,6 @@
     <include file="db/changelog/changes/v1_drop_position_from_entry_metric_goal.xml"/>
     <include file="db/changelog/changes/v1_remove_legacy_food_chart_type_links.xml"/>
     <include file="db/changelog/changes/v1_remove_entry_field_config.xml"/>
+    <include file="db/changelog/changes/v1_migrate_food_nutrition_to_per_100g.xml"/>
 
 </databaseChangeLog>

@@ -72,12 +72,12 @@ class FoodChartStrategiesTest {
                 .thenReturn(sampleEntries());
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
-                        generalFood(1L, "Apple", "1.00", "9.99", "9.99", "9.99"),
-                        generalFood(2L, "Banana", "4.00", "0.40", "0.50", "0.60")
+                        generalFood(1L, "Apple", "100.00", "999.00", "999.00", "999.00"),
+                        generalFood(2L, "Banana", "400.00", "40.00", "50.00", "60.00")
                 ));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of(
-                        userFood(11L, 1L, "Apple", "2.00", "0.10", "0.20", "0.30")
+                        userFood(11L, 1L, "Apple", "200.00", "10.00", "20.00", "30.00")
                 ));
 
         ChartResponseDto response = caloriesPerDayChartStrategy.calculate(11L, filter);
@@ -99,7 +99,7 @@ class FoodChartStrategiesTest {
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(first, second));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
-                .thenReturn(List.of(generalFood(1L, "Apple", "2.00", "0.10", "0.20", "0.30")));
+                .thenReturn(List.of(generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00")));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of());
 
@@ -118,12 +118,12 @@ class FoodChartStrategiesTest {
                 .thenReturn(sampleEntries());
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
-                        generalFood(1L, "Apple", "1.00", "9.99", "9.99", "9.99"),
-                        generalFood(2L, "Banana", "4.00", "0.40", "0.50", "0.60")
+                        generalFood(1L, "Apple", "100.00", "999.00", "999.00", "999.00"),
+                        generalFood(2L, "Banana", "400.00", "40.00", "50.00", "60.00")
                 ));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of(
-                        userFood(11L, 1L, "Apple", "2.00", "0.10", "0.20", "0.30")
+                        userFood(11L, 1L, "Apple", "200.00", "10.00", "20.00", "30.00")
                 ));
 
         ChartResponseDto response = pfcPerDayChartStrategy.calculate(11L, filter);
@@ -141,12 +141,12 @@ class FoodChartStrategiesTest {
                 .thenReturn(sampleEntries());
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
-                        generalFood(1L, "Apple", "1.00", "9.99", "9.99", "9.99"),
-                        generalFood(2L, "Banana", "4.00", "0.40", "0.50", "0.60")
+                        generalFood(1L, "Apple", "100.00", "999.00", "999.00", "999.00"),
+                        generalFood(2L, "Banana", "400.00", "40.00", "50.00", "60.00")
                 ));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of(
-                        userFood(11L, 1L, "Apple", "2.00", "0.10", "0.20", "0.30")
+                        userFood(11L, 1L, "Apple", "200.00", "10.00", "20.00", "30.00")
                 ));
 
         ChartResponseDto response = pfcPerDiaryChartStrategy.calculate(11L, filter);
@@ -169,8 +169,8 @@ class FoodChartStrategiesTest {
                 .thenReturn(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
-                        generalFood(1L, "Apple", "2.00", "0.10", "0.20", "0.30"),
-                        generalFood(2L, "Banana", "4.00", "0.40", "0.50", "0.60")
+                        generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00"),
+                        generalFood(2L, "Banana", "400.00", "40.00", "50.00", "60.00")
                 ));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of());
@@ -191,7 +191,7 @@ class FoodChartStrategiesTest {
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
-                .thenReturn(List.of(generalFood(1L, "Apple", "2.00", "0.10", "0.20", "0.30")));
+                .thenReturn(List.of(generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00")));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of());
 
@@ -212,8 +212,8 @@ class FoodChartStrategiesTest {
                 .thenReturn(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
-                        generalFood(1L, "Apple", "2.00", "0.10", "0.20", "0.30"),
-                        generalFood(2L, "Banana", "4.00", "0.40", "0.50", "0.60")
+                        generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00"),
+                        generalFood(2L, "Banana", "400.00", "40.00", "50.00", "60.00")
                 ));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
                 .thenReturn(List.of());

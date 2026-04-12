@@ -35,6 +35,7 @@ public class GeneralFood extends BaseEntity {
     @JoinColumn(name = "dictionary_item_id", nullable = false)
     private DictionaryItem dictionaryItem;
 
+    // Nutritional values are stored per 100 g of product.
     @Column(nullable = false, precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal protein = BigDecimal.ZERO;

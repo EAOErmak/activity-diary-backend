@@ -35,6 +35,7 @@ import java.util.TreeMap;
 @Transactional(readOnly = true)
 public class FoodChartSupportService {
 
+    private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
     private static final String CALORIES_LABEL = "calories";
     private static final String PROTEIN_LABEL = "protein";
     private static final String FAT_LABEL = "fat";
@@ -239,7 +240,7 @@ public class FoodChartSupportService {
             return Optional.empty();
         }
 
-        return Optional.of(foodProfile.multiplyBy(grams));
+        return Optional.of(foodProfile.calculateForGrams(grams));
     }
 
     private BigDecimal extractGrams(List<EntryMetricValue> values) {
@@ -293,21 +294,21 @@ public class FoodChartSupportService {
     }
 
     private static final class FoodProfile {
-        private final BigDecimal caloriesPerGram;
-        private final BigDecimal proteinPerGram;
-        private final BigDecimal fatPerGram;
-        private final BigDecimal carbsPerGram;
+        private final BigDecimal caloriesPerHundredGrams;
+        private final BigDecimal proteinPerHundredGrams;
+        private final BigDecimal fatPerHundredGrams;
+        private final BigDecimal carbsPerHundredGrams;
 
         private FoodProfile(
-                BigDecimal caloriesPerGram,
-                BigDecimal proteinPerGram,
-                BigDecimal fatPerGram,
-                BigDecimal carbsPerGram
+                BigDecimal caloriesPerHundredGrams,
+                BigDecimal proteinPerHundredGrams,
+                BigDecimal fatPerHundredGrams,
+                BigDecimal carbsPerHundredGrams
         ) {
-            this.caloriesPerGram = normalize(caloriesPerGram);
-            this.proteinPerGram = normalize(proteinPerGram);
-            this.fatPerGram = normalize(fatPerGram);
-            this.carbsPerGram = normalize(carbsPerGram);
+            this.caloriesPerHundredGrams = normalize(caloriesPerHundredGrams);
+            this.proteinPerHundredGrams = normalize(proteinPerHundredGrams);
+            this.fatPerHundredGrams = normalize(fatPerHundredGrams);
+            this.carbsPerHundredGrams = normalize(carbsPerHundredGrams);
         }
 
         private static FoodProfile fromGeneralFood(GeneralFood food) {
@@ -328,12 +329,12 @@ public class FoodChartSupportService {
             );
         }
 
-        private NutritionTotals multiplyBy(BigDecimal grams) {
+        private NutritionTotals calculateForGrams(BigDecimal grams) {
             return new NutritionTotals(
-                    caloriesPerGram.multiply(grams),
-                    proteinPerGram.multiply(grams),
-                    fatPerGram.multiply(grams),
-                    carbsPerGram.multiply(grams)
+                    caloriesPerHundredGrams.multiply(grams).divide(ONE_HUNDRED, 6, RoundingMode.HALF_UP),
+                    proteinPerHundredGrams.multiply(grams).divide(ONE_HUNDRED, 6, RoundingMode.HALF_UP),
+                    fatPerHundredGrams.multiply(grams).divide(ONE_HUNDRED, 6, RoundingMode.HALF_UP),
+                    carbsPerHundredGrams.multiply(grams).divide(ONE_HUNDRED, 6, RoundingMode.HALF_UP)
             );
         }
     }
@@ -350,10 +351,10 @@ public class FoodChartSupportService {
                 BigDecimal fat,
                 BigDecimal carbs
         ) {
-            this.calories = normalize(calories);
-            this.protein = normalize(protein);
-            this.fat = normalize(fat);
-            this.carbs = normalize(carbs);
+            this.calories = defaultValue(calories);
+            this.protein = defaultValue(protein);
+            this.fat = defaultValue(fat);
+            this.carbs = defaultValue(carbs);
         }
 
         private static NutritionTotals zero() {
@@ -375,24 +376,27 @@ public class FoodChartSupportService {
         }
 
         private BigDecimal getCalories() {
-            return calories;
+            return normalize(calories);
         }
 
         private BigDecimal getProtein() {
-            return protein;
+            return normalize(protein);
         }
 
         private BigDecimal getFat() {
-            return fat;
+            return normalize(fat);
         }
 
         private BigDecimal getCarbs() {
-            return carbs;
+            return normalize(carbs);
         }
     }
 
+    private static BigDecimal defaultValue(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
     private static BigDecimal normalize(BigDecimal value) {
-        BigDecimal safeValue = value == null ? BigDecimal.ZERO : value;
-        return safeValue.setScale(2, RoundingMode.HALF_UP);
+        return defaultValue(value).setScale(2, RoundingMode.HALF_UP);
     }
 }
