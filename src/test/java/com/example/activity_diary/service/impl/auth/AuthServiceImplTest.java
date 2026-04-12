@@ -1,10 +1,12 @@
 package com.example.activity_diary.service.impl.auth;
 
 import com.example.activity_diary.dto.auth.AuthResponseDto;
+import com.example.activity_diary.dto.auth.AuthRequestDto;
 import com.example.activity_diary.entity.RefreshToken;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.ForbiddenException;
+import com.example.activity_diary.exception.types.UnauthorizedException;
 import com.example.activity_diary.repository.RegistrationEventRepository;
 import com.example.activity_diary.repository.UserAccountRepository;
 import com.example.activity_diary.repository.UserRepository;
@@ -21,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +65,26 @@ class AuthServiceImplTest {
 
     @InjectMocks
     private AuthServiceImpl service;
+
+    @Test
+    void login_whenAccountMissing_performsDummyPasswordCheckAndThrowsUnauthorized() {
+        AuthRequestDto request = new AuthRequestDto();
+        request.setEmail("missing@example.com");
+        request.setPassword("secret");
+
+        when(userAccountRepository.findByProviderAndProviderId(
+                com.example.activity_diary.entity.enums.ProviderType.LOCAL,
+                "missing@example.com"
+        )).thenReturn(Optional.empty());
+
+        UnauthorizedException ex = assertThrows(
+                UnauthorizedException.class,
+                () -> service.login(request, null)
+        );
+
+        assertEquals("Invalid email or password", ex.getMessage());
+        verify(passwordEncoder).matches(eq("secret"), anyString());
+    }
 
     @Test
     void refresh_rotatesTokensAndReturnsNewAuthPayload() {
