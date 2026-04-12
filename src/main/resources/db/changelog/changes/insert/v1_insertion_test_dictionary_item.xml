@@ -32,34 +32,4 @@
             <column name="active" valueBoolean="true"/>
         </insert>
     </changeSet>
-
-    <changeSet id="631246-insert-dictionary-items" author="Yermek">
-        <insert tableName="dictionary_item">
-            <column name="created_at" value="2026-03-23 12:00:00.000"/>
-            <column name="updated_at" value="2026-03-23 12:00:00.000"/>
-
-            <column name="type" value="METRIC_UNIT"/>
-            <column name="label" value="Белки"/>
-            <column name="active" valueBoolean="true"/>
-        </insert>
-
-        <insert tableName="dictionary_item">
-            <column name="created_at" value="2026-03-23 12:00:00.000"/>
-            <column name="updated_at" value="2026-03-23 12:00:00.000"/>
-
-            <column name="type" value="METRIC_UNIT"/>
-            <column name="label" value="Жиры"/>
-            <column name="active" valueBoolean="true"/>
-        </insert>
-
-        <insert tableName="dictionary_item">
-            <column name="created_at" value="2026-03-23 12:00:00.000"/>
-            <column name="updated_at" value="2026-03-23 12:00:00.000"/>
-
-            <column name="type" value="METRIC_UNIT"/>
-            <column name="label" value="Углеводы"/>
-            <column name="active" valueBoolean="true"/>
-        </insert>
-    </changeSet>
-
 </databaseChangeLog>
