@@ -57,7 +57,7 @@ class TagResolverServiceImplTest {
     private TagResolverServiceImpl service;
 
     @Test
-    void resolveFromDescription_extractsNormalizesAndDeduplicates() {
+    void resolveFromDescription_extractsHashtagsUntilFirstWhitespace() {
         User user = userWithId(1L);
         when(userRepository.getReferenceById(1L)).thenReturn(user);
         when(tagRepository.findByNameIn(any())).thenReturn(List.of());
@@ -74,10 +74,10 @@ class TagResolverServiceImplTest {
 
         Set<Tag> tags = service.resolveFromDescription(
                 1L,
-                "Run #Sport and #sport! #test_1 #a"
+                "Run #Sport #sport #test_1! #a"
         );
 
-        assertEquals(2, tags.size());
+        assertEquals(3, tags.size());
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<LinkedHashSet<String>> namesCaptor =
@@ -85,8 +85,8 @@ class TagResolverServiceImplTest {
         verify(tagRepository).findByNameIn(namesCaptor.capture());
 
         LinkedHashSet<String> names = namesCaptor.getValue();
-        assertEquals(List.of("sport", "test_1"), List.copyOf(names));
-        verify(globalSyncService, times(2)).bump(GlobalSyncEntityType.TAG);
+        assertEquals(List.of("#sport", "#test_1!", "#a"), List.copyOf(names));
+        verify(globalSyncService, times(3)).bump(GlobalSyncEntityType.TAG);
     }
 
     @Test
@@ -95,14 +95,14 @@ class TagResolverServiceImplTest {
         when(userRepository.getReferenceById(2L)).thenReturn(user);
 
         Tag rejected = Tag.builder()
-                .name("bad")
+                .name("#bad")
                 .status(TagStatus.REJECTED)
                 .build();
         rejected.setId(5L);
 
         when(tagRepository.findByNameIn(any())).thenReturn(List.of(rejected));
 
-        Collection<String> raw = List.of("bad");
+        Collection<String> raw = List.of("#bad");
 
         assertThrows(IllegalArgumentException.class, () ->
                 service.resolveForUser(2L, raw));
@@ -116,7 +116,7 @@ class TagResolverServiceImplTest {
         when(userRepository.getReferenceById(3L)).thenReturn(user);
 
         Tag existing = Tag.builder()
-                .name("ok")
+                .name("#ok")
                 .status(TagStatus.APPROVED)
                 .build();
         existing.setId(7L);
@@ -124,7 +124,7 @@ class TagResolverServiceImplTest {
         when(tagRepository.findByNameIn(any())).thenReturn(List.of(existing));
         when(userTagRepository.existsById(any())).thenReturn(false);
 
-        Set<Tag> tags = service.resolveForUser(3L, List.of("ok"));
+        Set<Tag> tags = service.resolveForUser(3L, List.of("#ok"));
 
         assertEquals(1, tags.size());
 
@@ -148,18 +148,18 @@ class TagResolverServiceImplTest {
                 .thenThrow(new DataIntegrityViolationException("unique"));
 
         Tag existing = Tag.builder()
-                .name("race")
+                .name("#race")
                 .status(TagStatus.PENDING)
                 .build();
         existing.setId(9L);
 
-        when(tagRepository.findByName("race")).thenReturn(Optional.of(existing));
+        when(tagRepository.findByName("#race")).thenReturn(Optional.of(existing));
 
-        Set<Tag> tags = service.resolveForUser(4L, List.of("race"));
+        Set<Tag> tags = service.resolveForUser(4L, List.of("#race"));
 
         assertEquals(1, tags.size());
         assertTrue(tags.stream().anyMatch(t -> t.getId().equals(9L)));
-        verify(tagRepository).findByName("race");
+        verify(tagRepository).findByName("#race");
     }
 
     private static User userWithId(Long id) {

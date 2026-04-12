@@ -8,11 +8,13 @@ import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.tag.TagRepository;
+import com.example.activity_diary.service.impl.diary.DiaryDescriptionTagPolicy;
 import com.example.activity_diary.service.sync.GlobalSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -36,6 +38,9 @@ class AdminTagServiceImplTest {
     @Mock
     private TagMapper tagMapper;
 
+    @Spy
+    private DiaryDescriptionTagPolicy diaryDescriptionTagPolicy = new DiaryDescriptionTagPolicy();
+
     @InjectMocks
     private AdminTagServiceImpl service;
 
@@ -45,19 +50,19 @@ class AdminTagServiceImplTest {
         dto.setName("  #Sport!! ");
 
         Tag saved = Tag.builder()
-                .name("sport")
+                .name("#sport!!")
                 .status(TagStatus.APPROVED)
                 .build();
         TagDto expected = new TagDto();
 
-        when(tagRepository.findByName("sport")).thenReturn(Optional.empty());
+        when(tagRepository.findByName("#sport!!")).thenReturn(Optional.empty());
         when(tagRepository.save(any(Tag.class))).thenReturn(saved);
         when(tagMapper.toDto(saved)).thenReturn(expected);
 
         TagDto actual = service.create(dto);
 
         assertSame(expected, actual);
-        verify(tagRepository).findByName("sport");
+        verify(tagRepository).findByName("#sport!!");
         verify(tagRepository).save(any(Tag.class));
         verify(globalSyncService).bump(GlobalSyncEntityType.TAG);
         verify(tagMapper).toDto(saved);
@@ -66,18 +71,18 @@ class AdminTagServiceImplTest {
     @Test
     void create_duplicateTag_throwsBadRequest() {
         TagCreateDto dto = new TagCreateDto();
-        dto.setName("sport");
+        dto.setName("#sport");
 
-        when(tagRepository.findByName("sport")).thenReturn(Optional.of(Tag.builder().name("sport").build()));
+        when(tagRepository.findByName("#sport")).thenReturn(Optional.of(Tag.builder().name("#sport").build()));
 
         assertThrows(BadRequestException.class, () -> service.create(dto));
         verify(tagRepository, never()).save(any(Tag.class));
     }
 
     @Test
-    void create_invalidNormalizedName_throwsBadRequest() {
+    void create_nameWithoutHashtag_throwsBadRequest() {
         TagCreateDto dto = new TagCreateDto();
-        dto.setName("#a");
+        dto.setName("sport");
 
         assertThrows(BadRequestException.class, () -> service.create(dto));
         verify(tagRepository, never()).findByName(any());

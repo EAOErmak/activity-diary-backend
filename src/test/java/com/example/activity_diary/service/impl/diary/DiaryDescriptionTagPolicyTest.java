@@ -15,22 +15,22 @@ class DiaryDescriptionTagPolicyTest {
     private final DiaryDescriptionTagPolicy policy = new DiaryDescriptionTagPolicy();
 
     @Test
-    void extractValidTagNames_normalizesDeduplicatesAndSkipsInvalidTags() {
+    void extractValidTagNames_preservesCharactersUntilFirstWhitespace() {
         List<String> tags = List.copyOf(
-                policy.extractValidTagNames("Run #Sport and #sport! #test_1 #a")
+                policy.extractValidTagNames("Run #Sport #sport #test_1! #a")
         );
 
-        assertEquals(List.of("sport", "test_1"), tags);
+        assertEquals(List.of("#sport", "#test_1!", "#a"), tags);
     }
 
     @Test
-    void hasAtLeastOneValidTag_returnsFalseWhenNoValidHashtagExists() {
-        assertFalse(policy.hasAtLeastOneValidTag("plain text #a"));
+    void hasAtLeastOneValidTag_returnsFalseWhenNoHashtagExists() {
+        assertFalse(policy.hasAtLeastOneValidTag("plain text"));
     }
 
     @Test
     void hasAtLeastOneValidTag_returnsTrueWhenValidHashtagExists() {
-        assertTrue(policy.hasAtLeastOneValidTag("plain text #sport"));
+        assertTrue(policy.hasAtLeastOneValidTag("plain text #a"));
     }
 
     @Test
