@@ -43,7 +43,14 @@ public class DiaryDescriptionTagPolicy {
 
     public String normalizeTagName(String raw) {
         if (raw == null) return null;
-        return raw.trim().toLowerCase(Locale.ROOT);
+
+        String value = raw.trim().toLowerCase(Locale.ROOT);
+
+        while (value.startsWith("#")) {
+            value = value.substring(1);
+        }
+
+        return value.trim();
     }
 
     public boolean isValidTagName(String value) {
@@ -51,9 +58,7 @@ public class DiaryDescriptionTagPolicy {
             return false;
         }
 
-        return value.startsWith("#")
-                && value.length() > 1
-                && value.length() <= MAX_TAG_NAME_LENGTH
+        return value.length() <= MAX_TAG_NAME_LENGTH
                 && value.chars().noneMatch(Character::isWhitespace);
     }
 }
