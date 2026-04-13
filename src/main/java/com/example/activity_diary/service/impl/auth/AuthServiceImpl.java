@@ -197,6 +197,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void checkForLock(User user) {
+        if (!user.isEnabled()) {
+            throw new ForbiddenException("Account is disabled");
+        }
 
         if (user.isCurrentlyLocked()) {
             throw new ForbiddenException(

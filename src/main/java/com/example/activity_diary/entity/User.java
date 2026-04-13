@@ -96,6 +96,10 @@ public class User extends BaseEntity {
         this.enabled = true;
     }
 
+    public void disable() {
+        this.enabled = false;
+    }
+
     public void lockUntil(LocalDateTime time) {
         this.accountLocked = true;
         this.lockUntil = time;

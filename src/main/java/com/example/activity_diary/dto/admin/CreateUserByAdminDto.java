@@ -13,7 +13,7 @@ import lombok.Setter;
 public class CreateUserByAdminDto {
 
     @NotBlank
-    @Email
+    @Size(max = 64)
     private String username;
 
     @NotBlank
@@ -24,6 +24,7 @@ public class CreateUserByAdminDto {
     private String fullName;
 
     @Size(max = 128)
+    @Email
     private String email;
 
     @NotNull

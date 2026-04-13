@@ -2,6 +2,7 @@ package com.example.activity_diary.controller;
 
 import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.diary.TagDto;
+import com.example.activity_diary.entity.User;
 import com.example.activity_diary.security.CurrentUserProvider;
 import com.example.activity_diary.service.diary.TagService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,9 @@ public class TagController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<TagDto>>> getTags(@RequestParam(required = false) String q) {
+        User currentUser = currentUserProvider.getCurrentUser();
         return ResponseEntity.ok(
-                ApiResponse.success(tagService.getVisibleTags(currentUserProvider.getCurrentUserId(), q))
+                ApiResponse.success(tagService.getVisibleTags(currentUser.getId(), currentUser.getRole(), q))
         );
     }
 }

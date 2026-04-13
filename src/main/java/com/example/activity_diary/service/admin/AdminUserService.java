@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface AdminUserService {
     List<User> getAllUsers();
-    void blockUser(Long userId);
-    void unblockUser(Long userId);
-    void changeRole(Long userId, String role);
-    void createUser(CreateUserByAdminDto dto);
+    User updateEnabled(Long userId, boolean enabled);
+    User updateLock(Long userId, boolean locked);
+    User changeRole(Long userId, String role);
+    User createUser(CreateUserByAdminDto dto);
 }

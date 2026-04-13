@@ -8,6 +8,7 @@ import com.example.activity_diary.service.admin.AdminTagChartTypeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -27,6 +28,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Validated
+@Slf4j
 public class AdminTagChartTypeController {
 
     private final AdminTagChartTypeService adminTagChartTypeService;
@@ -35,6 +37,7 @@ public class AdminTagChartTypeController {
     public ResponseEntity<ApiResponse<TagChartTypeLinkResponseDto>> create(
             @Valid @RequestBody TagChartTypeLinkRequestDto dto
     ) {
+        log.info("Admin tag chart type create requested: tagId={}, chartType={}", dto.getTagId(), dto.getChartType());
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagChartTypeService.createLink(dto))
         );
@@ -45,6 +48,7 @@ public class AdminTagChartTypeController {
             @RequestParam @Positive Long tagId,
             @RequestParam ChartType chartType
     ) {
+        log.info("Admin tag chart type delete requested: tagId={}, chartType={}", tagId, chartType);
         adminTagChartTypeService.deleteLink(tagId, chartType);
         return ResponseEntity.ok(ApiResponse.ok());
     }
@@ -53,6 +57,7 @@ public class AdminTagChartTypeController {
     public ResponseEntity<ApiResponse<List<TagChartTypeLinkResponseDto>>> getChartTypesByTag(
             @PathVariable @Positive Long tagId
     ) {
+        log.info("Admin tag chart types requested for tagId={}", tagId);
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagChartTypeService.getChartTypesByTagId(tagId))
         );

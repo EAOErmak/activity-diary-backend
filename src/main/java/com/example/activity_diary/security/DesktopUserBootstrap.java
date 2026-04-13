@@ -31,6 +31,11 @@ public class DesktopUserBootstrap implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        ensureDesktopUserReady();
+    }
+
+    @Transactional
+    public void ensureDesktopUserReady() {
         User user = userAccountRepository
                 .findByProviderAndProviderId(ProviderType.LOCAL, desktopUserProperties.getProviderId())
                 .map(UserAccount::getUser)

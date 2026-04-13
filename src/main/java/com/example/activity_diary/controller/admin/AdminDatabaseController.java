@@ -6,6 +6,7 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.service.admin.AdminDatabaseService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Validated
+@Slf4j
 public class AdminDatabaseController {
 
     private final AdminDatabaseService adminDatabaseService;
@@ -31,6 +33,7 @@ public class AdminDatabaseController {
 
     @GetMapping("/table-types")
     public ResponseEntity<ApiResponse<List<TableType>>> getTableTypes() {
+        log.info("Admin database table types requested");
         return ResponseEntity.ok(
                 ApiResponse.ok(TableType.allValues())
         );
@@ -39,6 +42,7 @@ public class AdminDatabaseController {
     @PostMapping("/clear")
     public ResponseEntity<ApiResponse<Void>> clearDatabase() {
         ensureDatabaseClearEnabled();
+        log.info("Admin database clear requested");
         int clearedTables = adminDatabaseService.clearAllTables();
         return ResponseEntity.ok(
                 ApiResponse.okMessage("Cleared " + clearedTables + " tables")
@@ -50,6 +54,7 @@ public class AdminDatabaseController {
             @PathVariable @NotBlank String tableType
     ) {
         ensureDatabaseClearEnabled();
+        log.info("Admin database table clear requested: tableType={}", tableType);
         TableType resolvedTableType = TableType.fromValue(tableType);
         adminDatabaseService.clearTable(resolvedTableType);
         return ResponseEntity.ok(

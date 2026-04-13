@@ -71,6 +71,21 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     """)
     Slice<Tag> searchSlice(@Param("q") String q, Pageable pageable);
 
+    @Query("""
+        select t
+        from Tag t
+        order by t.name asc, t.id asc
+    """)
+    List<Tag> findAllForAdmin();
+
+    @Query("""
+        select t
+        from Tag t
+        where lower(t.name) like lower(concat('%', :q, '%'))
+        order by t.name asc, t.id asc
+    """)
+    List<Tag> searchAllForAdmin(@Param("q") String q);
+
     List<Tag> findByNameIn(LinkedHashSet<String> names);
 }
 

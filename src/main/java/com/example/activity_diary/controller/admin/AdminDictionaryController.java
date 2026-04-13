@@ -9,6 +9,7 @@ import com.example.activity_diary.service.dictionary.DictionaryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Validated
+@Slf4j
 public class AdminDictionaryController {
 
     private final DictionaryService dictionaryService;
@@ -29,6 +31,7 @@ public class AdminDictionaryController {
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getByType(
             @PathVariable DictionaryType type
     ) {
+        log.info("Admin dictionary requested by type={}", type);
         return ResponseEntity.ok(
                 ApiResponse.ok(dictionaryService.getByTypeForAdmin(type))
         );
@@ -38,6 +41,7 @@ public class AdminDictionaryController {
     public ResponseEntity<ApiResponse<DictionaryResponseDto>> create(
             @Valid @RequestBody DictionaryCreateDto dto
     ) {
+        log.info("Admin dictionary create requested: type={}, label={}", dto.getType(), dto.getLabel());
         return ResponseEntity.ok(
                 ApiResponse.ok(dictionaryService.create(dto))
         );
@@ -48,6 +52,8 @@ public class AdminDictionaryController {
             @PathVariable @Positive Long id,
             @Valid @RequestBody DictionaryUpdateDto dto
     ) {
+        log.info("Admin dictionary update requested: id={}, active={}, allowedRole={}, label={}",
+                id, dto.getActive(), dto.getAllowedRole(), dto.getLabel());
         return ResponseEntity.ok(
                 ApiResponse.ok(dictionaryService.update(id, dto))
         );
@@ -57,6 +63,7 @@ public class AdminDictionaryController {
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> search(
             @RequestParam String q
     ) {
+        log.info("Admin dictionary search requested: q={}", q);
         return ResponseEntity.ok(
                 ApiResponse.ok(dictionaryService.searchForAdmin(q))
         );

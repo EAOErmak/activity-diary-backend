@@ -7,6 +7,7 @@ import com.example.activity_diary.service.admin.AdminMetricLinkService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -26,6 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Validated
+@Slf4j
 public class AdminMetricLinkController {
 
     private final AdminMetricLinkService adminMetricLinkService;
@@ -34,6 +36,8 @@ public class AdminMetricLinkController {
     public ResponseEntity<ApiResponse<MetricLinkResponseDto>> create(
             @Valid @RequestBody MetricLinkRequestDto dto
     ) {
+        log.info("Admin metric link create requested: metricNameId={}, metricUnitId={}",
+                dto.getMetricNameId(), dto.getMetricUnitId());
         return ResponseEntity.ok(
                 ApiResponse.ok(adminMetricLinkService.createLink(dto))
         );
@@ -44,6 +48,7 @@ public class AdminMetricLinkController {
             @RequestParam @Positive Long metricNameId,
             @RequestParam @Positive Long metricUnitId
     ) {
+        log.info("Admin metric link delete requested: metricNameId={}, metricUnitId={}", metricNameId, metricUnitId);
         adminMetricLinkService.deleteLink(metricNameId, metricUnitId);
         return ResponseEntity.ok(ApiResponse.ok());
     }
@@ -52,6 +57,7 @@ public class AdminMetricLinkController {
     public ResponseEntity<ApiResponse<List<MetricLinkResponseDto>>> getUnitsByMetricName(
             @PathVariable @Positive Long id
     ) {
+        log.info("Admin metric links requested for metricNameId={}", id);
         return ResponseEntity.ok(
                 ApiResponse.ok(adminMetricLinkService.getUnitsByMetricName(id))
         );

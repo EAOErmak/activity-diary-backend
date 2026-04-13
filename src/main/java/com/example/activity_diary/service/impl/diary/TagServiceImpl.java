@@ -3,6 +3,7 @@ package com.example.activity_diary.service.impl.diary;
 import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
@@ -22,12 +23,19 @@ public class TagServiceImpl implements TagService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TagDto> getVisibleTags(Long userId, String q) {
+    public List<TagDto> getVisibleTags(Long userId, Role role, String q) {
         String query = normalizeQuery(q);
 
-        List<Tag> tags = query == null
-                ? tagRepository.findAllVisible(userId)
-                : tagRepository.searchVisible(userId, query);
+        List<Tag> tags;
+        if (role == Role.ADMIN) {
+            tags = query == null
+                    ? tagRepository.findAllForAdmin()
+                    : tagRepository.searchAllForAdmin(query);
+        } else {
+            tags = query == null
+                    ? tagRepository.findAllVisible(userId)
+                    : tagRepository.searchVisible(userId, query);
+        }
 
         return tagMapper.toDtoList(tags);
     }

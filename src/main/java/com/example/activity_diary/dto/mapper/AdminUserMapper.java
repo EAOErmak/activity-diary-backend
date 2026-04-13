@@ -9,6 +9,11 @@ import org.mapstruct.Mapping;
 public interface AdminUserMapper {
 
     @Mapping(source = "role", target = "role")
+    @Mapping(
+            target = "fullName",
+            expression = "java(user.getFullName() == null ? \"\" : user.getFullName())"
+    )
+    @Mapping(target = "accountLocked", expression = "java(user.isCurrentlyLocked())")
     @Mapping(target = "chatId", ignore = true)
     AdminUserDto toAdminDto(User user);
 }

@@ -7,6 +7,7 @@ import com.example.activity_diary.service.food.GeneralFoodService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Validated
+@Slf4j
 public class AdminGeneralFoodController {
 
     private final GeneralFoodService generalFoodService;
@@ -25,6 +27,7 @@ public class AdminGeneralFoodController {
     public ResponseEntity<ApiResponse<GeneralFoodResponseDto>> create(
             @Valid @RequestBody FoodUpsertDto dto
     ) {
+        log.info("Admin general food create requested: dictionaryItemId={}", dto.getDictionaryItemId());
         return ResponseEntity.ok(
                 ApiResponse.ok(generalFoodService.create(dto))
         );
@@ -35,6 +38,7 @@ public class AdminGeneralFoodController {
             @PathVariable @Positive Long id,
             @Valid @RequestBody FoodUpsertDto dto
     ) {
+        log.info("Admin general food update requested: id={}, dictionaryItemId={}", id, dto.getDictionaryItemId());
         return ResponseEntity.ok(
                 ApiResponse.ok(generalFoodService.update(id, dto))
         );
@@ -44,6 +48,7 @@ public class AdminGeneralFoodController {
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable @Positive Long id
     ) {
+        log.info("Admin general food delete requested: id={}", id);
         generalFoodService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok());
     }
