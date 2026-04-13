@@ -5,12 +5,14 @@ import com.example.activity_diary.dto.auth.*;
 import com.example.activity_diary.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
+@Profile("!desktop")
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {

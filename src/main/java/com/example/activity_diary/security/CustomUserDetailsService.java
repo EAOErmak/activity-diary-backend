@@ -3,12 +3,14 @@ package com.example.activity_diary.security;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 
 @Service
+@Profile("!desktop")
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 

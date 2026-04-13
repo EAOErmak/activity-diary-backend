@@ -23,6 +23,7 @@ import com.example.activity_diary.service.login.LoginEventService;
 import com.example.activity_diary.util.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
+@Profile("!desktop")
 @RequiredArgsConstructor
 @Transactional
 public class AuthServiceImpl implements AuthService {

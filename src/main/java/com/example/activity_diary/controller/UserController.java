@@ -5,12 +5,11 @@ import com.example.activity_diary.dto.user.ChangePasswordRequest;
 import com.example.activity_diary.dto.user.ChangeUsernameRequest;
 import com.example.activity_diary.dto.user.UpdateProfileRequest;
 import com.example.activity_diary.dto.user.UserDto;
-import com.example.activity_diary.security.LightUserDetails;
+import com.example.activity_diary.security.CurrentUserProvider;
 import com.example.activity_diary.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,42 +18,36 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final CurrentUserProvider currentUserProvider;
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserDto>> me(
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
+    public ResponseEntity<ApiResponse<UserDto>> me() {
+        Long userId = currentUserProvider.getCurrentUserId();
 
         return ResponseEntity.ok(
-                ApiResponse.success(userService.getProfile(user.getId()))
+                ApiResponse.success(userService.getProfile(userId))
         );
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<ApiResponse<?>> updateProfile(
-            @RequestBody @Valid UpdateProfileRequest request,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
-        userService.updateProfile(request, user.getId());
-        return ResponseEntity.ok(ApiResponse.success(user));
+    public ResponseEntity<ApiResponse<?>> updateProfile(@RequestBody @Valid UpdateProfileRequest request) {
+        Long userId = currentUserProvider.getCurrentUserId();
+        userService.updateProfile(request, userId);
+        return ResponseEntity.ok(ApiResponse.success(userService.getProfile(userId)));
     }
 
     @PutMapping("/password")
-    public ResponseEntity<ApiResponse<?>> changePassword(
-            @RequestBody @Valid ChangePasswordRequest request,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
-        userService.changePassword(request, user.getId());
-        return ResponseEntity.ok(ApiResponse.success(user));
+    public ResponseEntity<ApiResponse<?>> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
+        Long userId = currentUserProvider.getCurrentUserId();
+        userService.changePassword(request, userId);
+        return ResponseEntity.ok(ApiResponse.success(userService.getProfile(userId)));
     }
 
     @PutMapping("/username")
-    public ResponseEntity<ApiResponse<?>> changeUsername(
-            @RequestBody @Valid ChangeUsernameRequest request,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
-        userService.changeUsername(request, user.getId());
-        return ResponseEntity.ok(ApiResponse.success(user));
+    public ResponseEntity<ApiResponse<?>> changeUsername(@RequestBody @Valid ChangeUsernameRequest request) {
+        Long userId = currentUserProvider.getCurrentUserId();
+        userService.changeUsername(request, userId);
+        return ResponseEntity.ok(ApiResponse.success(userService.getProfile(userId)));
     }
 }
 

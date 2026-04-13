@@ -2,12 +2,11 @@ package com.example.activity_diary.controller;
 
 import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
-import com.example.activity_diary.security.LightUserDetails;
+import com.example.activity_diary.security.CurrentUserProvider;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,14 +22,17 @@ import java.util.List;
 public class DictionaryMetricNameController {
 
     private final DictionaryService dictionaryService;
+    private final CurrentUserProvider currentUserProvider;
 
     @GetMapping("/{metricNameId}/units")
-    public ResponseEntity<ApiResponse<List<DictionaryOptionDto>>> getUnitsByMetricName(
-            @PathVariable @Positive Long metricNameId,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
+    public ResponseEntity<ApiResponse<List<DictionaryOptionDto>>> getUnitsByMetricName(@PathVariable @Positive Long metricNameId) {
         return ResponseEntity.ok(
-                ApiResponse.ok(dictionaryService.getUnitsByMetricNameId(metricNameId, user.getRole()))
+                ApiResponse.ok(
+                        dictionaryService.getUnitsByMetricNameId(
+                                metricNameId,
+                                currentUserProvider.getCurrentUser().getRole()
+                        )
+                )
         );
     }
 }

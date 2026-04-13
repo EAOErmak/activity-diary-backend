@@ -6,7 +6,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
 import com.example.activity_diary.entity.enums.UiStatus;
-import com.example.activity_diary.security.LightUserDetails;
+import com.example.activity_diary.security.CurrentUserProvider;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,10 +32,10 @@ import java.util.List;
 public class DiaryController {
 
     private final DiaryService diaryService;
+    private final CurrentUserProvider currentUserProvider;
 
     @GetMapping("/mine")
     public ResponseEntity<ApiResponse<Slice<DiaryEntryViewDto>>> myEntries(
-            @AuthenticationPrincipal LightUserDetails user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "9") @Min(1) @Max(100) int size,
             @RequestParam(required = false) UiStatus uiStatus,
@@ -52,52 +51,44 @@ public class DiaryController {
         );
 
         Instant effectiveNow = (now != null) ? now : Instant.now();
+        Long userId = currentUserProvider.getCurrentUserId();
 
         return ResponseEntity.ok(ApiResponse.success(
-                diaryService.getMyEntriesFiltered(user.getId(), uiStatus, effectiveNow, tags, from, to, pageable)
+                diaryService.getMyEntriesFiltered(userId, uiStatus, effectiveNow, tags, from, to, pageable)
         ));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<DiaryEntryViewDto>>> getAll(
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
+    public ResponseEntity<ApiResponse<List<DiaryEntryViewDto>>> getAll() {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        diaryService.getAllEntries(user.getId())
+                        diaryService.getAllEntries(currentUserProvider.getCurrentUserId())
                 )
         );
     }
 
     @GetMapping("/range")
     public ResponseEntity<ApiResponse<List<DiaryEntryViewDto>>> getByRange(
-            @AuthenticationPrincipal LightUserDetails user,
             @RequestParam LocalDateTime from,
             @RequestParam LocalDateTime to
     ) {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        diaryService.getEntriesByDateRange(user.getId(), from, to)
+                        diaryService.getEntriesByDateRange(currentUserProvider.getCurrentUserId(), from, to)
                 )
         );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<DiaryEntryDto>> getById(
-            @PathVariable @Positive Long id,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
-        DiaryEntryDto dto = diaryService.getMyEntryById(id, user.getId());
+    public ResponseEntity<ApiResponse<DiaryEntryDto>> getById(@PathVariable @Positive Long id) {
+        DiaryEntryDto dto = diaryService.getMyEntryById(id, currentUserProvider.getCurrentUserId());
 
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<DiaryEntryDto>> create(
-            @Valid @RequestBody DiaryEntryCreateDto dto,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
-        DiaryEntryDto created = diaryService.create(dto, user.getId());
+    public ResponseEntity<ApiResponse<DiaryEntryDto>> create(@Valid @RequestBody DiaryEntryCreateDto dto) {
+        DiaryEntryDto created = diaryService.create(dto, currentUserProvider.getCurrentUserId());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -107,21 +98,17 @@ public class DiaryController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DiaryEntryDto>> update(
             @PathVariable @Positive Long id,
-            @Valid @RequestBody DiaryEntryUpdateDto dto,
-            @AuthenticationPrincipal LightUserDetails user
+            @Valid @RequestBody DiaryEntryUpdateDto dto
     ) {
         DiaryEntryDto updated =
-                diaryService.update(id, dto, user.getId());
+                diaryService.update(id, dto, currentUserProvider.getCurrentUserId());
 
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable @Positive Long id,
-            @AuthenticationPrincipal LightUserDetails user
-    ) {
-        diaryService.delete(id, user.getId());
+    public ResponseEntity<Void> delete(@PathVariable @Positive Long id) {
+        diaryService.delete(id, currentUserProvider.getCurrentUserId());
 
         return ResponseEntity.noContent().build();
     }

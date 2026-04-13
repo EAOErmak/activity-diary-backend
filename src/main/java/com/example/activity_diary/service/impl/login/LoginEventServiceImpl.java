@@ -4,9 +4,11 @@ import com.example.activity_diary.entity.log.LoginEvent;
 import com.example.activity_diary.repository.LoginEventRepository;
 import com.example.activity_diary.service.login.LoginEventService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile("!desktop")
 @RequiredArgsConstructor
 public class LoginEventServiceImpl implements LoginEventService {
 

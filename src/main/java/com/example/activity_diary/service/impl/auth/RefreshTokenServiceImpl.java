@@ -7,6 +7,7 @@ import com.example.activity_diary.repository.RefreshTokenRepository;
 import com.example.activity_diary.security.JwtUtils;
 import com.example.activity_diary.service.auth.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.util.Base64;
 
 @Service
+@Profile("!desktop")
 @RequiredArgsConstructor
 @Transactional
 public class RefreshTokenServiceImpl implements RefreshTokenService {
