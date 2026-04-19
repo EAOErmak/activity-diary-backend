@@ -29,7 +29,7 @@
 
             <column name="user_id" value="1"/>
             <column name="provider" value="LOCAL"/>
-            <column name="provider_id" value="zrmek.aydarbekov@example.com"/>
+            <column name="provider_id" value="zrmek.aydarbekov@gmail.com"/>
             <column name="password_hash" value="$2a$12$1P1DlUCKCK60JfiBEJtviOYX/iRrjAMB5PIOXI9w4gKTYQh/Osmd2"/>
         </insert>
     </changeSet>
