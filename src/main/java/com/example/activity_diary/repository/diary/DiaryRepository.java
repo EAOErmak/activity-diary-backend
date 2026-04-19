@@ -74,7 +74,7 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         where d.status in :currentStatuses
           and d.whenEnded < :now
     """)
-    int finishExpiredEntries(
+    int markExpiredEntriesOverdue(
             @Param("currentStatuses") List<EntryStatus> currentStatuses,
             @Param("newStatus") EntryStatus newStatus,
             @Param("now") Instant now
@@ -184,12 +184,24 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     
           and (
             :uiStatus is null
-            or (case
-                  when :now < d.whenStarted then 'PLANNED'
-                  when :now <= d.whenEnded then 'ACTIVE'
-                  when d.status = com.example.activity_diary.entity.enums.EntryStatus.FINISHED then 'FINISHED'
-                  else 'FAILED'
-                end) = :uiStatus
+            or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.FINISHED
+                and d.status = com.example.activity_diary.entity.enums.EntryStatus.FINISHED)
+            or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.FAILED
+                and d.status = com.example.activity_diary.entity.enums.EntryStatus.FAILED)
+            or (
+                d.status not in (
+                    com.example.activity_diary.entity.enums.EntryStatus.FINISHED,
+                    com.example.activity_diary.entity.enums.EntryStatus.FAILED,
+                    com.example.activity_diary.entity.enums.EntryStatus.DELETED
+                )
+                and (
+                    (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.PLANNED and :now < d.whenStarted)
+                    or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.ACTIVE
+                        and d.whenStarted <= :now
+                        and d.whenEnded >= :now)
+                    or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.OVERDUE and d.whenEnded < :now)
+                )
+            )
           )
     
           and d.whenStarted >= coalesce(:from, d.whenStarted)
@@ -207,7 +219,7 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     """)
     Slice<DiaryEntryViewDto> findListByUserIdFilteredAndTags(
             @Param("userId") Long userId,
-            @Param("uiStatus") String uiStatus,
+            @Param("uiStatus") EntryStatus uiStatus,
             @Param("now") Instant now,
 
             @Param("hasTags") boolean hasTags,

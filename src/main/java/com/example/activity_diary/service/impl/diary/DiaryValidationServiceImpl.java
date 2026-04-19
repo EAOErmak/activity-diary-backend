@@ -6,6 +6,8 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
+import com.example.activity_diary.entity.enums.EntryStatus;
+import com.example.activity_diary.entity.enums.EntryStatusPolicy;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.service.diary.DiaryValidationService;
 import com.example.activity_diary.util.MetricValueNormalizer;
@@ -47,6 +49,8 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
         validateMood(dto.getMood());
 
         validateDescription(dto.getDescription());
+
+        validateStatus(dto.getStatus());
 
         validateMetricsUpdate(dto.getMetrics());
     }
@@ -164,6 +168,12 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             throw new BadRequestException(
                     "value must be greater than zero for unitId " + unitId + " and metricTypeId: " + metricTypeId
             );
+        }
+    }
+
+    private void validateStatus(EntryStatus status) {
+        if (status != null && !EntryStatusPolicy.canBeSetManually(status)) {
+            throw new BadRequestException("OVERDUE is assigned automatically");
         }
     }
 }

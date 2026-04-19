@@ -6,6 +6,7 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
+import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import org.junit.jupiter.api.Test;
 
@@ -92,6 +93,14 @@ class DiaryValidationServiceImplTest {
         dto.setMood((short) 3);
         dto.setDescription("ok");
         dto.setMetrics(List.of(metricUpdate(1L, 10L)));
+
+        assertThrows(BadRequestException.class, () -> service.validateUpdate(dto));
+    }
+
+    @Test
+    void validateUpdate_overdueStatus_throwsBadRequest() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setStatus(EntryStatus.OVERDUE);
 
         assertThrows(BadRequestException.class, () -> service.validateUpdate(dto));
     }

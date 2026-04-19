@@ -3,7 +3,8 @@ package com.example.activity_diary.entity.enums;
 public enum EntryStatus {
     FINISHED,        // запись успешно выполнена (whenEnded < now)
     FAILED,
-    ACTIVE,// запись не выполнена (whenEnded >= now)
+    ACTIVE,          // запись происходит сейчас
     PLANNED,
-    DELETED     // логически удалена
+    OVERDUE,
+    DELETED          // логически удалена
 }

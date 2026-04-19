@@ -3,6 +3,7 @@ package com.example.activity_diary.entity.diary;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.base.BaseEntity;
 import com.example.activity_diary.entity.enums.EntryStatus;
+import com.example.activity_diary.entity.enums.EntryStatusPolicy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -111,26 +112,16 @@ public class DiaryEntry extends BaseEntity {
                 .duration(duration)
                 .mood(mood)
                 .description(null)
-                .status(EntryStatus.FAILED)
+                .status(EntryStatusPolicy.resolveAutomaticStatus(started, ended, Instant.now()))
                 .build();
 
         entry.updateMood(mood);
         entry.updateDescription(description);
-        entry.autoUpdateStatusByTime(Instant.now());
-
         return entry;
     }
 
     public void autoUpdateStatusByTime(Instant now) {
-        if (this.status == EntryStatus.DELETED) return;
-
-        if (now.isBefore(whenStarted)) {
-            this.status = EntryStatus.PLANNED;
-        } else if (!now.isAfter(whenEnded)) {
-            this.status = EntryStatus.ACTIVE;
-        } else {
-            this.status = EntryStatus.FINISHED;
-        }
+        this.status = EntryStatusPolicy.resolveCurrentStatus(this.status, whenStarted, whenEnded, now);
     }
 
     public void forceStatusWin() {
@@ -158,6 +149,9 @@ public class DiaryEntry extends BaseEntity {
 
         if (this.status == EntryStatus.DELETED) {
             throw new IllegalStateException("Deleted entry cannot change status");
+        }
+        if (!EntryStatusPolicy.canBeSetManually(newStatus)) {
+            throw new IllegalArgumentException("OVERDUE is assigned automatically");
         }
 
         this.status = newStatus;

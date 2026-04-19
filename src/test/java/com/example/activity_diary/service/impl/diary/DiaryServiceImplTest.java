@@ -134,7 +134,7 @@ class DiaryServiceImplTest {
 
         verify(diaryRepository).findListByUserIdFilteredAndTags(
                 eq(7L),
-                eq(UiStatus.ACTIVE.name()),
+                eq(EntryStatus.ACTIVE),
                 eq(now),
                 hasTagsCaptor.capture(),
                 tagsCaptor.capture(),
@@ -387,7 +387,7 @@ class DiaryServiceImplTest {
     }
 
     @Test
-    void create_pastEntry_setsFinishedStatus() {
+    void create_pastEntry_setsOverdueStatus() {
         DiaryEntryCreateDto dto = validCreateDto(
                 "hello",
                 Instant.now().minusSeconds(1200),
@@ -405,7 +405,7 @@ class DiaryServiceImplTest {
 
         ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
         verify(diaryRepository).save(entryCaptor.capture());
-        assertEquals(EntryStatus.FINISHED, entryCaptor.getValue().getStatus());
+        assertEquals(EntryStatus.OVERDUE, entryCaptor.getValue().getStatus());
     }
 
     @Test

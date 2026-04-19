@@ -15,6 +15,7 @@ import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.enums.DictionaryType;
+import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.entity.enums.UiStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
@@ -81,12 +82,13 @@ public class DiaryServiceImpl implements DiaryService {
 
         Instant effectiveNow = (now != null) ? now : Instant.now();
 
+
         // Р’РђР–РќРћ: СЃРїРёСЃРѕРє РІСЃРµРіРґР° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РќР• null
         var normalizedTags = DiaryEntryTagFilterNormalizer.normalize(tags);
 
         return diaryRepository.findListByUserIdFilteredAndTags(
                 userId,
-                uiStatus == null ? null : uiStatus.name(),
+                uiStatus == null ? null : EntryStatus.valueOf(uiStatus.name()),
                 effectiveNow,
                 normalizedTags.hasTags(),
                 normalizedTags.tagNames(),
