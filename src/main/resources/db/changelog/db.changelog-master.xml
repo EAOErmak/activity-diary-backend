@@ -38,6 +38,7 @@
     <include file="db/changelog/changes/create/v1_create_metric_name_unit_link.xml"/>
     <include file="db/changelog/changes/create/v1_create_tag_chart_type_link.xml"/>
     <include file="db/changelog/changes/drop/v1_drop_legacy_state_tables.xml"/>
+    <include file="db/changelog/changes/drop/v1_drop_legacy_telegram_accounts.xml"/>
     <include file="db/changelog/changes/insert/v1_seed_tag_chart_type_links.xml"/>
 
     <include file="db/changelog/changes/insert/v1_insertion_test_dictionary_item.xml"/>
