@@ -9,6 +9,7 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.exception.types.BadRequestException;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -95,6 +96,14 @@ class DiaryValidationServiceImplTest {
         assertThrows(BadRequestException.class, () -> service.validateUpdate(dto));
     }
 
+    @Test
+    void validateCreate_metricValueRoundedToZero_throwsBadRequest() {
+        DiaryEntryCreateDto dto = validCreateDto();
+        dto.getMetrics().getFirst().getValues().getFirst().setValue(new BigDecimal("0.000004"));
+
+        assertThrows(BadRequestException.class, () -> service.validateCreate(dto));
+    }
+
     private static DiaryEntryCreateDto validCreateDto() {
         DiaryEntryCreateDto dto = new DiaryEntryCreateDto();
         dto.setWhenStarted(Instant.parse("2026-02-10T10:00:00Z"));
@@ -108,7 +117,7 @@ class DiaryValidationServiceImplTest {
     private static EntryMetricCreateDto metricCreate(Long metricTypeId, Long unitId) {
         EntryMetricValueCreateDto value = new EntryMetricValueCreateDto();
         value.setUnitId(unitId);
-        value.setValue(1);
+        value.setValue(BigDecimal.ONE);
 
         EntryMetricCreateDto metric = new EntryMetricCreateDto();
         metric.setMetricTypeId(metricTypeId);
@@ -119,7 +128,7 @@ class DiaryValidationServiceImplTest {
     private static EntryMetricUpdateDto metricUpdate(Long metricTypeId, Long unitId) {
         EntryMetricValueUpdateDto value = new EntryMetricValueUpdateDto();
         value.setUnitId(unitId);
-        value.setValue(1);
+        value.setValue(BigDecimal.ONE);
 
         EntryMetricUpdateDto metric = new EntryMetricUpdateDto();
         metric.setMetricTypeId(metricTypeId);

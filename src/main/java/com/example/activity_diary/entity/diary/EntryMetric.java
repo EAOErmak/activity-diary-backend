@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -58,12 +59,9 @@ public class EntryMetric extends BaseEntity {
 
     /* ---------- DOMAIN LOGIC ---------- */
 
-    public void addValue(DictionaryItem unit, Integer value) {
+    public void addValue(DictionaryItem unit, BigDecimal value) {
         if (unit == null)
             throw new IllegalArgumentException("Unit is required");
-
-        if (value == null || value <= 0)
-            throw new IllegalArgumentException("Value must be positive");
 
         boolean exists = values.stream()
                 .anyMatch(v -> Objects.equals(v.getUnit().getId(), unit.getId()));

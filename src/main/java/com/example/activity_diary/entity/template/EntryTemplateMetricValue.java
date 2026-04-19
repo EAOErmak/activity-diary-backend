@@ -2,8 +2,11 @@ package com.example.activity_diary.entity.template;
 
 import com.example.activity_diary.entity.base.BaseEntity;
 import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.util.MetricValueNormalizer;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(
@@ -33,15 +36,15 @@ public class EntryTemplateMetricValue extends BaseEntity {
     private DictionaryItem unit;
 
     /** Значение в выбранных единицах */
-    @Column(nullable = false)
-    private Integer value;
+    @Column(nullable = false, precision = 19, scale = 5)
+    private BigDecimal value;
 
     /* ---------- FACTORY ---------- */
 
     static EntryTemplateMetricValue create(
             EntryTemplateMetric templateMetric,
             DictionaryItem unit,
-            Integer value
+            BigDecimal value
     ) {
         if (templateMetric == null)
             throw new IllegalArgumentException("TemplateMetric is required");
@@ -49,21 +52,16 @@ public class EntryTemplateMetricValue extends BaseEntity {
         if (unit == null)
             throw new IllegalArgumentException("Unit is required");
 
-        if (value == null || value <= 0)
-            throw new IllegalArgumentException("Value must be positive");
-
         EntryTemplateMetricValue v = new EntryTemplateMetricValue();
         v.templateMetric = templateMetric;
         v.unit = unit;
-        v.value = value;
+        v.value = MetricValueNormalizer.normalizePositive(value, "Value");
         return v;
     }
 
     /* ---------- DOMAIN ---------- */
 
-    public void changeValue(Integer newValue) {
-        if (newValue == null || newValue <= 0)
-            throw new IllegalArgumentException("Value must be positive");
-        this.value = newValue;
+    public void changeValue(BigDecimal newValue) {
+        this.value = MetricValueNormalizer.normalizePositive(newValue, "Value");
     }
 }

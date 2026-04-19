@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -105,7 +106,7 @@ class DiaryEntryTemplateServiceImplTest {
     @Test
     void create_success_withMetrics_returnsView() {
         DiaryEntryTemplateCreateDto dto = validCreateDto("tpl", "#desc");
-        dto.setMetrics(List.of(metric(10L, 20L, 5)));
+        dto.setMetrics(List.of(metric(10L, 20L, BigDecimal.valueOf(5))));
 
         User user = userWithId(1L);
 
@@ -128,6 +129,7 @@ class DiaryEntryTemplateServiceImplTest {
 
         assertEquals("tpl", result.getName());
         assertEquals(1, result.getMetrics().size());
+        assertEquals(new BigDecimal("5.00000"), result.getMetrics().getFirst().getValues().getFirst().getValue());
     }
 
     @Test
@@ -143,7 +145,7 @@ class DiaryEntryTemplateServiceImplTest {
                 .thenReturn(Optional.of(template));
 
         DiaryEntryTemplateUpdateDto dto = new DiaryEntryTemplateUpdateDto();
-        dto.setMetrics(List.of(metric(10L, 20L, 1, 20L, 2)));
+        dto.setMetrics(List.of(metric(10L, 20L, BigDecimal.ONE, 20L, BigDecimal.valueOf(2))));
 
         DictionaryItem metricType = dictItem(10L, DictionaryType.METRIC_NAME, "m");
         DictionaryItem unit = dictItem(20L, DictionaryType.METRIC_UNIT, "u");
@@ -202,7 +204,7 @@ class DiaryEntryTemplateServiceImplTest {
         return dto;
     }
 
-    private static EntryTemplateMetricUpsertDto metric(Long metricTypeId, Long unitId, Integer value) {
+    private static EntryTemplateMetricUpsertDto metric(Long metricTypeId, Long unitId, BigDecimal value) {
         EntryTemplateMetricValueUpsertDto v = new EntryTemplateMetricValueUpsertDto();
         v.setUnitId(unitId);
         v.setValue(value);
@@ -216,9 +218,9 @@ class DiaryEntryTemplateServiceImplTest {
     private static EntryTemplateMetricUpsertDto metric(
             Long metricTypeId,
             Long unitId1,
-            Integer value1,
+            BigDecimal value1,
             Long unitId2,
-            Integer value2
+            BigDecimal value2
     ) {
         EntryTemplateMetricValueUpsertDto v1 = new EntryTemplateMetricValueUpsertDto();
         v1.setUnitId(unitId1);

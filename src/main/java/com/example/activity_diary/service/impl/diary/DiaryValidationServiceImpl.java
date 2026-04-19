@@ -8,8 +8,10 @@ import com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto;
 import com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.service.diary.DiaryValidationService;
+import com.example.activity_diary.util.MetricValueNormalizer;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
@@ -132,10 +134,13 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             }
 
             Long unitId;
+            BigDecimal value;
             if (raw instanceof EntryMetricValueCreateDto v) {
                 unitId = v.getUnitId();
+                value = v.getValue();
             } else if (raw instanceof EntryMetricValueUpdateDto v) {
                 unitId = v.getUnitId();
+                value = v.getValue();
             } else {
                 throw new BadRequestException("Invalid metric value type for metricTypeId: " + metricTypeId);
             }
@@ -147,6 +152,18 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             if (!unitIds.add(unitId)) {
                 throw new BadRequestException("Duplicate unitId " + unitId + " for metricTypeId: " + metricTypeId);
             }
+
+            validateMetricValue(metricTypeId, unitId, value);
+        }
+    }
+
+    private void validateMetricValue(Long metricTypeId, Long unitId, BigDecimal value) {
+        try {
+            MetricValueNormalizer.normalizePositive(value, "Value");
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException(
+                    "value must be greater than zero for unitId " + unitId + " and metricTypeId: " + metricTypeId
+            );
         }
     }
 }

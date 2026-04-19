@@ -3,8 +3,14 @@ package com.example.activity_diary.service.impl.goal;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.diary.EntryMetricValue;
-import com.example.activity_diary.entity.goal.*;
+import com.example.activity_diary.entity.goal.DayGoal;
+import com.example.activity_diary.entity.goal.DiaryEntryGoal;
+import com.example.activity_diary.entity.goal.EntryMetricGoal;
+import com.example.activity_diary.entity.goal.EntryMetricValueGoal;
+import com.example.activity_diary.entity.goal.WeekGoal;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -12,143 +18,155 @@ import java.util.Map;
 
 public final class GoalCompletenessCalculator {
 
-    private GoalCompletenessCalculator() {}
-
     private static final int MAX = 200;
+    private static final int DIVISION_SCALE = 10;
+    private static final BigDecimal ZERO = BigDecimal.ZERO;
+    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    private static final BigDecimal W_DURATION = new BigDecimal("0.5");
+    private static final BigDecimal W_METRICS = new BigDecimal("0.5");
 
-    // Веса (можешь менять)
-    private static final double W_DURATION = 0.5;
-    private static final double W_METRICS = 0.5;
-
-    /* ============================================================
-       ENTRY LEVEL
-    ============================================================ */
+    private GoalCompletenessCalculator() {
+    }
 
     public static void recalcEntryGoal(DiaryEntryGoal goal, DiaryEntry entry) {
-
         int durationPct = calcDurationPct(goal.getExpectedDurationMin(), entry);
         int metricsPct = calcMetricsPct(goal, entry);
 
-        double total;
+        BigDecimal total;
 
         if (goal.getMetricGoals() == null || goal.getMetricGoals().isEmpty()) {
-            // если метрик-целей нет, считаем только duration
-            total = durationPct;
+            total = BigDecimal.valueOf(durationPct);
         } else if (goal.getExpectedDurationMin() == null || goal.getExpectedDurationMin() <= 0) {
-            // если duration в goal не задан, считаем только метрики
-            total = metricsPct;
+            total = BigDecimal.valueOf(metricsPct);
         } else {
-            total = W_DURATION * durationPct + W_METRICS * metricsPct;
+            total = W_DURATION.multiply(BigDecimal.valueOf(durationPct))
+                    .add(W_METRICS.multiply(BigDecimal.valueOf(metricsPct)));
         }
 
-        goal.setCompleteness(clamp((int) Math.round(total)));
+        goal.setCompleteness(clamp(total.setScale(0, RoundingMode.HALF_UP).intValue()));
     }
 
-    /**
-     * Duration% = actualMinutes / expectedMinutes * 100 (clamp 0..MAX)
-     */
     private static int calcDurationPct(Integer expectedMin, DiaryEntry entry) {
-        if (expectedMin == null || expectedMin <= 0) return 0;
+        if (expectedMin == null || expectedMin <= 0) {
+            return 0;
+        }
 
         Integer actualMin = calcActualMinutes(entry.getWhenStarted(), entry.getWhenEnded());
-        if (actualMin == null || actualMin < 0) return 0;
+        if (actualMin == null || actualMin < 0) {
+            return 0;
+        }
 
-        double pct = ((double) actualMin / expectedMin) * 100.0;
-        return clamp((int) Math.round(pct));
+        BigDecimal pct = BigDecimal.valueOf(actualMin)
+                .multiply(HUNDRED)
+                .divide(BigDecimal.valueOf(expectedMin), DIVISION_SCALE, RoundingMode.HALF_UP);
+
+        return clamp(pct.setScale(0, RoundingMode.HALF_UP).intValue());
     }
 
     private static Integer calcActualMinutes(Instant started, Instant ended) {
-        if (started == null || ended == null) return null;
-        if (!ended.isAfter(started)) return null;
+        if (started == null || ended == null) {
+            return null;
+        }
+        if (!ended.isAfter(started)) {
+            return null;
+        }
         return (int) Duration.between(started, ended).toMinutes();
     }
 
-    /**
-     * Metrics% считаем строго по ожидаемым unit’ам из goal:
-     *
-     * - Группируем actual по (metricTypeId -> (unitId -> actualValue))
-     * - Для каждой метрики goal:
-     *     ожидаемые unit’ы = mg.values
-     *     actual берём только по этим unit’ам (если нет — 0)
-     * - Итоговый процент: взвешенно по expectedValue (чтобы большие expected имели больший вес)
-     */
     private static int calcMetricsPct(DiaryEntryGoal goal, DiaryEntry entry) {
-        if (goal.getMetricGoals() == null || goal.getMetricGoals().isEmpty()) return 0;
+        if (goal.getMetricGoals() == null || goal.getMetricGoals().isEmpty()) {
+            return 0;
+        }
 
-        Map<Long, Map<Long, Integer>> actual = buildActualMap(entry);
+        Map<Long, Map<Long, BigDecimal>> actual = buildActualMap(entry);
 
-        long totalExpected = 0;
-        double weightedSumPct = 0.0;
+        BigDecimal totalExpected = ZERO;
+        BigDecimal weightedSumPct = ZERO;
 
         for (EntryMetricGoal mg : goal.getMetricGoals()) {
-            if (mg.getMetricType() == null) continue;
+            if (mg.getMetricType() == null) {
+                continue;
+            }
 
             long typeId = mg.getMetricType().getId();
-            Map<Long, Integer> actualUnits = actual.getOrDefault(typeId, Map.of());
+            Map<Long, BigDecimal> actualUnits = actual.getOrDefault(typeId, Map.of());
 
-            if (mg.getValues() == null || mg.getValues().isEmpty()) continue;
+            if (mg.getValues() == null || mg.getValues().isEmpty()) {
+                continue;
+            }
 
             for (EntryMetricValueGoal vg : mg.getValues()) {
-                if (vg.getUnit() == null) continue;
+                if (vg.getUnit() == null) {
+                    continue;
+                }
 
-                int expected = safePos(vg.getExpectedValue());
-                if (expected <= 0) continue;
+                BigDecimal expected = safePositive(vg.getExpectedValue());
+                if (expected.signum() <= 0) {
+                    continue;
+                }
 
                 long unitId = vg.getUnit().getId();
-                int actualVal = safePos(actualUnits.get(unitId));
+                BigDecimal actualVal = safePositive(actualUnits.get(unitId));
 
-                double pct = ((double) actualVal / expected) * 100.0;
-                int pctClamped = clamp((int) Math.round(pct));
+                BigDecimal pct = actualVal.multiply(HUNDRED)
+                        .divide(expected, DIVISION_SCALE, RoundingMode.HALF_UP);
+                int pctClamped = clamp(pct.setScale(0, RoundingMode.HALF_UP).intValue());
 
-                // вес = expected (взвешенное среднее)
-                totalExpected += expected;
-                weightedSumPct += (double) expected * pctClamped;
+                totalExpected = totalExpected.add(expected);
+                weightedSumPct = weightedSumPct.add(expected.multiply(BigDecimal.valueOf(pctClamped)));
             }
         }
 
-        if (totalExpected <= 0) return 0;
+        if (totalExpected.signum() <= 0) {
+            return 0;
+        }
 
-        int res = (int) Math.round(weightedSumPct / totalExpected);
-        return clamp(res);
+        int result = weightedSumPct
+                .divide(totalExpected, DIVISION_SCALE, RoundingMode.HALF_UP)
+                .setScale(0, RoundingMode.HALF_UP)
+                .intValue();
+
+        return clamp(result);
     }
 
-    /**
-     * Строим actual значения:
-     * metricTypeId -> unitId -> sum(value)
-     *
-     * Если в entry есть несколько одинаковых unit (по идее у тебя unique на unit в EntryMetricValue),
-     * но суммирование всё равно безопасно.
-     */
-    private static Map<Long, Map<Long, Integer>> buildActualMap(DiaryEntry entry) {
-        Map<Long, Map<Long, Integer>> res = new HashMap<>();
-        if (entry.getMetrics() == null) return res;
+    private static Map<Long, Map<Long, BigDecimal>> buildActualMap(DiaryEntry entry) {
+        Map<Long, Map<Long, BigDecimal>> result = new HashMap<>();
+        if (entry.getMetrics() == null) {
+            return result;
+        }
 
-        for (EntryMetric m : entry.getMetrics()) {
-            if (m.getMetricType() == null) continue;
-            Long typeId = m.getMetricType().getId();
+        for (EntryMetric metric : entry.getMetrics()) {
+            if (metric.getMetricType() == null) {
+                continue;
+            }
 
-            Map<Long, Integer> unitMap = res.computeIfAbsent(typeId, k -> new HashMap<>());
+            Long typeId = metric.getMetricType().getId();
+            Map<Long, BigDecimal> unitMap = result.computeIfAbsent(typeId, k -> new HashMap<>());
 
-            if (m.getValues() == null) continue;
-            for (EntryMetricValue v : m.getValues()) {
-                if (v.getUnit() == null) continue;
-                Long unitId = v.getUnit().getId();
+            if (metric.getValues() == null) {
+                continue;
+            }
 
-                int add = safePos(v.getValue());
-                unitMap.merge(unitId, add, Integer::sum);
+            for (EntryMetricValue value : metric.getValues()) {
+                if (value.getUnit() == null) {
+                    continue;
+                }
+
+                Long unitId = value.getUnit().getId();
+                BigDecimal add = safePositive(value.getValue());
+                unitMap.merge(unitId, add, BigDecimal::add);
             }
         }
 
-        return res;
+        return result;
     }
 
-    private static int safePos(Integer v) {
-        return v == null ? 0 : Math.max(0, v);
+    private static BigDecimal safePositive(BigDecimal value) {
+        if (value == null || value.signum() < 0) {
+            return ZERO;
+        }
+        return value;
     }
-
-    /* ============================================================
-       DAY LEVEL
-    ============================================================ */
 
     public static void recalcDayGoal(DayGoal day) {
         if (day.getEntryGoals() == null || day.getEntryGoals().isEmpty()) {
@@ -157,16 +175,12 @@ public final class GoalCompletenessCalculator {
         }
 
         int sum = 0;
-        for (DiaryEntryGoal g : day.getEntryGoals()) {
-            sum += safePos(g.getCompleteness());
+        for (DiaryEntryGoal goal : day.getEntryGoals()) {
+            sum += safePos(goal.getCompleteness());
         }
 
         day.setCompleteness(clamp(sum / day.getEntryGoals().size()));
     }
-
-    /* ============================================================
-       WEEK LEVEL
-    ============================================================ */
 
     public static void recalcWeekGoal(WeekGoal week) {
         if (week.getDays() == null || week.getDays().isEmpty()) {
@@ -175,18 +189,24 @@ public final class GoalCompletenessCalculator {
         }
 
         int sum = 0;
-        for (DayGoal d : week.getDays()) {
-            sum += safePos(d.getCompleteness());
+        for (DayGoal day : week.getDays()) {
+            sum += safePos(day.getCompleteness());
         }
 
         week.setCompleteness(clamp(sum / week.getDays().size()));
     }
 
-    /* ============================================================ */
+    private static int safePos(Integer value) {
+        return value == null ? 0 : Math.max(0, value);
+    }
 
-    private static int clamp(int v) {
-        if (v < 0) return 0;
-        if (v > MAX) return MAX;
-        return v;
+    private static int clamp(int value) {
+        if (value < 0) {
+            return 0;
+        }
+        if (value > MAX) {
+            return MAX;
+        }
+        return value;
     }
 }

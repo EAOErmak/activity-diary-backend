@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -154,7 +155,7 @@ class GoalCalendarProgressServiceTest {
                         new GoalDiaryEntryCommand.Metric(
                                 null,
                                 100L,
-                                List.of(new GoalDiaryEntryCommand.Value(200L, 12))
+                                List.of(new GoalDiaryEntryCommand.Value(200L, BigDecimal.valueOf(12)))
                         )
                 )
         );

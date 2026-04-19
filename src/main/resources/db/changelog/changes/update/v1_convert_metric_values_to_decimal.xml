@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1_convert_metric_values_to_decimal" author="activity-diary">
+        <modifyDataType tableName="entry_metric_value" columnName="value" newDataType="DECIMAL(19,5)"/>
+        <modifyDataType tableName="entry_template_metric_value" columnName="value" newDataType="DECIMAL(19,5)"/>
+        <modifyDataType tableName="entry_metric_value_goal" columnName="expected_value" newDataType="DECIMAL(19,5)"/>
+        <modifyDataType tableName="metric_usage_agg" columnName="value_sum" newDataType="DECIMAL(24,5)"/>
+    </changeSet>
+</databaseChangeLog>

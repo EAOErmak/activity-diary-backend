@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -67,12 +68,9 @@ public class EntryTemplateMetric extends BaseEntity {
      * Добавляет unit->value внутрь метрики-шаблона.
      * Важно: unit уникален в рамках одной метрики (доп. constraint на таблице values).
      */
-    public void addValue(DictionaryItem unit, Integer value) {
+    public void addValue(DictionaryItem unit, BigDecimal value) {
         if (unit == null)
             throw new IllegalArgumentException("Unit is required");
-
-        if (value == null || value <= 0)
-            throw new IllegalArgumentException("Value must be positive");
 
         boolean exists = values.stream()
                 .anyMatch(v -> v.getUnit().equals(unit));

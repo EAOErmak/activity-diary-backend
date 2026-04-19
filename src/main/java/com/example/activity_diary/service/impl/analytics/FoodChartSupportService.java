@@ -251,8 +251,7 @@ public class FoodChartSupportService {
         return values.stream()
                 .filter(this::isGramValue)
                 .map(EntryMetricValue::getValue)
-                .filter(value -> value != null && value > 0)
-                .map(BigDecimal::valueOf)
+                .filter(value -> value != null && value.compareTo(BigDecimal.ZERO) > 0)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

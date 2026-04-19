@@ -286,10 +286,14 @@ class FoodChartStrategiesTest {
     }
 
     private static ValueSpec grams(int value) {
-        return unit("граммы", value);
+        return unit("grams", BigDecimal.valueOf(value));
     }
 
     private static ValueSpec unit(String unitLabel, int value) {
+        return unit(unitLabel, BigDecimal.valueOf(value));
+    }
+
+    private static ValueSpec unit(String unitLabel, BigDecimal value) {
         return new ValueSpec(unitLabel, value);
     }
 
@@ -362,6 +366,6 @@ class FoodChartStrategiesTest {
     private record MetricSpec(Long dictionaryItemId, String label, ValueSpec[] values) {
     }
 
-    private record ValueSpec(String unitLabel, int value) {
+    private record ValueSpec(String unitLabel, BigDecimal value) {
     }
 }

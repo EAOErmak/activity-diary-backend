@@ -56,9 +56,7 @@ public class TrainingRawChartStrategy implements ChartCalculationStrategy {
                 List<ChartPointDto> chartPointDtoList = new ArrayList<>();
 
                 for (EntryMetricValue value : values){
-
-                    chartPointDtoList.add(new ChartPointDto(value.getUnit().getLabel(), new BigDecimal(value.getValue())));
-
+                    chartPointDtoList.add(new ChartPointDto(value.getUnit().getLabel(), value.getValue()));
                 }
 
                 ChartSeriesDto chartSeriesDto = new ChartSeriesDto(chartPointDtoList);

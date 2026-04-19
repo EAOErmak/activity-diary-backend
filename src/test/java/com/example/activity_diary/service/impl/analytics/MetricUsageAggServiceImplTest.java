@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.List;
@@ -76,8 +77,8 @@ class MetricUsageAggServiceImplTest {
             }
 
             @Override
-            public long getValueSum() {
-                return 120;
+            public BigDecimal getValueSum() {
+                return new BigDecimal("120.00000");
             }
 
             @Override
@@ -104,7 +105,7 @@ class MetricUsageAggServiceImplTest {
         assertEquals("km", actual.getFirst().getUnitLabel());
         assertEquals(TagUsageBucket.MONTH, actual.getFirst().getBucket());
         assertEquals(LocalDate.parse("2026-02-01"), actual.getFirst().getBucketStart());
-        assertEquals(120, actual.getFirst().getValueSum());
+        assertEquals(new BigDecimal("120.00000"), actual.getFirst().getValueSum());
         assertEquals(4, actual.getFirst().getValueCount());
         verify(repo).findUsageRows(
                 7L,
@@ -139,16 +140,16 @@ class MetricUsageAggServiceImplTest {
         DictionaryItem metricType = dictionaryItem(21L, DictionaryType.METRIC_NAME);
         DictionaryItem unit = dictionaryItem(34L, DictionaryType.METRIC_UNIT);
         EntryMetric metric = EntryMetric.create(entry, metricType);
-        metric.addValue(unit, 12);
+        metric.addValue(unit, BigDecimal.valueOf(12));
         entry.addMetric(metric);
 
         service.onEntryDeleted(entry);
 
-        verify(repo).addDelta(7L, 21L, 34L, "DAY", LocalDate.parse("2026-03-18"), -12L, -1);
-        verify(repo).addDelta(7L, 21L, 34L, "WEEK", LocalDate.parse("2026-03-16"), -12L, -1);
-        verify(repo).addDelta(7L, 21L, 34L, "MONTH", LocalDate.parse("2026-03-01"), -12L, -1);
-        verify(repo).addDelta(7L, 21L, 34L, "HALF_YEAR", LocalDate.parse("2026-01-01"), -12L, -1);
-        verify(repo).addDelta(7L, 21L, 34L, "YEAR", LocalDate.parse("2026-01-01"), -12L, -1);
+        verify(repo).addDelta(7L, 21L, 34L, "DAY", LocalDate.parse("2026-03-18"), new BigDecimal("-12.00000"), -1);
+        verify(repo).addDelta(7L, 21L, 34L, "WEEK", LocalDate.parse("2026-03-16"), new BigDecimal("-12.00000"), -1);
+        verify(repo).addDelta(7L, 21L, 34L, "MONTH", LocalDate.parse("2026-03-01"), new BigDecimal("-12.00000"), -1);
+        verify(repo).addDelta(7L, 21L, 34L, "HALF_YEAR", LocalDate.parse("2026-01-01"), new BigDecimal("-12.00000"), -1);
+        verify(repo).addDelta(7L, 21L, 34L, "YEAR", LocalDate.parse("2026-01-01"), new BigDecimal("-12.00000"), -1);
     }
 
     private static User userWithId(Long id) {

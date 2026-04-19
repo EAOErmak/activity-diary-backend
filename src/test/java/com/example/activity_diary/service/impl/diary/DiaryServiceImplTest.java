@@ -35,6 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -210,8 +211,8 @@ class DiaryServiceImplTest {
     void create_sortsMetricsByMetricTypeIdBeforeSaving() {
         DiaryEntryCreateDto dto = validCreateDto("hello");
         dto.setMetrics(List.of(
-                metricCreate(20L, 200L, 5),
-                metricCreate(10L, 100L, 3)
+                metricCreate(20L, 200L, BigDecimal.valueOf(5)),
+                metricCreate(10L, 100L, BigDecimal.valueOf(3))
         ));
 
         User user = userWithId(10L);
@@ -248,11 +249,11 @@ class DiaryServiceImplTest {
 
         EntryMetricValueCreateDto firstValue = new EntryMetricValueCreateDto();
         firstValue.setUnitId(200L);
-        firstValue.setValue(5);
+        firstValue.setValue(BigDecimal.valueOf(5));
 
         EntryMetricValueCreateDto secondValue = new EntryMetricValueCreateDto();
         secondValue.setUnitId(100L);
-        secondValue.setValue(3);
+        secondValue.setValue(BigDecimal.valueOf(3));
 
         EntryMetricCreateDto metricDto = new EntryMetricCreateDto();
         metricDto.setMetricTypeId(10L);
@@ -290,8 +291,8 @@ class DiaryServiceImplTest {
     void update_metrics_prefetchesDictionaryInSingleBatch() {
         DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
         dto.setMetrics(List.of(
-                metricUpdate(20L, 200L, 5),
-                metricUpdate(10L, 100L, 3)
+                metricUpdate(20L, 200L, BigDecimal.valueOf(5)),
+                metricUpdate(10L, 100L, BigDecimal.valueOf(3))
         ));
 
         User user = userWithId(10L);
@@ -315,6 +316,30 @@ class DiaryServiceImplTest {
 
         verify(dictionaryRepository).findAllById(Set.of(20L, 10L, 200L, 100L));
         verify(dictionaryRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    void create_roundsMetricValuesBeforeSaving() {
+        DiaryEntryCreateDto dto = validCreateDto("hello");
+        dto.setMetrics(List.of(metricCreate(10L, 100L, new BigDecimal("3.123456"))));
+
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
+        when(dictionaryRepository.findAllById(Set.of(10L, 100L))).thenReturn(List.of(
+                dictionaryItem(10L, DictionaryType.METRIC_NAME),
+                dictionaryItem(100L, DictionaryType.METRIC_UNIT)
+        ));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        ArgumentCaptor<DiaryEntry> entryCaptor = ArgumentCaptor.forClass(DiaryEntry.class);
+        verify(diaryRepository).save(entryCaptor.capture());
+        assertEquals(new BigDecimal("3.12346"), entryCaptor.getValue().getMetrics().getFirst().getValues().getFirst().getValue());
     }
 
     @Test
@@ -511,7 +536,7 @@ class DiaryServiceImplTest {
         return user;
     }
 
-    private static EntryMetricCreateDto metricCreate(Long metricTypeId, Long unitId, Integer value) {
+    private static EntryMetricCreateDto metricCreate(Long metricTypeId, Long unitId, BigDecimal value) {
         EntryMetricValueCreateDto valueDto = new EntryMetricValueCreateDto();
         valueDto.setUnitId(unitId);
         valueDto.setValue(value);
@@ -522,7 +547,7 @@ class DiaryServiceImplTest {
         return metricDto;
     }
 
-    private static EntryMetricUpdateDto metricUpdate(Long metricTypeId, Long unitId, Integer value) {
+    private static EntryMetricUpdateDto metricUpdate(Long metricTypeId, Long unitId, BigDecimal value) {
         EntryMetricValueUpdateDto valueDto = new EntryMetricValueUpdateDto();
         valueDto.setUnitId(unitId);
         valueDto.setValue(value);

@@ -2,8 +2,11 @@ package com.example.activity_diary.entity.goal;
 
 import com.example.activity_diary.entity.base.BaseEntity;
 import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.util.MetricValueNormalizer;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(
@@ -34,30 +37,26 @@ public class EntryMetricValueGoal extends BaseEntity {
     private DictionaryItem unit;
 
     // ожидаемое значение (snapshot)
-    @Column(name = "expected_value", nullable = false)
-    private Integer expectedValue;
+    @Column(name = "expected_value", nullable = false, precision = 19, scale = 5)
+    private BigDecimal expectedValue;
 
     /* ---------- FACTORY ---------- */
 
-    static EntryMetricValueGoal create(EntryMetricGoal metricGoal, DictionaryItem unit, Integer expectedValue) {
+    static EntryMetricValueGoal create(EntryMetricGoal metricGoal, DictionaryItem unit, BigDecimal expectedValue) {
         if (metricGoal == null) throw new IllegalArgumentException("EntryMetricGoal is required");
         if (unit == null) throw new IllegalArgumentException("Unit is required");
-        if (expectedValue == null || expectedValue <= 0)
-            throw new IllegalArgumentException("Expected value must be positive");
 
         EntryMetricValueGoal v = new EntryMetricValueGoal();
         v.metricGoal = metricGoal;
         v.unit = unit;
-        v.expectedValue = expectedValue;
+        v.expectedValue = MetricValueNormalizer.normalizePositive(expectedValue, "Expected value");
         return v;
     }
 
     /* ---------- DOMAIN ---------- */
 
-    public void changeExpectedValue(Integer newExpected) {
-        if (newExpected == null || newExpected <= 0)
-            throw new IllegalArgumentException("Expected value must be positive");
-        this.expectedValue = newExpected;
+    public void changeExpectedValue(BigDecimal newExpected) {
+        this.expectedValue = MetricValueNormalizer.normalizePositive(newExpected, "Expected value");
     }
 
     void attachTo(EntryMetricGoal goal) {

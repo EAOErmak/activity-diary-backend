@@ -232,7 +232,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
                         v.getId(),
                         v.getUnit() == null ? null : v.getUnit().getId(),
                         v.getUnit() == null ? null : v.getUnit().getLabel(),
-                        v.getValue() == null ? null : v.getValue().longValue()
+                        v.getValue()
                 ))
                 .toList();
 

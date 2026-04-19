@@ -35,7 +35,7 @@ class TrainingRawChartStrategyTest {
         ChartFilterDto filter = new ChartFilterDto(7L, dateFrom, dateTo, ChartType.TRAINING_RAW);
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, dateFrom, dateTo))
-                .thenReturn(List.of(diaryEntryWithMetricValue("km", 5)));
+                .thenReturn(List.of(diaryEntryWithMetricValue("km", BigDecimal.valueOf(5))));
 
         ChartResponseDto response = strategy.calculate(11L, filter);
 
@@ -45,10 +45,10 @@ class TrainingRawChartStrategyTest {
         assertEquals(1, response.getSeries().size());
         assertEquals(1, response.getSeries().getFirst().getPoints().size());
         assertEquals("km", response.getSeries().getFirst().getPoints().getFirst().getLabel());
-        assertEquals(new BigDecimal("5"), response.getSeries().getFirst().getPoints().getFirst().getValue());
+        assertEquals(new BigDecimal("5.00000"), response.getSeries().getFirst().getPoints().getFirst().getValue());
     }
 
-    private static DiaryEntry diaryEntryWithMetricValue(String unitLabel, int value) {
+    private static DiaryEntry diaryEntryWithMetricValue(String unitLabel, BigDecimal value) {
         DiaryEntry entry = DiaryEntry.builder().build();
         DictionaryItem metricType = DictionaryItem.builder().label("distance").build();
         DictionaryItem unit = DictionaryItem.builder().label(unitLabel).build();

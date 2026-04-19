@@ -5,6 +5,7 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,10 +50,8 @@ public class EntryMetricGoal extends BaseEntity {
         return mg;
     }
 
-    public void addValue(DictionaryItem unit, Integer expectedValue) {
+    public void addValue(DictionaryItem unit, BigDecimal expectedValue) {
         if (unit == null) throw new IllegalArgumentException("Unit is required");
-        if (expectedValue == null || expectedValue <= 0)
-            throw new IllegalArgumentException("Expected value must be positive");
 
         boolean exists = values.stream()
                 .anyMatch(v -> Objects.equals(v.getUnit().getId(), unit.getId()));

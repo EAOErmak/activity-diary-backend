@@ -10,6 +10,7 @@ import com.example.activity_diary.entity.goal.DiaryEntryGoal;
 import com.example.activity_diary.entity.goal.EntryMetricGoal;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -30,7 +31,7 @@ class GoalDiaryEntryCommandFactoryTest {
                 .mood((short) 4)
                 .description("goal #tag")
                 .build();
-        goal.addMetricGoal(metricGoal(goal, 100L, 200L, 12));
+        goal.addMetricGoal(metricGoal(goal, 100L, 200L, BigDecimal.valueOf(12)));
 
         GoalDiaryEntryCommand result = factory.fromGoal(goal);
 
@@ -43,7 +44,7 @@ class GoalDiaryEntryCommandFactoryTest {
         assertNull(result.metrics().getFirst().id());
         assertEquals(100L, result.metrics().getFirst().metricTypeId());
         assertEquals(200L, result.metrics().getFirst().values().getFirst().unitId());
-        assertEquals(12, result.metrics().getFirst().values().getFirst().value());
+        assertEquals(new BigDecimal("12.00000"), result.metrics().getFirst().values().getFirst().value());
     }
 
     @Test
@@ -56,7 +57,7 @@ class GoalDiaryEntryCommandFactoryTest {
 
         var valueDto = new com.example.activity_diary.dto.diary.metric.EntryMetricValueCreateDto();
         valueDto.setUnitId(200L);
-        valueDto.setValue(18);
+        valueDto.setValue(BigDecimal.valueOf(18));
 
         var metricDto = new com.example.activity_diary.dto.diary.metric.EntryMetricCreateDto();
         metricDto.setMetricTypeId(100L);
@@ -76,7 +77,7 @@ class GoalDiaryEntryCommandFactoryTest {
         assertNull(result.metrics().getFirst().id());
         assertEquals(100L, result.metrics().getFirst().metricTypeId());
         assertEquals(200L, result.metrics().getFirst().values().getFirst().unitId());
-        assertEquals(18, result.metrics().getFirst().values().getFirst().value());
+        assertEquals(BigDecimal.valueOf(18), result.metrics().getFirst().values().getFirst().value());
     }
 
     @Test
@@ -90,7 +91,7 @@ class GoalDiaryEntryCommandFactoryTest {
 
         var valueDto = new com.example.activity_diary.dto.diary.metric.EntryMetricValueUpdateDto();
         valueDto.setUnitId(200L);
-        valueDto.setValue(9);
+        valueDto.setValue(BigDecimal.valueOf(9));
 
         var metricDto = new com.example.activity_diary.dto.diary.metric.EntryMetricUpdateDto();
         metricDto.setId(777L);
@@ -105,7 +106,7 @@ class GoalDiaryEntryCommandFactoryTest {
         assertEquals(777L, result.metrics().getFirst().id());
         assertEquals(100L, result.metrics().getFirst().metricTypeId());
         assertEquals(200L, result.metrics().getFirst().values().getFirst().unitId());
-        assertEquals(9, result.metrics().getFirst().values().getFirst().value());
+        assertEquals(BigDecimal.valueOf(9), result.metrics().getFirst().values().getFirst().value());
     }
 
     @Test
@@ -119,7 +120,7 @@ class GoalDiaryEntryCommandFactoryTest {
                 List.of(new GoalDiaryEntryCommand.Metric(
                         777L,
                         100L,
-                        List.of(new GoalDiaryEntryCommand.Value(200L, 18))
+                        List.of(new GoalDiaryEntryCommand.Value(200L, BigDecimal.valueOf(18)))
                 ))
         );
 
@@ -146,7 +147,7 @@ class GoalDiaryEntryCommandFactoryTest {
                 List.of(new GoalDiaryEntryCommand.Metric(
                         null,
                         100L,
-                        List.of(new GoalDiaryEntryCommand.Value(200L, 12))
+                        List.of(new GoalDiaryEntryCommand.Value(200L, BigDecimal.valueOf(12)))
                 ))
         );
 
@@ -178,7 +179,7 @@ class GoalDiaryEntryCommandFactoryTest {
         assertEquals(EntryStatus.ACTIVE, result.getStatus());
     }
 
-    private static EntryMetricGoal metricGoal(DiaryEntryGoal goal, Long metricTypeId, Long unitId, Integer value) {
+    private static EntryMetricGoal metricGoal(DiaryEntryGoal goal, Long metricTypeId, Long unitId, BigDecimal value) {
         DictionaryItem metricType = DictionaryItem.builder()
                 .type(DictionaryType.METRIC_NAME)
                 .label("metric")

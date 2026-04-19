@@ -2,6 +2,7 @@ package com.example.activity_diary.service.impl.goal;
 
 import com.example.activity_diary.entity.enums.EntryStatus;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -23,7 +24,7 @@ record GoalDiaryEntryCommand(
 
     record Value(
             Long unitId,
-            Integer value
+            BigDecimal value
     ) {
     }
 }

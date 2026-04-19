@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -19,6 +20,6 @@ public class MetricUsageAggDto {
     private String unitLabel;
     private TagUsageBucket bucket;
     private LocalDate bucketStart;
-    private long valueSum;
+    private BigDecimal valueSum;
     private int valueCount;
 }

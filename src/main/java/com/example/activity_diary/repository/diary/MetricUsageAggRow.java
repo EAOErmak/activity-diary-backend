@@ -2,6 +2,7 @@ package com.example.activity_diary.repository.diary;
 
 import com.example.activity_diary.entity.enums.TagUsageBucket;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public interface MetricUsageAggRow {
@@ -17,7 +18,7 @@ public interface MetricUsageAggRow {
 
     LocalDate getBucketStart();
 
-    long getValueSum();
+    BigDecimal getValueSum();
 
     int getValueCount();
 }

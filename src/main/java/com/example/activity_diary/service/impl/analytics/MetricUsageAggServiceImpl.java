@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
@@ -97,11 +98,11 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
                 if (v.getValue() == null) continue;
 
                 Long unitId = v.getUnit().getId();
-                int value = v.getValue();
+                BigDecimal value = v.getValue();
 
                 Key key = new Key(metricTypeId, unitId);
                 Delta d = deltas.computeIfAbsent(key, k -> new Delta());
-                d.sum += (long) value * direction;
+                d.sum = d.sum.add(value.multiply(BigDecimal.valueOf(direction)));
                 d.count += direction;
             }
         }
@@ -147,7 +148,7 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
     }
 
     private static final class Delta {
-        private long sum = 0;
+        private BigDecimal sum = BigDecimal.ZERO;
         private int count = 0;
     }
 

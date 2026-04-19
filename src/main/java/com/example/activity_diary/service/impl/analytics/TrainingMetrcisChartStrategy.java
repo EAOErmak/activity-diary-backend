@@ -45,7 +45,7 @@ public class TrainingMetrcisChartStrategy implements ChartCalculationStrategy {
 
         for(DiaryEntry diaryEntry : diaryEntryList){
 
-            HashMap<DictionaryItem, Integer> total = new HashMap<>();
+            HashMap<DictionaryItem, BigDecimal> total = new HashMap<>();
             List<EntryMetric> metrics = diaryEntry.getMetrics();
 
             for(EntryMetric metric : metrics) {
@@ -54,17 +54,15 @@ public class TrainingMetrcisChartStrategy implements ChartCalculationStrategy {
 
 
                 for (EntryMetricValue value : values){
-                    total.merge(value.getUnit(), value.getValue(), Integer::sum);
+                    total.merge(value.getUnit(), value.getValue(), BigDecimal::add);
                 }
 
             }
 
             List<ChartPointDto> chartPointDtoList = new ArrayList<>();
 
-            for (HashMap.Entry<DictionaryItem, Integer> entry : total.entrySet()) {
-
-                chartPointDtoList.add(new ChartPointDto(entry.getKey().getLabel(), new BigDecimal(entry.getValue())));
-
+            for (HashMap.Entry<DictionaryItem, BigDecimal> entry : total.entrySet()) {
+                chartPointDtoList.add(new ChartPointDto(entry.getKey().getLabel(), entry.getValue()));
             }
             ChartSeriesDto chartSeriesDto = new ChartSeriesDto(chartPointDtoList);
             chartSeriesDtoList.add(chartSeriesDto);

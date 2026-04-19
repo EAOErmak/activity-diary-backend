@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public interface MetricUsageAggRepository extends JpaRepository<MetricUsageAgg, 
             @Param("unitId") Long unitId,
             @Param("bucket") String bucket,
             @Param("bucketStart") LocalDate bucketStart,
-            @Param("sumInc") long sumInc,
+            @Param("sumInc") BigDecimal sumInc,
             @Param("countInc") int countInc
     );
 }

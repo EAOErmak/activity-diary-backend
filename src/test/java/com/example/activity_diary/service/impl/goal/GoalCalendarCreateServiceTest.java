@@ -28,6 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -84,8 +85,8 @@ class GoalCalendarCreateServiceTest {
 
         User user = user(userId);
         DiaryEntryTemplate template = template(user);
-        addTemplateMetric(template, metricType(100L, "Buckwheat"), unit(200L, "grams"), 300);
-        addTemplateMetric(template, metricType(101L, "Water"), unit(201L, "ml"), 500);
+        addTemplateMetric(template, metricType(100L, "Buckwheat"), unit(200L, "grams"), BigDecimal.valueOf(300));
+        addTemplateMetric(template, metricType(101L, "Water"), unit(201L, "ml"), BigDecimal.valueOf(500));
 
         WeekGoal week = weekGoal(user);
         DayGoal day = dayGoal(week, targetDate);
@@ -138,7 +139,7 @@ class GoalCalendarCreateServiceTest {
                 LocalTime.of(12, 15),
                 LocalTime.of(13, 45)
         );
-        addTemplateMetric(entryTemplate, metricType(102L, "Soup"), unit(202L, "grams"), 450);
+        addTemplateMetric(entryTemplate, metricType(102L, "Soup"), unit(202L, "grams"), BigDecimal.valueOf(450));
 
         DayTemplate dayTemplate = DayTemplate.builder()
                 .user(user)
@@ -184,7 +185,7 @@ class GoalCalendarCreateServiceTest {
 
         User user = user(userId);
         DiaryEntryTemplate template = template(user);
-        addTemplateMetric(template, metricType(103L, "Tea"), unit(203L, "ml"), 250);
+        addTemplateMetric(template, metricType(103L, "Tea"), unit(203L, "ml"), BigDecimal.valueOf(250));
 
         WeekGoal week = weekGoal(user);
         DayGoal day = dayGoal(week, targetDate);
@@ -239,7 +240,7 @@ class GoalCalendarCreateServiceTest {
             DiaryEntryTemplate template,
             DictionaryItem metricType,
             DictionaryItem unit,
-            int value
+            BigDecimal value
     ) {
         EntryTemplateMetric metric = EntryTemplateMetric.create(template, metricType);
         metric.addValue(unit, value);
