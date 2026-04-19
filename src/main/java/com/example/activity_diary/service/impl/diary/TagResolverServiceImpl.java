@@ -2,11 +2,13 @@ package com.example.activity_diary.service.impl.diary;
 
 import com.example.activity_diary.entity.*;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.tag.UserTagRepository;
 import com.example.activity_diary.service.diary.TagResolverService;
+import com.example.activity_diary.service.sync.GlobalSyncService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +25,7 @@ public class TagResolverServiceImpl implements TagResolverService {
     private final UserRepository userRepository;
     private final UserTagRepository userTagRepository;
     private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
+    private final GlobalSyncService globalSyncService;
 
     @Transactional
     @Override
@@ -70,6 +73,7 @@ public class TagResolverServiceImpl implements TagResolverService {
                             .status(TagStatus.PENDING)
                             .createdBy(userRef)
                             .build());
+                    globalSyncService.bump(GlobalSyncEntityType.TAG);
                 } catch (DataIntegrityViolationException e) {
                     // РєС‚Рѕ-С‚Рѕ СЃРѕР·РґР°Р» РїР°СЂР°Р»Р»РµР»СЊРЅРѕ
                     tag = tagRepository.findByName(name).orElseThrow(() -> e);

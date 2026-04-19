@@ -7,13 +7,14 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.exception.types.UnauthorizedException;
+import com.example.activity_diary.platform.web.auth.service.LoginEventService;
+import com.example.activity_diary.platform.web.auth.service.RefreshTokenService;
+import com.example.activity_diary.platform.web.auth.service.impl.AuthServiceImpl;
+import com.example.activity_diary.platform.web.security.JwtUtils;
 import com.example.activity_diary.repository.RegistrationEventRepository;
 import com.example.activity_diary.repository.UserAccountRepository;
 import com.example.activity_diary.repository.UserRepository;
-import com.example.activity_diary.security.JwtUtils;
-import com.example.activity_diary.service.auth.RefreshTokenService;
 import com.example.activity_diary.service.auth.VerificationService;
-import com.example.activity_diary.service.login.LoginEventService;
 import com.example.activity_diary.service.sync.UserSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -130,7 +131,7 @@ class AuthServiceImplTest {
                 () -> service.refresh("refresh")
         );
 
-        assertEquals("User not verified", ex.getMessage());
+        assertEquals("Account is disabled", ex.getMessage());
         verify(refreshTokenService, never()).revoke(stored);
         verify(refreshTokenService, never()).save(eq(user), anyString());
     }

@@ -2,8 +2,8 @@ package com.example.activity_diary.platform.api.controller;
 
 import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.diary.TagDto;
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.core.usercontext.CurrentUserProvider;
+import com.example.activity_diary.entity.User;
 import com.example.activity_diary.service.diary.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

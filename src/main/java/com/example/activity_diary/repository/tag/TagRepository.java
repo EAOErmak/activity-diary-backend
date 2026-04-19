@@ -55,6 +55,33 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
           t.name,
           t.id
     """)
+    List<Tag> findAllForAdmin();
+
+    @Query("""
+        select t from Tag t
+        where lower(t.name) like concat('%', :q, '%')
+        order by
+          case
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.PENDING then 0
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.APPROVED then 1
+            else 2
+          end,
+          t.name,
+          t.id
+    """)
+    List<Tag> searchAllForAdmin(@Param("q") String q);
+
+    @Query("""
+        select t from Tag t
+        order by
+          case
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.PENDING then 0
+            when t.status = com.example.activity_diary.entity.enums.TagStatus.APPROVED then 1
+            else 2
+          end,
+          t.name,
+          t.id
+    """)
     Slice<Tag> findAllSlice(Pageable pageable);
 
     @Query("""

@@ -33,7 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ActiveProfiles("desktop")
 @AutoConfigureMockMvc
-@SpringBootTest(properties = "APP_DB_PATH=./build/admin-panel-desktop-integration.sqlite")
+@SpringBootTest(properties = {
+        "APP_DB_PATH=./build/admin-panel-desktop-integration-${random.uuid}.sqlite",
+        "app.admin.database.clear.enabled=true"
+})
 class AdminPanelDesktopIntegrationTest {
 
     @Autowired

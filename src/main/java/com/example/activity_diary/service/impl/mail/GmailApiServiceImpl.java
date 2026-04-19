@@ -3,21 +3,25 @@ package com.example.activity_diary.service.impl.mail;
 import com.example.activity_diary.service.mail.GmailApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.internet.MimeMessage;
 
 @Service
+@Profile("web")
 @RequiredArgsConstructor
 public class GmailApiServiceImpl implements GmailApiService {
 
-    @Value("${google.api.client-id}") private String clientId;
-    @Value("${google.api.client-secret}") private String clientSecret;
-    @Value("${google.api.refresh-token}") private String refreshToken;
-    @Value("${app.gmail.sender}") private String senderEmail;
+    @Value("${google.api.client-id:}") private String clientId;
+    @Value("${google.api.client-secret:}") private String clientSecret;
+    @Value("${google.api.refresh-token:}") private String refreshToken;
+    @Value("${app.gmail.sender:no-reply@example.local}") private String senderEmail;
 
     @Override
     public void sendEmail(String to, String subject, String bodyText) throws Exception {
+        validateConfiguration();
+
         com.google.api.client.http.javanet.NetHttpTransport transport =
                 new com.google.api.client.http.javanet.NetHttpTransport();
         com.google.api.client.json.gson.GsonFactory jsonFactory =
@@ -47,6 +51,12 @@ public class GmailApiServiceImpl implements GmailApiService {
         com.google.api.services.gmail.model.Message result = service.users().messages().send("me", message).execute();
 
         System.out.println("Email sent successfully. Message ID: " + result.getId());
+    }
+
+    private void validateConfiguration() {
+        if (clientId.isBlank() || clientSecret.isBlank() || refreshToken.isBlank()) {
+            throw new IllegalStateException("Google mail integration is not configured");
+        }
     }
 
     @Override

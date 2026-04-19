@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ActiveProfiles("desktop")
 @AutoConfigureMockMvc
-@SpringBootTest(properties = "APP_DB_PATH=./build/desktop-profile-test.sqlite")
+@SpringBootTest(properties = "APP_DB_PATH=./build/desktop-profile-test-${random.uuid}.sqlite")
 class DesktopProfileIntegrationTest {
 
     @Autowired

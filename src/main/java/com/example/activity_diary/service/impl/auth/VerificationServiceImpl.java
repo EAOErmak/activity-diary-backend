@@ -9,6 +9,7 @@ import com.example.activity_diary.service.auth.VerificationService;
 import com.example.activity_diary.service.mail.GmailApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@Profile("web")
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
@@ -29,7 +31,7 @@ public class VerificationServiceImpl implements VerificationService {
     private final UserRepository userRepository;
     private final GmailApiService gmailApiService;
 
-    @Value("${app.base-url}")
+    @Value("${app.base-url:http://localhost}")
     private String baseUrl;
 
     @Override

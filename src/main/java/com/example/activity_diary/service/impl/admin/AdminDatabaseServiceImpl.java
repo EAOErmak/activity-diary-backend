@@ -64,7 +64,9 @@ public class AdminDatabaseServiceImpl implements AdminDatabaseService {
                 tableType.getTableName(), resolvedTableNames);
 
         clearResolvedTables(resolvedTableNames);
-        reinitializeDesktopUserIfNeeded();
+        if (requiresDesktopUserReinitialization(resolvedTableNames)) {
+            reinitializeDesktopUserIfNeeded();
+        }
     }
 
     private void clearResolvedTables(List<String> tableNames) {
@@ -92,12 +94,14 @@ public class AdminDatabaseServiceImpl implements AdminDatabaseService {
                 .map(this::quoteIdentifier)
                 .collect(Collectors.joining(", "));
 
-        jdbcTemplate.execute("TRUNCATE TABLE " + joinedTables + " RESTART IDENTITY CASCADE");
+        entityManager.createNativeQuery("TRUNCATE TABLE " + joinedTables + " RESTART IDENTITY CASCADE")
+                .executeUpdate();
     }
 
     private void deleteTables(List<String> tableNames) {
         for (String tableName : tableNames) {
-            jdbcTemplate.execute("DELETE FROM " + quoteIdentifier(tableName));
+            entityManager.createNativeQuery("DELETE FROM " + quoteIdentifier(tableName))
+                    .executeUpdate();
         }
     }
 
@@ -337,7 +341,16 @@ public class AdminDatabaseServiceImpl implements AdminDatabaseService {
                 && databaseProductName.toLowerCase(Locale.ROOT).contains("sqlite");
     }
 
+    private boolean requiresDesktopUserReinitialization(Collection<String> tableNames) {
+        return tableNames.contains(TableType.USERS.getTableName())
+                || tableNames.contains(TableType.USER_ACCOUNTS.getTableName());
+    }
+
     private void reinitializeDesktopUserIfNeeded() {
+        if (desktopUserBootstrapProvider == null) {
+            return;
+        }
+
         DesktopUserBootstrap desktopUserBootstrap = desktopUserBootstrapProvider.getIfAvailable();
         if (desktopUserBootstrap == null) {
             return;

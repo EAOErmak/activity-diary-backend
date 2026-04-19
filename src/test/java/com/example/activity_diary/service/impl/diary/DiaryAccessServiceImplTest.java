@@ -1,17 +1,15 @@
 package com.example.activity_diary.service.impl.diary;
 
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.UserRepository;
+import com.example.activity_diary.core.usercontext.CurrentUserProvider;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
@@ -24,68 +22,53 @@ import static org.mockito.Mockito.when;
 class DiaryAccessServiceImplTest {
 
     @Mock
-    private UserRepository userRepository;
+    private CurrentUserProvider currentUserProvider;
 
     @Mock
     private DiaryRepository diaryRepository;
-
-    @Mock
-    private UserDetails currentUser;
 
     @InjectMocks
     private DiaryAccessServiceImpl service;
 
     @Test
-    void getUserId_returnsUserId() {
-        User user = userWithId(10L);
-        when(currentUser.getUsername()).thenReturn("alice");
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
+    void getCurrentUserId_returnsUserId() {
+        when(currentUserProvider.getCurrentUserId()).thenReturn(10L);
 
-        Long userId = service.getUserId(currentUser);
+        Long userId = service.getCurrentUserId();
 
         assertEquals(10L, userId);
     }
 
     @Test
-    void getUserId_userMissing_throwsNotFound() {
-        when(currentUser.getUsername()).thenReturn("ghost");
-        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> service.getUserId(currentUser));
-    }
-
-    @Test
-    void getEntryForUser_entryMissing_throwsNotFound() {
+    void getEntryForCurrentUser_entryMissing_throwsNotFound() {
         when(diaryRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> service.getEntryForUser(1L, currentUser));
+        assertThrows(NotFoundException.class, () -> service.getEntryForCurrentUser(1L));
     }
 
     @Test
-    void getEntryForUser_ownerMismatch_throwsForbidden() {
-        DiaryEntry entry = DiaryEntry.builder().user(userWithId(20L)).build();
+    void getEntryForCurrentUser_ownerMismatch_throwsForbidden() {
+        DiaryEntry entry = DiaryEntry.builder()
+                .user(com.example.activity_diary.entity.User.builder().build())
+                .build();
+        entry.getUser().setId(20L);
         when(diaryRepository.findById(1L)).thenReturn(Optional.of(entry));
-        when(currentUser.getUsername()).thenReturn("alice");
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(userWithId(10L)));
+        when(currentUserProvider.getCurrentUserId()).thenReturn(10L);
 
-        assertThrows(ForbiddenException.class, () -> service.getEntryForUser(1L, currentUser));
+        assertThrows(ForbiddenException.class, () -> service.getEntryForCurrentUser(1L));
     }
 
     @Test
-    void getEntryForUser_ownerMatch_returnsEntry() {
-        DiaryEntry entry = DiaryEntry.builder().user(userWithId(10L)).build();
+    void getEntryForCurrentUser_ownerMatch_returnsEntry() {
+        DiaryEntry entry = DiaryEntry.builder()
+                .user(com.example.activity_diary.entity.User.builder().build())
+                .build();
+        entry.getUser().setId(10L);
         when(diaryRepository.findById(1L)).thenReturn(Optional.of(entry));
-        when(currentUser.getUsername()).thenReturn("alice");
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(userWithId(10L)));
+        when(currentUserProvider.getCurrentUserId()).thenReturn(10L);
 
-        DiaryEntry result = service.getEntryForUser(1L, currentUser);
+        DiaryEntry result = service.getEntryForCurrentUser(1L);
 
         assertSame(entry, result);
-    }
-
-    private static User userWithId(Long id) {
-        User user = User.builder().username("u").build();
-        user.setId(id);
-        return user;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.activity_diary.security;
 
+import com.example.activity_diary.platform.web.security.SecurityErrorWriter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

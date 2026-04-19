@@ -4,6 +4,7 @@ import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
+import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
@@ -46,7 +47,7 @@ class TagServiceImplTest {
         when(tagRepository.findAllVisible(7L)).thenReturn(tags);
         when(tagMapper.toDtoList(tags)).thenReturn(expected);
 
-        List<TagDto> actual = tagService.getVisibleTags(7L, null);
+        List<TagDto> actual = tagService.getVisibleTags(7L, Role.USER, null);
 
         assertSame(expected, actual);
         verify(tagRepository).findAllVisible(7L);
@@ -61,7 +62,7 @@ class TagServiceImplTest {
         when(tagRepository.searchVisible(7L, "sport")).thenReturn(tags);
         when(tagMapper.toDtoList(tags)).thenReturn(expected);
 
-        List<TagDto> actual = tagService.getVisibleTags(7L, "  Sport  ");
+        List<TagDto> actual = tagService.getVisibleTags(7L, Role.USER, "  Sport  ");
 
         assertSame(expected, actual);
         verify(tagRepository).searchVisible(7L, "sport");

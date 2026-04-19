@@ -24,6 +24,7 @@ import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import com.example.activity_diary.service.diary.*;
+import com.example.activity_diary.service.sync.UserSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,7 @@ public class DiaryServiceImpl implements DiaryService {
     private final DiaryEntryMapper mapper;
     private final TagUsageAggService tagUsageAggService;
     private final MetricUsageAggService metricUsageAggService;
+    private final UserSyncService userSyncService;
 
     @Override
     @Transactional(readOnly = true)
@@ -162,6 +164,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         metricUsageAggService.onEntryCreated(saved);
         tagUsageAggService.onEntryCreated(saved);
+        userSyncService.bump(userId, com.example.activity_diary.entity.enums.UserSyncEntityType.DIARY);
         return mapper.toDto(saved);
     }
 
@@ -199,6 +202,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         metricUsageAggService.onEntryCreated(saved);
         tagUsageAggService.onEntryCreated(saved);
+        userSyncService.bump(userId, com.example.activity_diary.entity.enums.UserSyncEntityType.DIARY);
         return mapper.toDto(saved);
     }
 
@@ -213,7 +217,7 @@ public class DiaryServiceImpl implements DiaryService {
         entry.markDeleted();
 
         diaryRepository.save(entry);
-
+        userSyncService.bump(userId, com.example.activity_diary.entity.enums.UserSyncEntityType.DIARY);
     }
 
     private void applyMetricsOnCreate(
