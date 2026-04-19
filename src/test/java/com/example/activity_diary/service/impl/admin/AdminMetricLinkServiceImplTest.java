@@ -4,11 +4,9 @@ import com.example.activity_diary.dto.admin.MetricLinkResponseDto;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.dict.MetricNameUnitLink;
 import com.example.activity_diary.entity.enums.DictionaryType;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,9 +32,6 @@ class AdminMetricLinkServiceImplTest {
     @Mock
     private DictionaryRepository dictionaryRepository;
 
-    @Mock
-    private GlobalSyncService globalSyncService;
-
     @InjectMocks
     private AdminMetricLinkServiceImpl service;
 
@@ -60,7 +55,6 @@ class AdminMetricLinkServiceImplTest {
         verify(metricNameUnitLinkRepository).save(captor.capture());
         assertEquals(10L, captor.getValue().getMetricName().getId());
         assertEquals(20L, captor.getValue().getMetricUnit().getId());
-        verify(globalSyncService).bump(GlobalSyncEntityType.DICTIONARY);
     }
 
     @Test
@@ -86,7 +80,7 @@ class AdminMetricLinkServiceImplTest {
     }
 
     @Test
-    void deleteLink_existing_deletesAndBumpsSync() {
+    void deleteLink_existing_deletesLink() {
         DictionaryItem metricName = dictionaryItem(10L, DictionaryType.METRIC_NAME, "Weight");
         DictionaryItem metricUnit = dictionaryItem(20L, DictionaryType.METRIC_UNIT, "kg");
 
@@ -97,7 +91,6 @@ class AdminMetricLinkServiceImplTest {
         service.deleteLink(10L, 20L);
 
         verify(metricNameUnitLinkRepository).deleteByMetricNameIdAndMetricUnitId(10L, 20L);
-        verify(globalSyncService).bump(GlobalSyncEntityType.DICTIONARY);
     }
 
     @Test

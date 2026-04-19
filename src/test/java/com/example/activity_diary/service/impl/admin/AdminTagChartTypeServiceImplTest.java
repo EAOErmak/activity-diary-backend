@@ -4,13 +4,11 @@ import com.example.activity_diary.dto.admin.TagChartTypeLinkResponseDto;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.diary.TagChartTypeLink;
 import com.example.activity_diary.entity.enums.ChartType;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -38,14 +36,11 @@ class AdminTagChartTypeServiceImplTest {
     @Mock
     private TagRepository tagRepository;
 
-    @Mock
-    private GlobalSyncService globalSyncService;
-
     @InjectMocks
     private AdminTagChartTypeServiceImpl service;
 
     @Test
-    void createLink_savesLinkAndBumpsSync() {
+    void createLink_savesLink() {
         Tag tag = tag(7L, "training");
 
         when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
@@ -62,7 +57,6 @@ class AdminTagChartTypeServiceImplTest {
         verify(tagChartTypeLinkRepository).saveAndFlush(captor.capture());
         assertEquals(7L, captor.getValue().getTag().getId());
         assertEquals(ChartType.TRAINING_RAW, captor.getValue().getChartType());
-        verify(globalSyncService).bump(GlobalSyncEntityType.TAG);
     }
 
     @Test
@@ -86,7 +80,6 @@ class AdminTagChartTypeServiceImplTest {
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 
         assertThrows(BadRequestException.class, () -> service.createLink(7L, ChartType.TRAINING_RAW));
-        verify(globalSyncService, never()).bump(GlobalSyncEntityType.TAG);
     }
 
     @Test
@@ -98,7 +91,7 @@ class AdminTagChartTypeServiceImplTest {
     }
 
     @Test
-    void deleteLink_existing_deletesAndBumpsSync() {
+    void deleteLink_existing_deletesLink() {
         Tag tag = tag(7L, "training");
 
         when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
@@ -107,7 +100,6 @@ class AdminTagChartTypeServiceImplTest {
         service.deleteLink(7L, ChartType.TRAINING_RAW);
 
         verify(tagChartTypeLinkRepository).deleteByTagIdAndChartType(7L, ChartType.TRAINING_RAW);
-        verify(globalSyncService).bump(GlobalSyncEntityType.TAG);
     }
 
     @Test

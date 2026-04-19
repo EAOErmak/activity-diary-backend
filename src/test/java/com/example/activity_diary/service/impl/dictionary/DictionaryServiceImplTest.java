@@ -9,7 +9,6 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,9 +34,6 @@ class DictionaryServiceImplTest {
 
     @Mock
     private DictionaryMapper mapper;
-
-    @Mock
-    private GlobalSyncService globalSyncService;
 
     @InjectMocks
     private DictionaryServiceImpl service;

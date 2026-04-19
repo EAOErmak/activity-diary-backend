@@ -14,8 +14,6 @@ import com.example.activity_diary.platform.web.security.JwtUtils;
 import com.example.activity_diary.repository.RegistrationEventRepository;
 import com.example.activity_diary.repository.UserAccountRepository;
 import com.example.activity_diary.repository.UserRepository;
-import com.example.activity_diary.service.auth.VerificationService;
-import com.example.activity_diary.service.sync.UserSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,13 +42,7 @@ class AuthServiceImplTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private VerificationService verificationService;
-
-    @Mock
     private RefreshTokenService refreshTokenService;
-
-    @Mock
-    private UserSyncService userSyncService;
 
     @Mock
     private LoginEventService loginEventService;

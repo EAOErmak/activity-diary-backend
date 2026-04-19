@@ -16,7 +16,6 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.entity.enums.UiStatus;
-import com.example.activity_diary.entity.enums.UserSyncEntityType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
@@ -26,7 +25,6 @@ import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import com.example.activity_diary.service.diary.DiaryValidationService;
 import com.example.activity_diary.service.diary.TagResolverService;
-import com.example.activity_diary.service.sync.UserSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -71,9 +69,6 @@ class DiaryServiceImplTest {
 
     @Mock
     private DiaryValidationService validationService;
-
-    @Mock
-    private UserSyncService userSyncService;
 
     @Mock
     private TagResolverService tagResolverService;
@@ -191,7 +186,7 @@ class DiaryServiceImplTest {
     }
 
     @Test
-    void create_success_savesAndBumps() {
+    void create_success_savesAndUpdatesAggregates() {
         DiaryEntryCreateDto dto = validCreateDto("  hello ");
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
@@ -209,7 +204,6 @@ class DiaryServiceImplTest {
         assertEquals(mapped, result);
         verify(metricUsageAggService).onEntryCreated(any(DiaryEntry.class));
         verify(tagUsageAggService).onEntryCreated(any(DiaryEntry.class));
-        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     @Test
@@ -410,7 +404,6 @@ class DiaryServiceImplTest {
         assertEquals(mapped, result);
         assertEquals(dto.getWhenStarted(), entry.getWhenStarted());
         assertEquals(dto.getWhenEnded(), entry.getWhenEnded());
-        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     @Test
@@ -432,11 +425,10 @@ class DiaryServiceImplTest {
 
         assertEquals(mapped, result);
         assertEquals(EntryStatus.FINISHED, entry.getStatus());
-        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     @Test
-    void update_description_resolvesTagsAndBumps() {
+    void update_description_resolvesTagsAndRebuildsAggregates() {
         DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
         dto.setDescription("  new desc ");
 
@@ -459,7 +451,6 @@ class DiaryServiceImplTest {
         verify(tagUsageAggService).onEntryDeleted(entry);
         verify(metricUsageAggService).onEntryCreated(entry);
         verify(tagUsageAggService).onEntryCreated(entry);
-        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     @Test
@@ -480,7 +471,7 @@ class DiaryServiceImplTest {
     }
 
     @Test
-    void delete_marksDeletedAdjustsAggregatesAndBumps() {
+    void delete_marksDeletedAndAdjustsAggregates() {
         User user = userWithId(10L);
         DiaryEntry entry = entryForUser(user,
                 Instant.now().minusSeconds(1200),
@@ -494,7 +485,6 @@ class DiaryServiceImplTest {
         assertEquals(EntryStatus.DELETED, entry.getStatus());
         verify(metricUsageAggService).onEntryDeleted(entry);
         verify(tagUsageAggService).onEntryDeleted(entry);
-        verify(userSyncService).bump(10L, UserSyncEntityType.DIARY);
     }
 
     private static DiaryEntryCreateDto validCreateDto(String description) {

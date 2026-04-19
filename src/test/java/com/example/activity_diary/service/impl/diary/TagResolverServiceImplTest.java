@@ -4,12 +4,10 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.UserTag;
 import com.example.activity_diary.entity.UserTagId;
 import com.example.activity_diary.entity.diary.Tag;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.repository.tag.UserTagRepository;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -47,9 +45,6 @@ class TagResolverServiceImplTest {
     @Mock
     private UserTagRepository userTagRepository;
 
-    @Mock
-    private GlobalSyncService globalSyncService;
-
     @Spy
     private DiaryDescriptionTagPolicy diaryDescriptionTagPolicy = new DiaryDescriptionTagPolicy();
 
@@ -86,7 +81,6 @@ class TagResolverServiceImplTest {
 
         LinkedHashSet<String> names = namesCaptor.getValue();
         assertEquals(List.of("#sport", "#test_1!", "#a"), List.copyOf(names));
-        verify(globalSyncService, times(3)).bump(GlobalSyncEntityType.TAG);
     }
 
     @Test

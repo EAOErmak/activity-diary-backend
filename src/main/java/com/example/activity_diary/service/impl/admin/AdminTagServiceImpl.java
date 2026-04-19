@@ -4,14 +4,12 @@ import com.example.activity_diary.dto.diary.TagCreateDto;
 import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.admin.AdminTagService;
 import com.example.activity_diary.service.impl.diary.DiaryDescriptionTagPolicy;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -25,7 +23,6 @@ public class AdminTagServiceImpl implements AdminTagService {
     private final TagRepository tagRepository;
     private final TagMapper tagMapper;
     private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
-    private final GlobalSyncService globalSyncService;
 
     @Override
     @Transactional
@@ -43,7 +40,6 @@ public class AdminTagServiceImpl implements AdminTagService {
                         .status(TagStatus.APPROVED)
                         .build()
         );
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
 
         return tagMapper.toDto(saved);
     }
@@ -71,7 +67,6 @@ public class AdminTagServiceImpl implements AdminTagService {
     public void approve(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.APPROVED);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     @Override
@@ -79,7 +74,6 @@ public class AdminTagServiceImpl implements AdminTagService {
     public void reject(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.REJECTED);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     @Override
@@ -87,7 +81,6 @@ public class AdminTagServiceImpl implements AdminTagService {
     public void deprecate(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.DEPRECATED);
-        globalSyncService.bump(GlobalSyncEntityType.TAG);
     }
 
     private Tag get(Long id) {

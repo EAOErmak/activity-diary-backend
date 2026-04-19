@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="v1-99-drop-user-sync-state" author="diary">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="user_sync_state"/>
+        </preConditions>
+
+        <dropTable tableName="user_sync_state" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="v1-100-drop-global-sync-state" author="diary">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="global_sync_state"/>
+        </preConditions>
+
+        <dropTable tableName="global_sync_state" cascadeConstraints="true"/>
+    </changeSet>
+</databaseChangeLog>
