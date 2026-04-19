@@ -51,3 +51,5 @@ src/test/java/com/example/activity_diary/service/impl/admin/AdminDatabaseService
 ARCHITECTURE_REFACTORING_REPORT_2026-04-04.html
 ARCHITECTURE_REFACTORING_REPORT_2026-04-04.md
 ARCHITECTURE_REFACTORING_REPORT_2026-04-04.pdf
+
+data/app.db

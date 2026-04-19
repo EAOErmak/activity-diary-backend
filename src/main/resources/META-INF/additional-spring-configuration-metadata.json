@@ -16,54 +16,29 @@
       "description": "Refresh token lifetime in milliseconds."
     },
     {
-      "name": "google.api.client-id",
-      "type": "java.lang.String",
-      "description": "OAuth client id used to send mail via Gmail API."
-    },
-    {
-      "name": "google.api.client-secret",
-      "type": "java.lang.String",
-      "description": "OAuth client secret used to send mail via Gmail API."
-    },
-    {
-      "name": "google.api.refresh-token",
-      "type": "java.lang.String",
-      "description": "Refresh token used to obtain Gmail API access tokens."
-    },
-    {
-      "name": "app.gmail.sender",
-      "type": "java.lang.String",
-      "description": "Sender address used for Gmail API messages."
-    },
-    {
-      "name": "app.base-url",
-      "type": "java.lang.String",
-      "description": "Public application base URL used in generated links."
-    },
-    {
       "name": "app.admin.database.clear.enabled",
       "type": "java.lang.Boolean",
       "description": "Enables the admin endpoint that clears database data."
     },
     {
-      "name": "telegram.bot.token",
-      "type": "java.lang.String",
-      "description": "Telegram bot token."
-    },
-    {
-      "name": "telegram.chat.id",
-      "type": "java.lang.Long",
-      "description": "Telegram chat identifier used by integrations."
-    },
-    {
-      "name": "telegram.bot.name",
-      "type": "java.lang.String",
-      "description": "Telegram bot username."
-    },
-    {
       "name": "app.cors.allowed-origin",
       "type": "java.lang.String",
       "description": "Allowed CORS origin for browser clients."
+    },
+    {
+      "name": "app.desktop.user.username",
+      "type": "java.lang.String",
+      "description": "Default username for the trusted local desktop user."
+    },
+    {
+      "name": "app.desktop.user.full-name",
+      "type": "java.lang.String",
+      "description": "Default display name for the trusted local desktop user."
+    },
+    {
+      "name": "app.desktop.user.provider-id",
+      "type": "java.lang.String",
+      "description": "Stable local-account marker used to resolve the desktop user."
     }
   ]
 }

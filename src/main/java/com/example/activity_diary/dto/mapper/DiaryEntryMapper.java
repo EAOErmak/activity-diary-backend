@@ -20,7 +20,7 @@ import java.util.Set;
 )
 public interface DiaryEntryMapper {
 
-    //DiaryEntry → DiaryEntryDto
+    //DiaryEntry в†’ DiaryEntryDto
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "metrics", target = "metrics")
     DiaryEntryDto toDto(DiaryEntry entry);
@@ -45,7 +45,7 @@ public interface DiaryEntryMapper {
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget DiaryEntry entry, DiaryEntryUpdateDto dto);
 
-    //EntryMetric → EntryMetricResponseDto
+    //EntryMetric в†’ EntryMetricResponseDto
     @Mapping(source = "metricType.id", target = "metricTypeId")
     @Mapping(source = "metricType.label", target = "metricTypeName")
     @Mapping(source = "values", target = "values")
@@ -53,7 +53,7 @@ public interface DiaryEntryMapper {
 
     List<EntryMetricResponseDto> toMetricResponseDtoList(List<EntryMetric> metrics);
 
-    //EntryMetricValue → EntryMetricValueResponseDto
+    //EntryMetricValue в†’ EntryMetricValueResponseDto
     @Mapping(source = "unit.id", target = "unitId")
     @Mapping(source = "unit.label", target = "unitName")
     @Mapping(source = "value", target = "value")
@@ -77,17 +77,24 @@ public interface DiaryEntryMapper {
         if (tags == null) return List.of();
         return tags.stream()
                 .map(Tag::getName)
+                .map(this::toApiTagName)
                 .toList();
     }
 
     default String firstTag(Set<Tag> tags) {
         if (tags == null || tags.isEmpty()) return null;
 
-        // "первый" делаем детерминированным: минимальный tag.id
+        // "РїРµСЂРІС‹Р№" РґРµР»Р°РµРј РґРµС‚РµСЂРјРёРЅРёСЂРѕРІР°РЅРЅС‹Рј: РјРёРЅРёРјР°Р»СЊРЅС‹Р№ tag.id
         return tags.stream()
                 .filter(t -> t != null && t.getId() != null)
                 .min(java.util.Comparator.comparing(Tag::getId))
                 .map(Tag::getName)
+                .map(this::toApiTagName)
                 .orElse(null);
+    }
+
+    default String toApiTagName(String name) {
+        if (name == null || name.isBlank()) return name;
+        return name.startsWith("#") ? name : "#" + name;
     }
 }

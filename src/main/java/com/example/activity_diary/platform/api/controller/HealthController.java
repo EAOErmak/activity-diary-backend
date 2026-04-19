@@ -1,0 +1,17 @@
+package com.example.activity_diary.platform.api.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/health")
+public class HealthController {
+
+    //Р­С‚Рѕ С‡С‚Рѕ Р±С‹ Render РјРѕР№ СЃРµСЂРІРµСЂ СЃРїР°С‚СЊ РЅРµ РѕС‚РїСЂР°РІР»СЏР»
+    @GetMapping
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
+}

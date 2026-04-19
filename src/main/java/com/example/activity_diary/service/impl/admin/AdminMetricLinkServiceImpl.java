@@ -4,12 +4,10 @@ import com.example.activity_diary.dto.admin.MetricLinkResponseDto;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.dict.MetricNameUnitLink;
 import com.example.activity_diary.entity.enums.DictionaryType;
-import com.example.activity_diary.entity.enums.GlobalSyncEntityType;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
 import com.example.activity_diary.service.admin.AdminMetricLinkService;
-import com.example.activity_diary.service.sync.GlobalSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +21,6 @@ public class AdminMetricLinkServiceImpl implements AdminMetricLinkService {
 
     private final MetricNameUnitLinkRepository metricNameUnitLinkRepository;
     private final DictionaryRepository dictionaryRepository;
-    private final GlobalSyncService globalSyncService;
-
     @Override
     public MetricLinkResponseDto createLink(Long metricNameId, Long metricUnitId) {
         DictionaryItem metricName = getDictionaryItem(metricNameId, DictionaryType.METRIC_NAME, "Metric name");
@@ -36,8 +32,6 @@ public class AdminMetricLinkServiceImpl implements AdminMetricLinkService {
 
         MetricNameUnitLink link = MetricNameUnitLink.create(metricName, metricUnit);
         MetricNameUnitLink saved = metricNameUnitLinkRepository.save(link);
-
-        globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
 
         return toDto(saved.getMetricUnit());
     }
@@ -52,7 +46,6 @@ public class AdminMetricLinkServiceImpl implements AdminMetricLinkService {
         }
 
         metricNameUnitLinkRepository.deleteByMetricNameIdAndMetricUnitId(metricNameId, metricUnitId);
-        globalSyncService.bump(GlobalSyncEntityType.DICTIONARY);
     }
 
     @Override

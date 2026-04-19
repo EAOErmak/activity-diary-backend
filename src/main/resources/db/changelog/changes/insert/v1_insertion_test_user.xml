@@ -4,6 +4,22 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
+    <changeSet id="20260323-insert-initial-users" author="Yermek">
+        <insert tableName="users">
+            <column name="id" value="1"/>
+
+            <column name="created_at" value="2026-03-23 12:00:00.000"/>
+            <column name="updated_at" value="2026-03-23 12:00:00.000"/>
+
+            <column name="username" value="admin_user"/>
+            <column name="full_name" value="System Administrator"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="role" value="ADMIN"/>
+            <column name="account_locked" valueBoolean="false"/>
+            <column name="failed_2fa_attempts" valueNumeric="0"/>
+        </insert>
+    </changeSet>
+
     <changeSet id="20260323-insert-user-accounts" author="Yermek">
         <insert tableName="user_accounts">
             <column name="id" value="1"/>
@@ -13,9 +29,8 @@
 
             <column name="user_id" value="1"/>
             <column name="provider" value="LOCAL"/>
-            <column name="provider_id" value="zrmek.aydarbekov@gmail.com"/>
+            <column name="provider_id" value="zrmek.aydarbekov@example.com"/>
             <column name="password_hash" value="$2a$12$1P1DlUCKCK60JfiBEJtviOYX/iRrjAMB5PIOXI9w4gKTYQh/Osmd2"/>
         </insert>
     </changeSet>
-
 </databaseChangeLog>
