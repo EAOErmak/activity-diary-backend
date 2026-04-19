@@ -4,6 +4,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 
 import com.example.activity_diary.entity.enums.EntryStatus;
+import com.example.activity_diary.entity.enums.UiStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
@@ -184,9 +185,9 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     
           and (
             :uiStatus is null
-            or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.FINISHED
+            or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.FINISHED
                 and d.status = com.example.activity_diary.entity.enums.EntryStatus.FINISHED)
-            or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.FAILED
+            or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.FAILED
                 and d.status = com.example.activity_diary.entity.enums.EntryStatus.FAILED)
             or (
                 d.status not in (
@@ -195,11 +196,11 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
                     com.example.activity_diary.entity.enums.EntryStatus.DELETED
                 )
                 and (
-                    (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.PLANNED and :now < d.whenStarted)
-                    or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.ACTIVE
+                    (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.PLANNED and :now < d.whenStarted)
+                    or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.ACTIVE
                         and d.whenStarted <= :now
                         and d.whenEnded >= :now)
-                    or (:uiStatus = com.example.activity_diary.entity.enums.EntryStatus.OVERDUE and d.whenEnded < :now)
+                    or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.OVERDUE and d.whenEnded < :now)
                 )
             )
           )
@@ -219,7 +220,7 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     """)
     Slice<DiaryEntryViewDto> findListByUserIdFilteredAndTags(
             @Param("userId") Long userId,
-            @Param("uiStatus") EntryStatus uiStatus,
+            @Param("uiStatus") UiStatus uiStatus,
             @Param("now") Instant now,
 
             @Param("hasTags") boolean hasTags,

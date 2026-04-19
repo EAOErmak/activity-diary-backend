@@ -88,7 +88,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         return diaryRepository.findListByUserIdFilteredAndTags(
                 userId,
-                uiStatus == null ? null : EntryStatus.valueOf(uiStatus.name()),
+                uiStatus == null ? null : UiStatus.valueOf(uiStatus.name()),
                 effectiveNow,
                 normalizedTags.hasTags(),
                 normalizedTags.tagNames(),

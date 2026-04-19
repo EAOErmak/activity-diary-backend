@@ -134,7 +134,7 @@ class DiaryServiceImplTest {
 
         verify(diaryRepository).findListByUserIdFilteredAndTags(
                 eq(7L),
-                eq(EntryStatus.ACTIVE),
+                eq(UiStatus.ACTIVE),
                 eq(now),
                 hasTagsCaptor.capture(),
                 tagsCaptor.capture(),
