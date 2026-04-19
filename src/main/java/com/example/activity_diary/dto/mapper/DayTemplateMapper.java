@@ -16,4 +16,3 @@ public interface DayTemplateMapper {
     @Mapping(target = "entryTemplateName", source = "entryTemplate.name")
     TemplateEntryItemViewDto toViewItem(TemplateEntryItem item);
 }
-

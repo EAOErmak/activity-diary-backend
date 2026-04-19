@@ -10,4 +10,3 @@ public class UpdateProfileRequest {
     @Size(max = 128)
     private String fullName;
 }
-

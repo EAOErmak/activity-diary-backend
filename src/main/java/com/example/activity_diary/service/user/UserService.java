@@ -20,4 +20,3 @@ public interface UserService {
     void changeUsername(ChangeUsernameRequest request, Long userId);
 
 }
-

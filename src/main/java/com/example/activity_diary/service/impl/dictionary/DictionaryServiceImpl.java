@@ -176,4 +176,3 @@ public class DictionaryServiceImpl implements DictionaryService {
         return item.getAllowedRole() == null || item.getAllowedRole() == role;
     }
 }
-

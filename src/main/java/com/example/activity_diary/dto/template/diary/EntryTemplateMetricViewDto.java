@@ -10,6 +10,6 @@ import java.util.List;
 public class EntryTemplateMetricViewDto {
     Long id;
     Long metricTypeId;
-    String metricTypeName; // можно null если не хочешь тянуть словарь
+    String metricTypeName; // РјРѕР¶РЅРѕ null РµСЃР»Рё РЅРµ С…РѕС‡РµС€СЊ С‚СЏРЅСѓС‚СЊ СЃР»РѕРІР°СЂСЊ
     List<EntryTemplateMetricValueViewDto> values;
 }

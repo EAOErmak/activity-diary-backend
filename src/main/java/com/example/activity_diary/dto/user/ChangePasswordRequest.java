@@ -13,4 +13,3 @@ public class ChangePasswordRequest {
     @Size(min = 8, max = 64)
     private String newPassword;
 }
-

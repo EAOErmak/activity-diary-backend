@@ -38,7 +38,7 @@ public class DiaryEntryGoal extends BaseEntity {
     private DayGoal dayGoal;
 
     /**
-     * Позиция внутри DayGoal (если порядок важен, как в DayTemplate).
+     * РџРѕР·РёС†РёСЏ РІРЅСѓС‚СЂРё DayGoal (РµСЃР»Рё РїРѕСЂСЏРґРѕРє РІР°Р¶РµРЅ, РєР°Рє РІ DayTemplate).
      */
     @Column(nullable = false)
     private Integer position;
@@ -50,12 +50,12 @@ public class DiaryEntryGoal extends BaseEntity {
     private Instant whenEnded;
 
     /**
-     * Ожидаемая длительность (минуты) для расчёта completeness по duration.
+     * РћР¶РёРґР°РµРјР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅСѓС‚С‹) РґР»СЏ СЂР°СЃС‡С‘С‚Р° completeness РїРѕ duration.
      */
     @Column(name = "expected_duration_min", nullable = false)
     private Integer expectedDurationMin;
 
-    // --------- SNAPSHOT (из Template) ----------
+    // --------- SNAPSHOT (РёР· Template) ----------
     @Column(nullable = false, length = 120)
     private String name;
 
@@ -64,7 +64,7 @@ public class DiaryEntryGoal extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
-    // ---------- LINK TO ACTUAL ENTRY (последняя/актуальная запись) ----------
+    // ---------- LINK TO ACTUAL ENTRY (РїРѕСЃР»РµРґРЅСЏСЏ/Р°РєС‚СѓР°Р»СЊРЅР°СЏ Р·Р°РїРёСЃСЊ) ----------
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_entry_id")
     private DiaryEntry currentEntry;

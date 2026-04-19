@@ -19,7 +19,7 @@ public interface GoalMapper {
 
     List<DayGoalDetailDto> toDayViews(List<DayGoal> days);
 
-    // ✅ Добавили metricGoals
+    // вњ… Р”РѕР±Р°РІРёР»Рё metricGoals
     @Mapping(target = "currentEntryId", source = "currentEntry.id")
     @Mapping(target = "metricGoals", source = "metricGoals")
     DiaryEntryGoalDetailDto toEntryView(DiaryEntryGoal goal);
@@ -35,6 +35,6 @@ public interface GoalMapper {
 
     @Mapping(target = "unitId", source = "unit.id")
     @Mapping(target = "unitName", source = "unit.label")
-    @Mapping(target = "expectedValue", source = "expectedValue") // или target="value" если так в DTO
+    @Mapping(target = "expectedValue", source = "expectedValue") // РёР»Рё target="value" РµСЃР»Рё С‚Р°Рє РІ DTO
     EntryMetricValueGoalDto toMetricValueGoalDto(EntryMetricValueGoal vg);
 }

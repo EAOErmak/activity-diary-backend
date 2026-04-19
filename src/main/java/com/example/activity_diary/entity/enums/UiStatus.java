@@ -1,10 +1,9 @@
 package com.example.activity_diary.entity.enums;
 
 public enum UiStatus {
-    FINISHED,        // запись успешно выполнена (whenEnded < now)
+    FINISHED,        // Р·Р°РїРёСЃСЊ СѓСЃРїРµС€РЅРѕ РІС‹РїРѕР»РЅРµРЅР° (whenEnded < now)
     FAILED,
-    ACTIVE,// запись не выполнена (whenEnded >= now)
+    ACTIVE,// Р·Р°РїРёСЃСЊ РЅРµ РІС‹РїРѕР»РЅРµРЅР° (whenEnded >= now)
     PLANNED,
     DELETED
 }
-

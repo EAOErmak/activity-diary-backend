@@ -40,6 +40,6 @@ public interface DiaryEntryGoalMapper {
 
     @Named("dictName")
     default String dictName(DictionaryItem item) {
-        return item == null ? null : item.getLabel(); // поменяй, если поле не name
+        return item == null ? null : item.getLabel(); // РїРѕРјРµРЅСЏР№, РµСЃР»Рё РїРѕР»Рµ РЅРµ name
     }
 }

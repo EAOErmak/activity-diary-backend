@@ -62,4 +62,3 @@ public class EntryMetricValue extends BaseEntity {
         this.value = newValue;
     }
 }
-

@@ -16,4 +16,3 @@ public class EntryMetricResponseDto {
 
     private List<EntryMetricValueResponseDto> values;
 }
-

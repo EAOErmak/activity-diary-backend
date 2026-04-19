@@ -12,11 +12,11 @@ public interface DiaryEntryTemplateMapper {
     @Mapping(target = "metrics", source = "metrics")
     DiaryEntryTemplateViewDto toViewDto(DiaryEntryTemplate entity);
 
-    // List item без metrics
+    // List item Р±РµР· metrics
     @Mapping(target = "metrics", ignore = true)
     DiaryEntryTemplateViewDto toListItemDto(DiaryEntryTemplate entity);
 
-    // PATCH update: обновлять только не-null поля (включая timeStart/timeEnd)
+    // PATCH update: РѕР±РЅРѕРІР»СЏС‚СЊ С‚РѕР»СЊРєРѕ РЅРµ-null РїРѕР»СЏ (РІРєР»СЋС‡Р°СЏ timeStart/timeEnd)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)

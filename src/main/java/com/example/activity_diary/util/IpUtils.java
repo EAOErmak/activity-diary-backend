@@ -5,8 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 public class IpUtils {
 
     /**
-     * Берём реальный IP с учётом прокси/nginx (если есть),
-     * но без риска подмены — берём только первый элемент.
+     * Р‘РµСЂС‘Рј СЂРµР°Р»СЊРЅС‹Р№ IP СЃ СѓС‡С‘С‚РѕРј РїСЂРѕРєСЃРё/nginx (РµСЃР»Рё РµСЃС‚СЊ),
+     * РЅРѕ Р±РµР· СЂРёСЃРєР° РїРѕРґРјРµРЅС‹ вЂ” Р±РµСЂС‘Рј С‚РѕР»СЊРєРѕ РїРµСЂРІС‹Р№ СЌР»РµРјРµРЅС‚.
      */
     public static String getClientIp(HttpServletRequest request) {
 

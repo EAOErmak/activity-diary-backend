@@ -16,7 +16,7 @@ public final class GoalCompletenessCalculator {
 
     private static final int MAX = 200;
 
-    // Веса (можешь менять)
+    // Р’РµСЃР° (РјРѕР¶РµС€СЊ РјРµРЅСЏС‚СЊ)
     private static final double W_DURATION = 0.5;
     private static final double W_METRICS = 0.5;
 
@@ -32,10 +32,10 @@ public final class GoalCompletenessCalculator {
         double total;
 
         if (goal.getMetricGoals() == null || goal.getMetricGoals().isEmpty()) {
-            // если метрик-целей нет, считаем только duration
+            // РµСЃР»Рё РјРµС‚СЂРёРє-С†РµР»РµР№ РЅРµС‚, СЃС‡РёС‚Р°РµРј С‚РѕР»СЊРєРѕ duration
             total = durationPct;
         } else if (goal.getExpectedDurationMin() == null || goal.getExpectedDurationMin() <= 0) {
-            // если duration в goal не задан, считаем только метрики
+            // РµСЃР»Рё duration РІ goal РЅРµ Р·Р°РґР°РЅ, СЃС‡РёС‚Р°РµРј С‚РѕР»СЊРєРѕ РјРµС‚СЂРёРєРё
             total = metricsPct;
         } else {
             total = W_DURATION * durationPct + W_METRICS * metricsPct;
@@ -64,13 +64,13 @@ public final class GoalCompletenessCalculator {
     }
 
     /**
-     * Metrics% считаем строго по ожидаемым unit’ам из goal:
+     * Metrics% СЃС‡РёС‚Р°РµРј СЃС‚СЂРѕРіРѕ РїРѕ РѕР¶РёРґР°РµРјС‹Рј unitвЂ™Р°Рј РёР· goal:
      *
-     * - Группируем actual по (metricTypeId -> (unitId -> actualValue))
-     * - Для каждой метрики goal:
-     *     ожидаемые unit’ы = mg.values
-     *     actual берём только по этим unit’ам (если нет — 0)
-     * - Итоговый процент: взвешенно по expectedValue (чтобы большие expected имели больший вес)
+     * - Р“СЂСѓРїРїРёСЂСѓРµРј actual РїРѕ (metricTypeId -> (unitId -> actualValue))
+     * - Р”Р»СЏ РєР°Р¶РґРѕР№ РјРµС‚СЂРёРєРё goal:
+     *     РѕР¶РёРґР°РµРјС‹Рµ unitвЂ™С‹ = mg.values
+     *     actual Р±РµСЂС‘Рј С‚РѕР»СЊРєРѕ РїРѕ СЌС‚РёРј unitвЂ™Р°Рј (РµСЃР»Рё РЅРµС‚ вЂ” 0)
+     * - РС‚РѕРіРѕРІС‹Р№ РїСЂРѕС†РµРЅС‚: РІР·РІРµС€РµРЅРЅРѕ РїРѕ expectedValue (С‡С‚РѕР±С‹ Р±РѕР»СЊС€РёРµ expected РёРјРµР»Рё Р±РѕР»СЊС€РёР№ РІРµСЃ)
      */
     private static int calcMetricsPct(DiaryEntryGoal goal, DiaryEntry entry) {
         if (goal.getMetricGoals() == null || goal.getMetricGoals().isEmpty()) return 0;
@@ -100,7 +100,7 @@ public final class GoalCompletenessCalculator {
                 double pct = ((double) actualVal / expected) * 100.0;
                 int pctClamped = clamp((int) Math.round(pct));
 
-                // вес = expected (взвешенное среднее)
+                // РІРµСЃ = expected (РІР·РІРµС€РµРЅРЅРѕРµ СЃСЂРµРґРЅРµРµ)
                 totalExpected += expected;
                 weightedSumPct += (double) expected * pctClamped;
             }
@@ -113,11 +113,11 @@ public final class GoalCompletenessCalculator {
     }
 
     /**
-     * Строим actual значения:
+     * РЎС‚СЂРѕРёРј actual Р·РЅР°С‡РµРЅРёСЏ:
      * metricTypeId -> unitId -> sum(value)
      *
-     * Если в entry есть несколько одинаковых unit (по идее у тебя unique на unit в EntryMetricValue),
-     * но суммирование всё равно безопасно.
+     * Р•СЃР»Рё РІ entry РµСЃС‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ РѕРґРёРЅР°РєРѕРІС‹С… unit (РїРѕ РёРґРµРµ Сѓ С‚РµР±СЏ unique РЅР° unit РІ EntryMetricValue),
+     * РЅРѕ СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ РІСЃС‘ СЂР°РІРЅРѕ Р±РµР·РѕРїР°СЃРЅРѕ.
      */
     private static Map<Long, Map<Long, Integer>> buildActualMap(DiaryEntry entry) {
         Map<Long, Map<Long, Integer>> res = new HashMap<>();

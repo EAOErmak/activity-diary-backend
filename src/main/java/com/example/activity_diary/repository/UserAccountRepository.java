@@ -26,4 +26,3 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
             @Param("providerId") String providerId
     );
 }
-

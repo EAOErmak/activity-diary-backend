@@ -9,7 +9,7 @@ import lombok.*;
 @Table(
         name = "entry_template_metric_value",
         uniqueConstraints = {
-                // unit уникален в рамках одной templateMetric
+                // unit СѓРЅРёРєР°Р»РµРЅ РІ СЂР°РјРєР°С… РѕРґРЅРѕР№ templateMetric
                 @UniqueConstraint(name = "uk_tpl_metric_value_unit", columnNames = {"template_metric_id", "unit_id"})
         },
         indexes = {
@@ -22,17 +22,17 @@ import lombok.*;
 @AllArgsConstructor
 public class EntryTemplateMetricValue extends BaseEntity {
 
-    /** К какой метрике-шаблону относится значение */
+    /** Рљ РєР°РєРѕР№ РјРµС‚СЂРёРєРµ-С€Р°Р±Р»РѕРЅСѓ РѕС‚РЅРѕСЃРёС‚СЃСЏ Р·РЅР°С‡РµРЅРёРµ */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "template_metric_id", nullable = false)
     private EntryTemplateMetric templateMetric;
 
-    /** Единица измерения (мл, раз, км и т.п.) */
+    /** Р•РґРёРЅРёС†Р° РёР·РјРµСЂРµРЅРёСЏ (РјР», СЂР°Р·, РєРј Рё С‚.Рї.) */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "unit_id", nullable = false)
     private DictionaryItem unit;
 
-    /** Значение в выбранных единицах */
+    /** Р—РЅР°С‡РµРЅРёРµ РІ РІС‹Р±СЂР°РЅРЅС‹С… РµРґРёРЅРёС†Р°С… */
     @Column(nullable = false)
     private Integer value;
 

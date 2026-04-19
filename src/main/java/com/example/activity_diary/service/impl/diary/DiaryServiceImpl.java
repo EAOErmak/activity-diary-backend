@@ -81,7 +81,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         Instant effectiveNow = (now != null) ? now : Instant.now();
 
-        // ВАЖНО: список всегда должен быть НЕ null
+        // Р’РђР–РќРћ: СЃРїРёСЃРѕРє РІСЃРµРіРґР° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РќР• null
         var normalizedTags = DiaryEntryTagFilterNormalizer.normalize(tags);
 
         return diaryRepository.findListByUserIdFilteredAndTags(
@@ -133,15 +133,15 @@ public class DiaryServiceImpl implements DiaryService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
-        // 1) Нормализуем описание
+        // 1) РќРѕСЂРјР°Р»РёР·СѓРµРј РѕРїРёСЃР°РЅРёРµ
         String desc = dto.getDescription() == null ? null : dto.getDescription().trim();
 
-        // 2) Жёстко требуем непустое описание
+        // 2) Р–С‘СЃС‚РєРѕ С‚СЂРµР±СѓРµРј РЅРµРїСѓСЃС‚РѕРµ РѕРїРёСЃР°РЅРёРµ
         if (desc == null || desc.isBlank()) {
             throw new BadRequestException("Description is required");
         }
 
-        // 3) Резолвим теги и требуем хотя бы 1
+        // 3) Р РµР·РѕР»РІРёРј С‚РµРіРё Рё С‚СЂРµР±СѓРµРј С…РѕС‚СЏ Р±С‹ 1
         DiaryEntry entry = DiaryEntry.create(
                 user,
                 dto.getWhenStarted(),

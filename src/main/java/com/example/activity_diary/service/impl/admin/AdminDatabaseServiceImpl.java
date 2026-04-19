@@ -2,7 +2,7 @@ package com.example.activity_diary.service.impl.admin;
 
 import com.example.activity_diary.entity.enums.TableType;
 import com.example.activity_diary.exception.types.BadRequestException;
-import com.example.activity_diary.security.DesktopUserBootstrap;
+import com.example.activity_diary.platform.desktop.security.DesktopUserBootstrap;
 import com.example.activity_diary.service.admin.AdminDatabaseService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;

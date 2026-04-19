@@ -15,4 +15,3 @@ public class DiaryEntryViewDto {
     private Instant whenEnded;
     private String firstTag;
 }
-

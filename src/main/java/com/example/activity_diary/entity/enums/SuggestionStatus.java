@@ -5,4 +5,3 @@ public enum SuggestionStatus {
     APPROVED,
     REJECTED
 }
-

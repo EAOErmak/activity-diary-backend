@@ -4,7 +4,7 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.enums.ProviderType;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.repository.UserAccountRepository;
-import com.example.activity_diary.security.CurrentUserProvider;
+import com.example.activity_diary.core.usercontext.CurrentUserProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

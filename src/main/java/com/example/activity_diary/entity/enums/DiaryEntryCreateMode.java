@@ -1,6 +1,6 @@
 package com.example.activity_diary.entity.enums;
 
 public enum DiaryEntryCreateMode {
-    NORMAL,        // текущее поведение (как сейчас)
-    CONFIRM_GOAL   // при подтверждении goal -> сразу WIN
+    NORMAL,        // С‚РµРєСѓС‰РµРµ РїРѕРІРµРґРµРЅРёРµ (РєР°Рє СЃРµР№С‡Р°СЃ)
+    CONFIRM_GOAL   // РїСЂРё РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРё goal -> СЃСЂР°Р·Сѓ WIN
 }

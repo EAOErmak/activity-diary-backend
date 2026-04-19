@@ -31,4 +31,3 @@ public interface DictionaryService {
 
     List<DictionaryResponseDto> getAll(Role role);
 }
-

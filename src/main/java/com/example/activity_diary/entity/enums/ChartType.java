@@ -12,4 +12,3 @@ public enum ChartType {
     SLEEP_SCORE_PER_ENTRY,
     DURATION_PER_ENTRY,
 }
-

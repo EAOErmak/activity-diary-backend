@@ -8,6 +8,6 @@ import lombok.Data;
 public class EntryTemplateMetricValueViewDto {
     Long id;
     Long unitId;
-    String unitName; // можно null
+    String unitName; // РјРѕР¶РЅРѕ null
     Long value;
 }

@@ -46,11 +46,11 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
     }
 
     /**
-     * Агрегируем метрики по ключу (metricTypeId, unitId):
-     * sumInc = сумма value внутри записи
-     * countInc = сколько значений сложили (для среднего)
+     * РђРіСЂРµРіРёСЂСѓРµРј РјРµС‚СЂРёРєРё РїРѕ РєР»СЋС‡Сѓ (metricTypeId, unitId):
+     * sumInc = СЃСѓРјРјР° value РІРЅСѓС‚СЂРё Р·Р°РїРёСЃРё
+     * countInc = СЃРєРѕР»СЊРєРѕ Р·РЅР°С‡РµРЅРёР№ СЃР»РѕР¶РёР»Рё (РґР»СЏ СЃСЂРµРґРЅРµРіРѕ)
      *
-     * Потом эту дельту пишем в 5 бакетов по whenStarted (UTC).
+     * РџРѕС‚РѕРј СЌС‚Сѓ РґРµР»СЊС‚Сѓ РїРёС€РµРј РІ 5 Р±Р°РєРµС‚РѕРІ РїРѕ whenStarted (UTC).
      */
     @Transactional
     @Override
@@ -72,7 +72,7 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
 
         Long userId = entry.getUser().getId();
 
-        // 1) bucket_start по UTC от whenStarted
+        // 1) bucket_start РїРѕ UTC РѕС‚ whenStarted
         LocalDate day = entry.getWhenStarted().atZone(ZoneOffset.UTC).toLocalDate();
         LocalDate weekStart = day.with(TemporalAdjusters.previousOrSame(MONDAY));
         LocalDate monthStart = day.withDayOfMonth(1);
@@ -82,7 +82,7 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
                 ? LocalDate.of(year, 1, 1)
                 : LocalDate.of(year, 7, 1);
 
-        // 2) собрать дельты по ключу (metricTypeId, unitId) внутри ОДНОЙ записи
+        // 2) СЃРѕР±СЂР°С‚СЊ РґРµР»СЊС‚С‹ РїРѕ РєР»СЋС‡Сѓ (metricTypeId, unitId) РІРЅСѓС‚СЂРё РћР”РќРћР™ Р·Р°РїРёСЃРё
         Map<Key, Delta> deltas = new HashMap<>();
 
         for (EntryMetric metric : entry.getMetrics()) {
@@ -108,7 +108,7 @@ public class MetricUsageAggServiceImpl implements MetricUsageAggService {
 
         if (deltas.isEmpty()) return;
 
-        // 3) применить дельты в 5 бакетов
+        // 3) РїСЂРёРјРµРЅРёС‚СЊ РґРµР»СЊС‚С‹ РІ 5 Р±Р°РєРµС‚РѕРІ
         for (Map.Entry<Key, Delta> e : deltas.entrySet()) {
             Key key = e.getKey();
             Delta d = e.getValue();

@@ -88,7 +88,7 @@ public class GoalGetServiceImpl implements GoalGetService {
             throw new BadRequestException("to must be >= from");
         }
 
-        // нормализуем к границам недель (Пн..Вс) чтобы фронту было удобнее
+        // РЅРѕСЂРјР°Р»РёР·СѓРµРј Рє РіСЂР°РЅРёС†Р°Рј РЅРµРґРµР»СЊ (РџРЅ..Р’СЃ) С‡С‚РѕР±С‹ С„СЂРѕРЅС‚Сѓ Р±С‹Р»Рѕ СѓРґРѕР±РЅРµРµ
         LocalDate fromMonday = from.with(DayOfWeek.MONDAY);
         LocalDate toSunday = to.with(DayOfWeek.SUNDAY);
 

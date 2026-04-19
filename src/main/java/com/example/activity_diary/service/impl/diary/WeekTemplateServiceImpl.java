@@ -105,7 +105,7 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
         tpl.getItems().clear();
         if (items == null || items.isEmpty()) return;
 
-        // max 7, dayOfWeek 1..7, уникальные dayOfWeek
+        // max 7, dayOfWeek 1..7, СѓРЅРёРєР°Р»СЊРЅС‹Рµ dayOfWeek
         if (items.size() > 7) throw new BadRequestException("Week template can't have more than 7 days");
 
         Set<Integer> dowSet = new HashSet<>();
@@ -149,4 +149,3 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
         return u;
     }
 }
-

@@ -7,7 +7,7 @@ public class EntryMetricValueGoalDto {
     Long id;
 
     Long unitId;
-    String unitName; // если надо
+    String unitName; // РµСЃР»Рё РЅР°РґРѕ
 
     Integer expectedValue;
 }

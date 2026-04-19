@@ -61,7 +61,7 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
         Long userId = entry.getUser().getId();
         Instant startedAt = entry.getWhenStarted();
 
-        // у тебя duration уже в минутах
+        // Сѓ С‚РµР±СЏ duration СѓР¶Рµ РІ РјРёРЅСѓС‚Р°С…
         long durationMinutes = entry.getDuration() == null ? 0L : entry.getDuration().longValue() * direction;
 
         // UTC
@@ -81,7 +81,7 @@ public class TagUsageAggServiceImpl implements TagUsageAggService {
 
             Long tagId = tag.getId();
 
-            // +1 запись и +duration минут в 5 бакетов
+            // +1 Р·Р°РїРёСЃСЊ Рё +duration РјРёРЅСѓС‚ РІ 5 Р±Р°РєРµС‚РѕРІ
             repo.addDelta(userId, tagId, "DAY", day, direction, durationMinutes);
             repo.addDelta(userId, tagId, "WEEK", weekStart, direction, durationMinutes);
             repo.addDelta(userId, tagId, "MONTH", monthStart, direction, durationMinutes);

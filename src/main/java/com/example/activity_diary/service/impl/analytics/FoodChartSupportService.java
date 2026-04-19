@@ -44,11 +44,11 @@ public class FoodChartSupportService {
             "g",
             "gram",
             "grams",
-            "гр",
-            "г",
-            "грамм",
-            "грамма",
-            "граммы"
+            "РіСЂ",
+            "Рі",
+            "РіСЂР°РјРј",
+            "РіСЂР°РјРјР°",
+            "РіСЂР°РјРјС‹"
     );
     private static final Comparator<DiaryEntry> ENTRY_ORDER = Comparator
             .comparing(DiaryEntry::getWhenStarted, Comparator.nullsLast(Comparator.naturalOrder()))

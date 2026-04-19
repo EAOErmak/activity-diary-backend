@@ -64,5 +64,5 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 bootJar {
-    archiveFileName = 'activity-diary-desktop.jar'
+    archiveFileName = 'activity-diary-backend.jar'
 }

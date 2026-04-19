@@ -30,7 +30,7 @@ public interface GoalGetMapper {
     // =========================
 
     @Mapping(target = "metricTypeId", source = "metricType.id")
-    @Mapping(target = "metricTypeName", source = "metricType.label") // ты говорил label
+    @Mapping(target = "metricTypeName", source = "metricType.label") // С‚С‹ РіРѕРІРѕСЂРёР» label
     @Mapping(target = "values", source = "values")
     EntryMetricGoalDto toMetricGoalDto(EntryMetricGoal mg);
 
@@ -42,7 +42,7 @@ public interface GoalGetMapper {
 
     @Mapping(target = "unitId", source = "unit.id")
     @Mapping(target = "unitName", source = "unit.label")
-    // ВАЖНО: поле в DTO должно называться expectedValue (как у тебя) или пропиши правильное имя
+    // Р’РђР–РќРћ: РїРѕР»Рµ РІ DTO РґРѕР»Р¶РЅРѕ РЅР°Р·С‹РІР°С‚СЊСЃСЏ expectedValue (РєР°Рє Сѓ С‚РµР±СЏ) РёР»Рё РїСЂРѕРїРёС€Рё РїСЂР°РІРёР»СЊРЅРѕРµ РёРјСЏ
     @Mapping(target = "expectedValue", source = "expectedValue")
     EntryMetricValueGoalDto toMetricValueGoalDto(EntryMetricValueGoal vg);
 

@@ -11,4 +11,3 @@ public class EntryMetricValueResponseDto {
     private String unitName;
     private Integer value;
 }
-

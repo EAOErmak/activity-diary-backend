@@ -22,4 +22,3 @@ public class EntryMetricCreateDto {
     @Size(min = 1)
     private List<EntryMetricValueCreateDto> values;
 }
-

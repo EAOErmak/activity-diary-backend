@@ -8,8 +8,7 @@ import java.util.List;
 public class EntryMetricGoalDto {
     Long id;
     Long metricTypeId;
-    String metricTypeName; // если надо
+    String metricTypeName; // РµСЃР»Рё РЅР°РґРѕ
 
     List<EntryMetricValueGoalDto> values;
 }
-

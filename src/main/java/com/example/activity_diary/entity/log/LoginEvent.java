@@ -25,5 +25,3 @@ public class LoginEvent extends BaseEntity {
     @Column(nullable = false)
     private boolean success = false;
 }
-
-

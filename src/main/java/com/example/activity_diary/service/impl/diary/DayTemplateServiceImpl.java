@@ -103,12 +103,12 @@ public class DayTemplateServiceImpl implements DayTemplateService {
     }
 
     private void applyItemsReplace(Long userId, DayTemplate tpl, List<DayTemplateItemDto> items) {
-        // 1) очистить старые items
+        // 1) РѕС‡РёСЃС‚РёС‚СЊ СЃС‚Р°СЂС‹Рµ items
         tpl.getItems().clear();
 
         if (items == null || items.isEmpty()) return;
 
-        // 2) валидация positions (уникальные и >0)
+        // 2) РІР°Р»РёРґР°С†РёСЏ positions (СѓРЅРёРєР°Р»СЊРЅС‹Рµ Рё >0)
         Set<Integer> posSet = new HashSet<>();
         for (var it : items) {
             if (it.getEntryTemplateId() == null) throw new BadRequestException("entryTemplateId is required");
@@ -116,7 +116,7 @@ public class DayTemplateServiceImpl implements DayTemplateService {
             if (!posSet.add(it.getPosition())) throw new BadRequestException("duplicate position in day template");
         }
 
-        // 3) загрузить все DiaryEntryTemplate одним запросом (и только пользователя)
+        // 3) Р·Р°РіСЂСѓР·РёС‚СЊ РІСЃРµ DiaryEntryTemplate РѕРґРЅРёРј Р·Р°РїСЂРѕСЃРѕРј (Рё С‚РѕР»СЊРєРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ)
         List<Long> ids = items.stream().map(DayTemplateItemDto::getEntryTemplateId).toList();
         Map<Long, DiaryEntryTemplate> byId = entryTemplateRepository
                 .findAllByIdInAndUser_Id(ids, userId)
@@ -149,4 +149,3 @@ public class DayTemplateServiceImpl implements DayTemplateService {
         return u;
     }
 }
-

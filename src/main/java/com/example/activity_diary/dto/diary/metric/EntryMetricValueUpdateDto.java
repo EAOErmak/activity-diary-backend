@@ -17,4 +17,3 @@ public class EntryMetricValueUpdateDto {
     @Positive
     private Integer value;
 }
-

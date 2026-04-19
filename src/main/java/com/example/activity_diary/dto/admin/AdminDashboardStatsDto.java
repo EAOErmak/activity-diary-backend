@@ -15,4 +15,3 @@ public class AdminDashboardStatsDto {
     private long entriesToday;
     private long entriesLast7Days;
 }
-

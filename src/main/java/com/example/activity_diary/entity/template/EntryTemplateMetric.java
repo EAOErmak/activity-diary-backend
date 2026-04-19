@@ -24,20 +24,20 @@ import java.util.Set;
 @EntityListeners(AuditingEntityListener.class)
 public class EntryTemplateMetric extends BaseEntity {
 
-    /** К какому DiaryEntryTemplate принадлежит метрика-шаблон */
+    /** Рљ РєР°РєРѕРјСѓ DiaryEntryTemplate РїСЂРёРЅР°РґР»РµР¶РёС‚ РјРµС‚СЂРёРєР°-С€Р°Р±Р»РѕРЅ */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "template_id", nullable = false)
     @JsonIgnore
     private DiaryEntryTemplate template;
 
-    /** Тип метрики (шаги, калории, вода и т.п.) */
+    /** РўРёРї РјРµС‚СЂРёРєРё (С€Р°РіРё, РєР°Р»РѕСЂРёРё, РІРѕРґР° Рё С‚.Рї.) */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "metric_type_id", nullable = false)
     private DictionaryItem metricType;
 
     /**
-     * Значения метрики в разных единицах (unit).
-     * Пример: metricType=Вода, unit=мл, value=2000
+     * Р—РЅР°С‡РµРЅРёСЏ РјРµС‚СЂРёРєРё РІ СЂР°Р·РЅС‹С… РµРґРёРЅРёС†Р°С… (unit).
+     * РџСЂРёРјРµСЂ: metricType=Р’РѕРґР°, unit=РјР», value=2000
      */
     @OneToMany(
             mappedBy = "templateMetric",
@@ -64,8 +64,8 @@ public class EntryTemplateMetric extends BaseEntity {
     /* ---------- DOMAIN LOGIC ---------- */
 
     /**
-     * Добавляет unit->value внутрь метрики-шаблона.
-     * Важно: unit уникален в рамках одной метрики (доп. constraint на таблице values).
+     * Р”РѕР±Р°РІР»СЏРµС‚ unit->value РІРЅСѓС‚СЂСЊ РјРµС‚СЂРёРєРё-С€Р°Р±Р»РѕРЅР°.
+     * Р’Р°Р¶РЅРѕ: unit СѓРЅРёРєР°Р»РµРЅ РІ СЂР°РјРєР°С… РѕРґРЅРѕР№ РјРµС‚СЂРёРєРё (РґРѕРї. constraint РЅР° С‚Р°Р±Р»РёС†Рµ values).
      */
     public void addValue(DictionaryItem unit, Integer value) {
         if (unit == null)
@@ -99,12 +99,12 @@ public class EntryTemplateMetric extends BaseEntity {
         this.metricType = newType;
     }
 
-    /** Прикрепляет метрику к шаблону (используется фабрикой и DiaryEntryTemplate.addMetric) */
+    /** РџСЂРёРєСЂРµРїР»СЏРµС‚ РјРµС‚СЂРёРєСѓ Рє С€Р°Р±Р»РѕРЅСѓ (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С„Р°Р±СЂРёРєРѕР№ Рё DiaryEntryTemplate.addMetric) */
     void attachTo(DiaryEntryTemplate template) {
         this.template = template;
     }
 
-    /** Отвязывает метрику от шаблона (используется DiaryEntryTemplate.removeMetric) */
+    /** РћС‚РІСЏР·С‹РІР°РµС‚ РјРµС‚СЂРёРєСѓ РѕС‚ С€Р°Р±Р»РѕРЅР° (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ DiaryEntryTemplate.removeMetric) */
     void detach() {
         this.template = null;
     }

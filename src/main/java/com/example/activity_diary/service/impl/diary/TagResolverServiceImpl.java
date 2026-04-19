@@ -44,7 +44,7 @@ public class TagResolverServiceImpl implements TagResolverService {
 
         User userRef = userRepository.getReferenceById(userId);
 
-        // 1) нормализуем и убираем дубли (сохраняем порядок)
+        // 1) РЅРѕСЂРјР°Р»РёР·СѓРµРј Рё СѓР±РёСЂР°РµРј РґСѓР±Р»Рё (СЃРѕС…СЂР°РЅСЏРµРј РїРѕСЂСЏРґРѕРє)
         LinkedHashSet<String> names = rawNames.stream()
                 .map(diaryDescriptionTagPolicy::normalizeTagName)
                 .filter(diaryDescriptionTagPolicy::isValidTagName)
@@ -52,7 +52,7 @@ public class TagResolverServiceImpl implements TagResolverService {
 
         if (names.isEmpty()) return Collections.emptySet();
 
-        // 2) одним запросом берём существующие теги
+        // 2) РѕРґРЅРёРј Р·Р°РїСЂРѕСЃРѕРј Р±РµСЂС‘Рј СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ С‚РµРіРё
         List<Tag> existing = tagRepository.findByNameIn(names);
         Map<String, Tag> byName = existing.stream()
                 .collect(Collectors.toMap(Tag::getName, t -> t));
@@ -63,7 +63,7 @@ public class TagResolverServiceImpl implements TagResolverService {
             Tag tag = byName.get(name);
 
             if (tag == null) {
-                // 3) создаём PENDING (race-safe на UNIQUE)
+                // 3) СЃРѕР·РґР°С‘Рј PENDING (race-safe РЅР° UNIQUE)
                 try {
                     tag = tagRepository.save(Tag.builder()
                             .name(name)
@@ -71,21 +71,21 @@ public class TagResolverServiceImpl implements TagResolverService {
                             .createdBy(userRef)
                             .build());
                 } catch (DataIntegrityViolationException e) {
-                    // кто-то создал параллельно
+                    // РєС‚Рѕ-С‚Рѕ СЃРѕР·РґР°Р» РїР°СЂР°Р»Р»РµР»СЊРЅРѕ
                     tag = tagRepository.findByName(name).orElseThrow(() -> e);
                 }
             } else {
-                // 4) запрещаем REJECTED
+                // 4) Р·Р°РїСЂРµС‰Р°РµРј REJECTED
                 if (tag.getStatus() == TagStatus.REJECTED) {
                     throw new IllegalArgumentException("Tag is rejected: " + name);
                 }
 
-                // 5) если PENDING — считаем в suggestion (опционально)
+                // 5) РµСЃР»Рё PENDING вЂ” СЃС‡РёС‚Р°РµРј РІ suggestion (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ)
             }
 
             result.add(tag);
 
-            // 6) гарантируем user_tag (для автокомплита и настроек пользователя)
+            // 6) РіР°СЂР°РЅС‚РёСЂСѓРµРј user_tag (РґР»СЏ Р°РІС‚РѕРєРѕРјРїР»РёС‚Р° Рё РЅР°СЃС‚СЂРѕРµРє РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ)
             UserTagId id = new UserTagId(userId, tag.getId());
             if (!userTagRepository.existsById(id)) {
                 userTagRepository.save(UserTag.builder()
@@ -99,4 +99,3 @@ public class TagResolverServiceImpl implements TagResolverService {
         return result;
     }
 }
-

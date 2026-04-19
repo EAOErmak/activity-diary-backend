@@ -36,13 +36,13 @@ public class DayGoal extends BaseEntity {
     private WeekGoal weekGoal;
 
     /**
-     * 1..7 (например: Пн=1 ... Вс=7) — удобно для WeekTemplate.
+     * 1..7 (РЅР°РїСЂРёРјРµСЂ: РџРЅ=1 ... Р’СЃ=7) вЂ” СѓРґРѕР±РЅРѕ РґР»СЏ WeekTemplate.
      */
     @Column(name = "day_index", nullable = false)
     private Integer dayIndex;
 
     /**
-     * Если ты привязываешь к конкретной дате — заполняй.
+     * Р•СЃР»Рё С‚С‹ РїСЂРёРІСЏР·С‹РІР°РµС€СЊ Рє РєРѕРЅРєСЂРµС‚РЅРѕР№ РґР°С‚Рµ вЂ” Р·Р°РїРѕР»РЅСЏР№.
      */
     @Column(name = "target_date")
     private LocalDate targetDate;

@@ -1,10 +1,9 @@
 package com.example.activity_diary.entity.enums;
 
 public enum TagStatus {
-    PROPOSED,    // создан пользователем
-    APPROVED,    // подтверждён разработчиком
-    DEPRECATED,  // устарел
+    PROPOSED,    // СЃРѕР·РґР°РЅ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
+    APPROVED,    // РїРѕРґС‚РІРµСЂР¶РґС‘РЅ СЂР°Р·СЂР°Р±РѕС‚С‡РёРєРѕРј
+    DEPRECATED,  // СѓСЃС‚Р°СЂРµР»
     PENDING,
-    REJECTED     // мусор / опечатка
+    REJECTED     // РјСѓСЃРѕСЂ / РѕРїРµС‡Р°С‚РєР°
 }
-

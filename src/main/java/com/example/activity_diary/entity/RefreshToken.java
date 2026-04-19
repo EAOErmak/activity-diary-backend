@@ -36,7 +36,7 @@ public class RefreshToken extends BaseEntity {
     @Column(nullable = false)
     private boolean revoked = false;
 
-    // ✅ ссылка на новый token при ротации
+    // вњ… СЃСЃС‹Р»РєР° РЅР° РЅРѕРІС‹Р№ token РїСЂРё СЂРѕС‚Р°С†РёРё
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "replaced_by_id")
     private RefreshToken replacedBy;

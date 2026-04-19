@@ -33,7 +33,7 @@ public class EntryMetricValueGoal extends BaseEntity {
     @JoinColumn(name = "unit_id", nullable = false)
     private DictionaryItem unit;
 
-    // ожидаемое значение (snapshot)
+    // РѕР¶РёРґР°РµРјРѕРµ Р·РЅР°С‡РµРЅРёРµ (snapshot)
     @Column(name = "expected_value", nullable = false)
     private Integer expectedValue;
 

@@ -25,4 +25,3 @@ public class EntryMetricUpdateDto {
     @Size(min = 1)
     private List<EntryMetricValueUpdateDto> values;
 }
-

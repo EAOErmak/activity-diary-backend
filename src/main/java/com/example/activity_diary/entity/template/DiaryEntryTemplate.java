@@ -123,4 +123,3 @@ public class DiaryEntryTemplate extends BaseEntity {
                 .build();
     }
 }
-

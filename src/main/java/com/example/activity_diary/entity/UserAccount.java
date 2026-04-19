@@ -28,11 +28,11 @@ public class UserAccount extends BaseEntity {
     @Column(nullable = false, length = 16)
     private ProviderType provider;
 
-    // Идентификатор у провайдера
+    // РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Сѓ РїСЂРѕРІР°Р№РґРµСЂР°
     @Column(name = "provider_id", nullable = false, length = 128)
     private String providerId;
 
-    // Пароль ТОЛЬКО для LOCAL
+    // РџР°СЂРѕР»СЊ РўРћР›Р¬РљРћ РґР»СЏ LOCAL
     @JsonIgnore
     @Column(length = 255)
     private String passwordHash;

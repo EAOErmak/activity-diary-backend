@@ -15,4 +15,3 @@ public interface WeekTemplateMapper {
     @Mapping(target = "dayTemplateName", source = "dayTemplate.name")
     TemplateDayItemViewDto toViewItem(TemplateDayItem item);
 }
-

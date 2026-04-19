@@ -24,4 +24,3 @@ public interface EntryTemplateMetricMapper {
     EntryTemplateMetricValueViewDto toValueViewDto(EntryTemplateMetricValue entity);
     List<EntryTemplateMetricValueViewDto> toValueViewDtos(List<EntryTemplateMetricValue> entities);
 }
-
