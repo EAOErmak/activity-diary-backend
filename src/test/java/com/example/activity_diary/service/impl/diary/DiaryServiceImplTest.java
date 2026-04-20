@@ -15,7 +15,6 @@ import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.EntryStatus;
-import com.example.activity_diary.entity.enums.UiStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
@@ -44,9 +43,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -100,8 +97,7 @@ class DiaryServiceImplTest {
         assertThrows(BadRequestException.class, () ->
                 service.getMyEntriesFiltered(
                         1L,
-                        UiStatus.ACTIVE,
-                        Instant.parse("2026-02-10T10:00:00Z"),
+                        EntryStatus.ACTIVE,
                         List.of("tag"),
                         from,
                         to,
@@ -113,14 +109,12 @@ class DiaryServiceImplTest {
     void getMyEntriesFiltered_normalizesTags() {
         Slice<DiaryEntryViewDto> emptySlice = new SliceImpl<>(List.of());
         when(diaryRepository.findListByUserIdFilteredAndTags(
-                anyLong(), any(), any(), anyBoolean(), anyList(), anyInt(), any(), any(), any()))
+                anyLong(), any(), anyList(), anyInt(), any(), any(), any()))
                 .thenReturn(emptySlice);
 
-        Instant now = Instant.parse("2026-02-10T10:00:00Z");
         service.getMyEntriesFiltered(
                 7L,
-                UiStatus.ACTIVE,
-                now,
+                EntryStatus.ACTIVE,
                 java.util.Arrays.asList("  Foo ", "", null, "BAR", "foo"),
                 null,
                 null,
@@ -129,14 +123,11 @@ class DiaryServiceImplTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<String>> tagsCaptor = ArgumentCaptor.forClass(List.class);
-        ArgumentCaptor<Boolean> hasTagsCaptor = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<Integer> tagCountCaptor = ArgumentCaptor.forClass(Integer.class);
 
         verify(diaryRepository).findListByUserIdFilteredAndTags(
                 eq(7L),
-                eq(UiStatus.ACTIVE),
-                eq(now),
-                hasTagsCaptor.capture(),
+                eq(EntryStatus.ACTIVE),
                 tagsCaptor.capture(),
                 tagCountCaptor.capture(),
                 isNull(),
@@ -146,8 +137,34 @@ class DiaryServiceImplTest {
 
         List<String> normalized = tagsCaptor.getValue();
         assertEquals(List.of("foo", "bar"), normalized);
-        assertTrue(hasTagsCaptor.getValue());
         assertEquals(2, tagCountCaptor.getValue());
+    }
+
+    @Test
+    void getMyEntriesFiltered_withoutTags_usesQueryWithoutTagFilter() {
+        Slice<DiaryEntryViewDto> emptySlice = new SliceImpl<>(List.of());
+        when(diaryRepository.findListByUserIdFiltered(anyLong(), any(), any(), any(), any()))
+                .thenReturn(emptySlice);
+
+        service.getMyEntriesFiltered(
+                7L,
+                EntryStatus.FINISHED,
+                java.util.Arrays.asList(" ", null),
+                null,
+                null,
+                PageRequest.of(0, 10)
+        );
+
+        verify(diaryRepository).findListByUserIdFiltered(
+                eq(7L),
+                eq(EntryStatus.FINISHED),
+                isNull(),
+                isNull(),
+                any()
+        );
+        verify(diaryRepository, never()).findListByUserIdFilteredAndTags(
+                anyLong(), any(), anyList(), anyInt(), any(), any(), any()
+        );
     }
 
     @Test

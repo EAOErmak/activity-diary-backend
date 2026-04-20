@@ -4,7 +4,6 @@ import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 
 import com.example.activity_diary.entity.enums.EntryStatus;
-import com.example.activity_diary.entity.enums.UiStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
@@ -149,16 +148,51 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     """)
     List<DiaryEntryViewDto> findAllByUserId(@Param("userId") Long userId);
 
+    @Query("""
+        select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
+            d.id,
+            d.status,
+            d.whenStarted,
+            d.whenEnded,
+            (
+                select t.name
+                from DiaryEntry d2
+                join d2.tags t
+                where d2.id = d.id
+                  and t.id = (
+                      select min(t2.id)
+                      from DiaryEntry d3
+                      join d3.tags t2
+                      where d3.id = d.id
+                  )
+            )
+        )
+        from DiaryEntry d
+        where d.user.id = :userId
+          and d.status <> com.example.activity_diary.entity.enums.EntryStatus.DELETED
+          and (:status is null or d.status = :status)
+          and d.whenStarted >= coalesce(:from, d.whenStarted)
+          and d.whenStarted <= coalesce(:to, d.whenStarted)
+    """)
+    Slice<DiaryEntryViewDto> findListByUserIdFiltered(
+            @Param("userId") Long userId,
+            @Param("status") EntryStatus status,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            Pageable pageable
+    );
 
     @Query("""
         select new com.example.activity_diary.dto.diary.DiaryEntryViewDto(
-            d.id, d.status, d.whenStarted, d.whenEnded,
+            d.id,
+            d.status,
+            d.whenStarted,
+            d.whenEnded,
             coalesce(
                 (
                     select tMatch.name
                     from DiaryEntry d2 join d2.tags tMatch
                     where d2.id = d.id
-                      and :hasTags = true
                       and lower(tMatch.name) in (:tagNames)
                       and tMatch.id = (
                           select min(t2.id)
@@ -182,56 +216,25 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
         from DiaryEntry d
         where d.user.id = :userId
           and d.status <> com.example.activity_diary.entity.enums.EntryStatus.DELETED
-    
-          and (
-            :uiStatus is null
-            or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.FINISHED
-                and d.status = com.example.activity_diary.entity.enums.EntryStatus.FINISHED)
-            or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.FAILED
-                and d.status = com.example.activity_diary.entity.enums.EntryStatus.FAILED)
-            or (
-                d.status not in (
-                    com.example.activity_diary.entity.enums.EntryStatus.FINISHED,
-                    com.example.activity_diary.entity.enums.EntryStatus.FAILED,
-                    com.example.activity_diary.entity.enums.EntryStatus.DELETED
-                )
-                and (
-                    (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.PLANNED and :now < d.whenStarted)
-                    or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.ACTIVE
-                        and d.whenStarted <= :now
-                        and d.whenEnded >= :now)
-                    or (:uiStatus = com.example.activity_diary.entity.enums.UiStatus.OVERDUE and d.whenEnded < :now)
-                )
-            )
-          )
-    
+          and (:status is null or d.status = :status)
           and d.whenStarted >= coalesce(:from, d.whenStarted)
-          and d.whenStarted <= coalesce(:to,   d.whenStarted)
-    
+          and d.whenStarted <= coalesce(:to, d.whenStarted)
           and (
-            :hasTags = false
-            or (
               select count(distinct tt.id)
               from DiaryEntry d6 join d6.tags tt
               where d6.id = d.id
                 and lower(tt.name) in (:tagNames)
-            ) = :tagCount
-          )
+          ) = :tagCount
     """)
     Slice<DiaryEntryViewDto> findListByUserIdFilteredAndTags(
             @Param("userId") Long userId,
-            @Param("uiStatus") UiStatus uiStatus,
-            @Param("now") Instant now,
-
-            @Param("hasTags") boolean hasTags,
+            @Param("status") EntryStatus status,
             @Param("tagNames") List<String> tagNames,
             @Param("tagCount") Integer tagCount,
-
             @Param("from") Instant from,
             @Param("to") Instant to,
             Pageable pageable
     );
-
 
 
     @Query("""

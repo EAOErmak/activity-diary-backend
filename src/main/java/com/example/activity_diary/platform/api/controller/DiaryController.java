@@ -5,7 +5,7 @@ import com.example.activity_diary.dto.diary.DiaryEntryCreateDto;
 import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.dto.diary.DiaryEntryViewDto;
 import com.example.activity_diary.dto.diary.DiaryEntryUpdateDto;
-import com.example.activity_diary.entity.enums.UiStatus;
+import com.example.activity_diary.entity.enums.EntryStatus;
 import com.example.activity_diary.core.usercontext.CurrentUserProvider;
 import com.example.activity_diary.service.diary.DiaryService;
 import jakarta.validation.Valid;
@@ -38,8 +38,8 @@ public class DiaryController {
     public ResponseEntity<ApiResponse<Slice<DiaryEntryViewDto>>> myEntries(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "9") @Min(1) @Max(100) int size,
-            @RequestParam(required = false) UiStatus uiStatus,
-            @RequestParam(required = false) Instant now,
+            @RequestParam(required = false, name = "uiStatus") EntryStatus status,
+            @RequestParam(required = false, name = "now") Instant ignoredNow,
             @RequestParam(required = false, name = "tags") List<String> tags,
             @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to
@@ -50,11 +50,10 @@ public class DiaryController {
                         .and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))
         );
 
-        Instant effectiveNow = (now != null) ? now : Instant.now();
         Long userId = currentUserProvider.getCurrentUserId();
 
         return ResponseEntity.ok(ApiResponse.success(
-                diaryService.getMyEntriesFiltered(userId, uiStatus, effectiveNow, tags, from, to, pageable)
+                diaryService.getMyEntriesFiltered(userId, status, tags, from, to, pageable)
         ));
     }
 

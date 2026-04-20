@@ -16,7 +16,6 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DiaryEntryCreateMode;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.EntryStatus;
-import com.example.activity_diary.entity.enums.UiStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DiaryRepository;
@@ -69,8 +68,7 @@ public class DiaryServiceImpl implements DiaryService {
     @Override
     public Slice<DiaryEntryViewDto> getMyEntriesFiltered(
             Long userId,
-            UiStatus uiStatus,
-            Instant now,
+            EntryStatus status,
             List<String> tags,
             Instant from,
             Instant to,
@@ -80,19 +78,26 @@ public class DiaryServiceImpl implements DiaryService {
             throw new BadRequestException("from must be <= to");
         }
 
-        Instant effectiveNow = (now != null) ? now : Instant.now();
 
 
         // Р’РђР–РќРћ: СЃРїРёСЃРѕРє РІСЃРµРіРґР° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РќР• null
         var normalizedTags = DiaryEntryTagFilterNormalizer.normalize(tags);
 
-        return diaryRepository.findListByUserIdFilteredAndTags(
+        if (normalizedTags.hasTags()) {
+            return diaryRepository.findListByUserIdFilteredAndTags(
+                    userId,
+                    status,
+                    normalizedTags.tagNames(),
+                    normalizedTags.tagCount(),
+                    from,
+                    to,
+                    pageable
+            );
+        }
+
+        return diaryRepository.findListByUserIdFiltered(
                 userId,
-                uiStatus == null ? null : UiStatus.valueOf(uiStatus.name()),
-                effectiveNow,
-                normalizedTags.hasTags(),
-                normalizedTags.tagNames(),
-                normalizedTags.tagCount(),
+                status,
                 from,
                 to,
                 pageable
