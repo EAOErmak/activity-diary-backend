@@ -142,7 +142,7 @@ class DiaryMineFiltersIntegrationTest {
     }
 
     @Test
-    void myEntries_withoutUiStatus_returnsAllNonDeletedEntries() throws Exception {
+    void myEntries_withoutStatus_returnsAllNonDeletedEntries() throws Exception {
         JsonNode content = responseContent(
                 mockMvc.perform(get("/api/diary/mine")
                                 .param("now", FIXED_NOW.toString()))
@@ -162,11 +162,11 @@ class DiaryMineFiltersIntegrationTest {
     }
 
     @Test
-    void myEntries_withUiStatus_returnsOnlyMatchingEntries() throws Exception {
+    void myEntries_withStatus_returnsOnlyMatchingEntries() throws Exception {
         JsonNode activeContent = responseContent(
                 mockMvc.perform(get("/api/diary/mine")
                                 .param("now", FIXED_NOW.toString())
-                                .param("uiStatus", "ACTIVE"))
+                                .param("status", "ACTIVE"))
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.success").value(true))
                         .andReturn()
@@ -178,7 +178,7 @@ class DiaryMineFiltersIntegrationTest {
         JsonNode finishedContent = responseContent(
                 mockMvc.perform(get("/api/diary/mine")
                                 .param("now", FIXED_NOW.toString())
-                                .param("uiStatus", "FINISHED"))
+                                .param("status", "FINISHED"))
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.success").value(true))
                         .andReturn()
@@ -223,7 +223,7 @@ class DiaryMineFiltersIntegrationTest {
         JsonNode content = responseContent(
                 mockMvc.perform(get("/api/diary/mine")
                                 .param("now", FIXED_NOW.toString())
-                                .param("uiStatus", "ACTIVE")
+                                .param("status", "ACTIVE")
                                 .param("tags", "#focus", "#fitness")
                                 .param("from", FIXED_NOW.minus(Duration.ofHours(1)).toString())
                                 .param("to", FIXED_NOW.toString()))
