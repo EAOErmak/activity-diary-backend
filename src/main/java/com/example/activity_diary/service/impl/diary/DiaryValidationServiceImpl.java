@@ -26,6 +26,8 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
     private static final int MAX_DESCRIPTION_LENGTH = 1000;
     private static final short MIN_MOOD = 1;
     private static final short MAX_MOOD = 5;
+    private static final String DUPLICATE_UNIT_MESSAGE =
+            "Duplicate unit is not allowed inside one metric";
 
     @Override
     public void validateCreate(DiaryEntryCreateDto dto) {
@@ -154,7 +156,9 @@ public class DiaryValidationServiceImpl implements DiaryValidationService {
             }
 
             if (!unitIds.add(unitId)) {
-                throw new BadRequestException("Duplicate unitId " + unitId + " for metricTypeId: " + metricTypeId);
+                throw new BadRequestException(
+                        DUPLICATE_UNIT_MESSAGE + ": unitId " + unitId + ", metricTypeId " + metricTypeId
+                );
             }
 
             validateMetricValue(metricTypeId, unitId, value);

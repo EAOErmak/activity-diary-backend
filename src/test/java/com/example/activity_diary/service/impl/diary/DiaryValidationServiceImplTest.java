@@ -12,8 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -75,6 +77,40 @@ class DiaryValidationServiceImplTest {
     }
 
     @Test
+    void validateCreate_metricWithDifferentUnits_doesNotThrow() {
+        DiaryEntryCreateDto dto = validCreateDto();
+        dto.setMetrics(List.of(metricCreate(1L, 10L, 11L)));
+
+        assertDoesNotThrow(() -> service.validateCreate(dto));
+    }
+
+    @Test
+    void validateCreate_sameUnitAcrossDifferentMetrics_doesNotThrow() {
+        DiaryEntryCreateDto dto = validCreateDto();
+        EntryMetricCreateDto metric1 = metricCreate(1L, 10L);
+        EntryMetricCreateDto metric2 = metricCreate(2L, 10L);
+        dto.setMetrics(List.of(metric1, metric2));
+
+        assertDoesNotThrow(() -> service.validateCreate(dto));
+    }
+
+    @Test
+    void validateCreate_duplicateUnitInsideSameMetric_throwsBadRequest() {
+        DiaryEntryCreateDto dto = validCreateDto();
+        dto.setMetrics(List.of(metricCreate(1L, 10L, 10L)));
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> service.validateCreate(dto)
+        );
+
+        assertEquals(
+                "Duplicate unit is not allowed inside one metric: unitId 10, metricTypeId 1",
+                exception.getMessage()
+        );
+    }
+
+    @Test
     void validateUpdate_duplicateMetricTypeId_doesNotThrow() {
         DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
         dto.setWhenStarted(Instant.parse("2026-02-10T10:00:00Z"));
@@ -84,6 +120,22 @@ class DiaryValidationServiceImplTest {
         dto.setMetrics(List.of(metricUpdate(1L, 10L), metricUpdate(1L, 11L)));
 
         assertDoesNotThrow(() -> service.validateUpdate(dto));
+    }
+
+    @Test
+    void validateUpdate_duplicateUnitInsideSameMetric_throwsBadRequest() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        dto.setMetrics(List.of(metricUpdate(1L, 10L, 10L)));
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> service.validateUpdate(dto)
+        );
+
+        assertEquals(
+                "Duplicate unit is not allowed inside one metric: unitId 10, metricTypeId 1",
+                exception.getMessage()
+        );
     }
 
     @Test
@@ -123,25 +175,35 @@ class DiaryValidationServiceImplTest {
         return dto;
     }
 
-    private static EntryMetricCreateDto metricCreate(Long metricTypeId, Long unitId) {
-        EntryMetricValueCreateDto value = new EntryMetricValueCreateDto();
-        value.setUnitId(unitId);
-        value.setValue(BigDecimal.ONE);
+    private static EntryMetricCreateDto metricCreate(Long metricTypeId, Long... unitIds) {
+        List<EntryMetricValueCreateDto> values = Arrays.stream(unitIds)
+                .map(unitId -> {
+                    EntryMetricValueCreateDto value = new EntryMetricValueCreateDto();
+                    value.setUnitId(unitId);
+                    value.setValue(BigDecimal.ONE);
+                    return value;
+                })
+                .toList();
 
         EntryMetricCreateDto metric = new EntryMetricCreateDto();
         metric.setMetricTypeId(metricTypeId);
-        metric.setValues(List.of(value));
+        metric.setValues(values);
         return metric;
     }
 
-    private static EntryMetricUpdateDto metricUpdate(Long metricTypeId, Long unitId) {
-        EntryMetricValueUpdateDto value = new EntryMetricValueUpdateDto();
-        value.setUnitId(unitId);
-        value.setValue(BigDecimal.ONE);
+    private static EntryMetricUpdateDto metricUpdate(Long metricTypeId, Long... unitIds) {
+        List<EntryMetricValueUpdateDto> values = Arrays.stream(unitIds)
+                .map(unitId -> {
+                    EntryMetricValueUpdateDto value = new EntryMetricValueUpdateDto();
+                    value.setUnitId(unitId);
+                    value.setValue(BigDecimal.ONE);
+                    return value;
+                })
+                .toList();
 
         EntryMetricUpdateDto metric = new EntryMetricUpdateDto();
         metric.setMetricTypeId(metricTypeId);
-        metric.setValues(List.of(value));
+        metric.setValues(values);
         return metric;
     }
 }

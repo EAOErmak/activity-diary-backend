@@ -49,6 +49,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -181,6 +182,22 @@ class DiaryServiceImplTest {
 
         assertThrows(BadRequestException.class, () -> service.create(dto, 10L));
         verify(validationService).validateCreate(dto);
+    }
+
+    @Test
+    void create_validationError_doesNotHitPersistence() {
+        DiaryEntryCreateDto dto = validCreateDto("desc");
+        doThrow(new BadRequestException("Duplicate unit is not allowed inside one metric"))
+                .when(validationService).validateCreate(dto);
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> service.create(dto, 10L)
+        );
+
+        assertEquals("Duplicate unit is not allowed inside one metric", exception.getMessage());
+        verify(userRepository, never()).findById(anyLong());
+        verify(diaryRepository, never()).save(any(DiaryEntry.class));
     }
 
     @Test
@@ -333,6 +350,22 @@ class DiaryServiceImplTest {
 
         verify(dictionaryRepository).findAllById(Set.of(20L, 10L, 200L, 100L));
         verify(dictionaryRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    void update_validationError_doesNotHitPersistence() {
+        DiaryEntryUpdateDto dto = new DiaryEntryUpdateDto();
+        doThrow(new BadRequestException("Duplicate unit is not allowed inside one metric"))
+                .when(validationService).validateUpdate(dto);
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> service.update(1L, dto, 10L)
+        );
+
+        assertEquals("Duplicate unit is not allowed inside one metric", exception.getMessage());
+        verify(diaryRepository, never()).findGraphByIdAndUser_Id(anyLong(), anyLong());
+        verify(diaryRepository, never()).save(any(DiaryEntry.class));
     }
 
     @Test
