@@ -59,4 +59,6 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
     boolean existsByTagId(Long tagId);
 
     void deleteByTagIdAndMetricNameId(Long tagId, Long metricNameId);
+
+    void deleteByTagId(Long tagId);
 }

@@ -134,6 +134,64 @@ class AdminTagMetricLinkServiceImplTest {
         assertEquals("Distance", result.getFirst().getMetricNameLabel());
     }
 
+    @Test
+    void replaceLinks_replacesFullMetricSet() {
+        Tag tag = tag(7L);
+        DictionaryItem distance = dictionaryItem(10L, DictionaryType.METRIC_NAME, "Distance");
+        DictionaryItem weight = dictionaryItem(20L, DictionaryType.METRIC_NAME, "Weight");
+
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+        when(dictionaryRepository.findAllById(java.util.Set.of(20L, 10L))).thenReturn(List.of(weight, distance));
+        when(tagMetricLinkRepository.saveAllAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<TagMetricLinkResponseDto> result = service.replaceLinks(7L, List.of(20L, 10L));
+
+        assertEquals(List.of(10L, 20L), result.stream().map(TagMetricLinkResponseDto::getMetricNameId).toList());
+        verify(tagMetricLinkRepository).deleteByTagId(7L);
+        verify(tagMetricLinkRepository).saveAllAndFlush(any());
+    }
+
+    @Test
+    void replaceLinks_allowsEmptyMetricSet() {
+        Tag tag = tag(7L);
+
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+
+        List<TagMetricLinkResponseDto> result = service.replaceLinks(7L, List.of());
+
+        assertEquals(List.of(), result);
+        verify(tagMetricLinkRepository).deleteByTagId(7L);
+        verify(tagMetricLinkRepository, never()).saveAllAndFlush(any());
+    }
+
+    @Test
+    void replaceLinks_deduplicatesMetricIds() {
+        Tag tag = tag(7L);
+        DictionaryItem distance = dictionaryItem(10L, DictionaryType.METRIC_NAME, "Distance");
+
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+        when(dictionaryRepository.findAllById(java.util.Set.of(10L))).thenReturn(List.of(distance));
+        when(tagMetricLinkRepository.saveAllAndFlush(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<TagMetricLinkResponseDto> result = service.replaceLinks(7L, List.of(10L, 10L));
+
+        assertEquals(List.of(10L), result.stream().map(TagMetricLinkResponseDto::getMetricNameId).toList());
+    }
+
+    @Test
+    void replaceLinks_wrongDictionaryType_throwsBadRequest() {
+        Tag tag = tag(7L);
+        DictionaryItem unit = dictionaryItem(10L, DictionaryType.METRIC_UNIT, "kg");
+
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+        when(dictionaryRepository.findAllById(java.util.Set.of(10L))).thenReturn(List.of(unit));
+
+        assertThrows(BadRequestException.class, () -> service.replaceLinks(7L, List.of(10L)));
+        verify(tagMetricLinkRepository, never()).deleteByTagId(7L);
+    }
+
     private static Tag tag(Long id) {
         Tag tag = Tag.builder()
                 .name("tag")

@@ -16,7 +16,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +75,29 @@ public class AdminTagMetricLinkServiceImpl implements AdminTagMetricLinkService 
                 .toList();
     }
 
+    @Override
+    public List<TagMetricLinkResponseDto> replaceLinks(Long tagId, Collection<Long> metricNameIds) {
+        Tag tag = getTag(tagId);
+        List<DictionaryItem> metricNames = getMetricNames(metricNameIds);
+
+        tagMetricLinkRepository.deleteByTagId(tag.getId());
+
+        if (metricNames.isEmpty()) {
+            return List.of();
+        }
+
+        List<TagMetricLink> savedLinks = tagMetricLinkRepository.saveAllAndFlush(
+                metricNames.stream()
+                        .sorted(Comparator.comparing(DictionaryItem::getLabel))
+                        .map(metricName -> TagMetricLink.create(tag, metricName))
+                        .toList()
+        );
+
+        return savedLinks.stream()
+                .map(this::toDto)
+                .toList();
+    }
+
     private Tag getTag(Long tagId) {
         if (tagId == null) {
             throw new BadRequestException("tagId is required");
@@ -91,6 +120,41 @@ public class AdminTagMetricLinkServiceImpl implements AdminTagMetricLinkService 
         }
 
         return metricName;
+    }
+
+    private List<DictionaryItem> getMetricNames(Collection<Long> metricNameIds) {
+        if (metricNameIds == null) {
+            throw new BadRequestException("metricNameIds is required");
+        }
+
+        Set<Long> ids = new LinkedHashSet<>();
+        for (Long metricNameId : metricNameIds) {
+            if (metricNameId == null) {
+                throw new BadRequestException("metricNameId is required");
+            }
+            ids.add(metricNameId);
+        }
+
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, DictionaryItem> byId = dictionaryRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(DictionaryItem::getId, item -> item));
+
+        if (byId.size() != ids.size()) {
+            throw new BadRequestException("Metric name not found");
+        }
+
+        for (DictionaryItem metricName : byId.values()) {
+            if (metricName.getType() != DictionaryType.METRIC_NAME) {
+                throw new BadRequestException("Metric name must be of type METRIC_NAME");
+            }
+        }
+
+        return ids.stream()
+                .map(byId::get)
+                .toList();
     }
 
     private TagMetricLinkResponseDto toDto(TagMetricLink link) {

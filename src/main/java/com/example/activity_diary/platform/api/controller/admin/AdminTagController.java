@@ -1,13 +1,17 @@
 package com.example.activity_diary.platform.api.controller.admin;
 
 import com.example.activity_diary.dto.ApiResponse;
+import com.example.activity_diary.dto.admin.TagMetricLinkReplaceRequestDto;
+import com.example.activity_diary.dto.admin.TagMetricLinkResponseDto;
 import com.example.activity_diary.dto.diary.TagCreateDto;
 import com.example.activity_diary.dto.diary.TagDto;
+import com.example.activity_diary.service.admin.AdminTagMetricLinkService;
 import com.example.activity_diary.service.admin.AdminTagService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -16,16 +20,21 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/tags")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Validated
 @Slf4j
 public class AdminTagController {
 
     private final AdminTagService adminTagService;
+    private final AdminTagMetricLinkService adminTagMetricLinkService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<TagDto>> create(
@@ -71,5 +80,26 @@ public class AdminTagController {
     public void deprecate(@PathVariable Long id) {
         log.info("Admin tag deprecate requested: id={}", id);
         adminTagService.deprecate(id);
+    }
+
+    @GetMapping("/{id}/metrics")
+    public ResponseEntity<ApiResponse<List<TagMetricLinkResponseDto>>> getMetrics(
+            @PathVariable @Positive Long id
+    ) {
+        log.info("Admin tag metrics requested: tagId={}", id);
+        return ResponseEntity.ok(
+                ApiResponse.ok(adminTagMetricLinkService.getMetricsByTagId(id))
+        );
+    }
+
+    @PutMapping("/{id}/metrics")
+    public ResponseEntity<ApiResponse<List<TagMetricLinkResponseDto>>> replaceMetrics(
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody TagMetricLinkReplaceRequestDto dto
+    ) {
+        log.info("Admin tag metrics replace requested: tagId={}, metricNameIds={}", id, dto.getMetricNameIds());
+        return ResponseEntity.ok(
+                ApiResponse.ok(adminTagMetricLinkService.replaceLinks(id, dto))
+        );
     }
 }
