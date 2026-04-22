@@ -9,6 +9,7 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
+import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.diary.TagService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class TagServiceImpl implements TagService {
     private final TagRepository tagRepository;
     private final DiaryRepository diaryRepository;
     private final TagChartTypeLinkRepository tagChartTypeLinkRepository;
+    private final TagMetricLinkRepository tagMetricLinkRepository;
     private final TagMapper tagMapper;
 
     @Override
@@ -87,6 +89,10 @@ public class TagServiceImpl implements TagService {
 
         if (tagChartTypeLinkRepository.existsByTagId(tagId)) {
             throw new BadRequestException("Tag cannot be deleted because it has chart type links");
+        }
+
+        if (tagMetricLinkRepository.existsByTagId(tagId)) {
+            throw new BadRequestException("Tag cannot be deleted because it has metric links");
         }
     }
 

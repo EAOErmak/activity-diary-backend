@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +54,7 @@ public class DiaryServiceImpl implements DiaryService {
     private final DiaryEntryMapper mapper;
     private final TagUsageAggService tagUsageAggService;
     private final MetricUsageAggService metricUsageAggService;
+    private final TagMetricService tagMetricService;
 
     @Override
     @Transactional(readOnly = true)
@@ -157,13 +159,15 @@ public class DiaryServiceImpl implements DiaryService {
                 desc
         );
 
+        Set<Tag> tags = resolveRequiredTags(userId, desc);
+
         if (mode == DiaryEntryCreateMode.CONFIRM_GOAL) {
             entry.forceStatusWin();
         }
 
-        applyMetricsOnCreate(dto.getMetrics(), entry);
+        applyMetricsOnCreate(dto.getMetrics(), entry, tags);
 
-        entry.setTags(resolveRequiredTags(userId, desc));
+        entry.setTags(tags);
 
         DiaryEntry saved = diaryRepository.save(entry);
 
@@ -178,6 +182,22 @@ public class DiaryServiceImpl implements DiaryService {
         validationService.validateUpdate(dto);
 
         DiaryEntry entry = getEntryGraphForUser(id, userId);
+
+        Set<Tag> targetTags = entry.getTags();
+        String desc = null;
+        if (dto.getDescription() != null) {
+            desc = dto.getDescription().trim();
+            targetTags = resolveRequiredTags(userId, desc);
+        }
+
+        List<ResolvedMetric> resolvedMetrics = null;
+        if (dto.getMetrics() != null) {
+            resolvedMetrics = resolveMetricsForUpdate(dto.getMetrics());
+            tagMetricService.validateMetricTypesAllowedForTags(targetTags, metricTypeIds(resolvedMetrics));
+        } else if (dto.getDescription() != null && !entry.getMetrics().isEmpty()) {
+            tagMetricService.validateMetricTypesAllowedForTags(targetTags, currentMetricTypeIds(entry));
+        }
+
         metricUsageAggService.onEntryDeleted(entry);
         tagUsageAggService.onEntryDeleted(entry);
 
@@ -186,8 +206,8 @@ public class DiaryServiceImpl implements DiaryService {
         }
 
         if (dto.getDescription() != null) {
-            entry.updateDescription(dto.getDescription());
-            entry.setTags(resolveRequiredTags(userId, entry.getDescription()));
+            entry.updateDescription(desc);
+            entry.setTags(targetTags);
         }
 
         if (dto.getMood() != null) {
@@ -198,8 +218,8 @@ public class DiaryServiceImpl implements DiaryService {
             entry.changeStatus(dto.getStatus());
         }
 
-        if (dto.getMetrics() != null) {
-            replaceMetrics(entry, dto.getMetrics());
+        if (resolvedMetrics != null) {
+            replaceMetrics(entry, resolvedMetrics);
         }
 
         DiaryEntry saved = diaryRepository.save(entry);
@@ -224,10 +244,18 @@ public class DiaryServiceImpl implements DiaryService {
 
     private void applyMetricsOnCreate(
             List<EntryMetricCreateDto> metrics,
-            DiaryEntry entry
+            DiaryEntry entry,
+            Set<Tag> tags
     ) {
         if (metrics == null || metrics.isEmpty()) return;
+        List<ResolvedMetric> resolvedMetrics = resolveMetricsForCreate(metrics);
+        tagMetricService.validateMetricTypesAllowedForTags(tags, metricTypeIds(resolvedMetrics));
+        applyResolvedMetrics(entry, resolvedMetrics);
+    }
+
+    private List<ResolvedMetric> resolveMetricsForCreate(List<EntryMetricCreateDto> metrics) {
         Map<Long, DictionaryItem> dictionaryItems = loadDictionaryItems(collectDictionaryIdsForCreate(metrics));
+        List<ResolvedMetric> resolvedMetrics = new ArrayList<>();
 
         for (EntryMetricCreateDto dto : metrics.stream()
                 .sorted(Comparator.comparing(EntryMetricCreateDto::getMetricTypeId))
@@ -239,7 +267,7 @@ public class DiaryServiceImpl implements DiaryService {
                     DictionaryType.METRIC_NAME
             );
 
-            EntryMetric metric = EntryMetric.create(entry, metricType);
+            List<ResolvedMetricValue> values = new ArrayList<>();
 
             for (EntryMetricValueCreateDto valueDto : dto.getValues().stream()
                     .sorted(Comparator.comparing(EntryMetricValueCreateDto::getUnitId))
@@ -251,19 +279,22 @@ public class DiaryServiceImpl implements DiaryService {
                         DictionaryType.METRIC_UNIT
                 );
 
-                metric.addValue(unit, valueDto.getValue());
+                values.add(new ResolvedMetricValue(unit, valueDto.getValue()));
             }
 
-            entry.addMetric(metric);
+            resolvedMetrics.add(new ResolvedMetric(metricType, values));
         }
+
+        return resolvedMetrics;
     }
 
-    private void replaceMetrics(
-            DiaryEntry entry,
-            List<EntryMetricUpdateDto> metrics
-    ) {
-        entry.getMetrics().clear();
+    private List<ResolvedMetric> resolveMetricsForUpdate(List<EntryMetricUpdateDto> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            return List.of();
+        }
+
         Map<Long, DictionaryItem> dictionaryItems = loadDictionaryItems(collectDictionaryIdsForUpdate(metrics));
+        List<ResolvedMetric> resolvedMetrics = new ArrayList<>();
 
         for (EntryMetricUpdateDto dto : metrics) {
 
@@ -273,7 +304,7 @@ public class DiaryServiceImpl implements DiaryService {
                     DictionaryType.METRIC_NAME
             );
 
-            EntryMetric metric = EntryMetric.create(entry, metricType);
+            List<ResolvedMetricValue> values = new ArrayList<>();
 
             for (EntryMetricValueUpdateDto valueDto : dto.getValues().stream()
                     .sorted(Comparator.comparing(EntryMetricValueUpdateDto::getUnitId))
@@ -285,7 +316,29 @@ public class DiaryServiceImpl implements DiaryService {
                         DictionaryType.METRIC_UNIT
                 );
 
-                metric.addValue(unit, valueDto.getValue());
+                values.add(new ResolvedMetricValue(unit, valueDto.getValue()));
+            }
+
+            resolvedMetrics.add(new ResolvedMetric(metricType, values));
+        }
+
+        return resolvedMetrics;
+    }
+
+    private void replaceMetrics(
+            DiaryEntry entry,
+            List<ResolvedMetric> resolvedMetrics
+    ) {
+        entry.getMetrics().clear();
+        applyResolvedMetrics(entry, resolvedMetrics);
+    }
+
+    private void applyResolvedMetrics(DiaryEntry entry, List<ResolvedMetric> resolvedMetrics) {
+        for (ResolvedMetric resolvedMetric : resolvedMetrics) {
+            EntryMetric metric = EntryMetric.create(entry, resolvedMetric.metricType());
+
+            for (ResolvedMetricValue value : resolvedMetric.values()) {
+                metric.addValue(value.unit(), value.value());
             }
 
             entry.addMetric(metric);
@@ -315,6 +368,10 @@ public class DiaryServiceImpl implements DiaryService {
     }
 
     private Map<Long, DictionaryItem> loadDictionaryItems(Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Map.of();
+        }
+
         return dictionaryRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(DictionaryItem::getId, item -> item));
     }
@@ -345,8 +402,28 @@ public class DiaryServiceImpl implements DiaryService {
         return resolvedTags;
     }
 
+    private List<Long> metricTypeIds(List<ResolvedMetric> metrics) {
+        return metrics.stream()
+                .map(ResolvedMetric::metricType)
+                .map(DictionaryItem::getId)
+                .toList();
+    }
+
+    private List<Long> currentMetricTypeIds(DiaryEntry entry) {
+        return entry.getMetrics().stream()
+                .map(EntryMetric::getMetricType)
+                .map(DictionaryItem::getId)
+                .toList();
+    }
+
     private DiaryEntry getEntryGraphForUser(Long id, Long userId) {
         return diaryRepository.findGraphByIdAndUser_Id(id, userId)
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
+    }
+
+    private record ResolvedMetric(DictionaryItem metricType, List<ResolvedMetricValue> values) {
+    }
+
+    private record ResolvedMetricValue(DictionaryItem unit, java.math.BigDecimal value) {
     }
 }

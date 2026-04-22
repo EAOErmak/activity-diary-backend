@@ -9,6 +9,7 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
+import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,9 @@ class TagServiceImplTest {
 
     @Mock
     private TagChartTypeLinkRepository tagChartTypeLinkRepository;
+
+    @Mock
+    private TagMetricLinkRepository tagMetricLinkRepository;
 
     @Mock
     private TagMapper tagMapper;
@@ -151,12 +155,27 @@ class TagServiceImplTest {
     }
 
     @Test
+    void deleteTag_whenMetricLinkReferencesTag_throwsBadRequest() {
+        Tag tag = Tag.builder().status(TagStatus.APPROVED).build();
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(diaryRepository.existsByTags_Id(1L)).thenReturn(false);
+        when(tagChartTypeLinkRepository.existsByTagId(1L)).thenReturn(false);
+        when(tagMetricLinkRepository.existsByTagId(1L)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> tagService.deleteTag(1L));
+
+        verify(tagRepository, never()).delete(tag);
+    }
+
+    @Test
     void deleteTag_whenNoUnsafeReferences_deletesTag() {
         Tag tag = Tag.builder().status(TagStatus.APPROVED).build();
 
         when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
         when(diaryRepository.existsByTags_Id(1L)).thenReturn(false);
         when(tagChartTypeLinkRepository.existsByTagId(1L)).thenReturn(false);
+        when(tagMetricLinkRepository.existsByTagId(1L)).thenReturn(false);
 
         tagService.deleteTag(1L);
 
@@ -171,6 +190,7 @@ class TagServiceImplTest {
         when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
         when(diaryRepository.existsByTags_Id(1L)).thenReturn(false);
         when(tagChartTypeLinkRepository.existsByTagId(1L)).thenReturn(false);
+        when(tagMetricLinkRepository.existsByTagId(1L)).thenReturn(false);
         doThrow(new DataIntegrityViolationException("constraint"))
                 .when(tagRepository)
                 .flush();

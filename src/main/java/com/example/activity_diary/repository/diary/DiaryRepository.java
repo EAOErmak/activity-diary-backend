@@ -21,6 +21,7 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
     @EntityGraph(attributePaths = {
             "user",
+            "tags",
             "metrics",
             "metrics.metricType",
     })

@@ -23,6 +23,7 @@ import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.service.analytics.MetricUsageAggService;
 import com.example.activity_diary.service.analytics.TagUsageAggService;
 import com.example.activity_diary.service.diary.DiaryValidationService;
+import com.example.activity_diary.service.diary.TagMetricService;
 import com.example.activity_diary.service.diary.TagResolverService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,6 +81,9 @@ class DiaryServiceImplTest {
 
     @Mock
     private MetricUsageAggService metricUsageAggService;
+
+    @Mock
+    private TagMetricService tagMetricService;
 
     @InjectMocks
     private DiaryServiceImpl service;
@@ -275,6 +279,7 @@ class DiaryServiceImplTest {
         assertEquals(List.of(10L, 20L), metricTypeIds);
         verify(dictionaryRepository).findAllById(Set.of(20L, 10L, 200L, 100L));
         verify(dictionaryRepository, never()).findById(anyLong());
+        verify(tagMetricService).validateMetricTypesAllowedForTags(Set.of(tag), List.of(10L, 20L));
     }
 
     @Test
@@ -319,6 +324,7 @@ class DiaryServiceImplTest {
         assertEquals(List.of(100L, 200L), unitIds);
         verify(dictionaryRepository).findAllById(Set.of(10L, 200L, 100L));
         verify(dictionaryRepository, never()).findById(anyLong());
+        verify(tagMetricService).validateMetricTypesAllowedForTags(Set.of(tag), List.of(10L));
     }
 
     @Test
@@ -350,6 +356,61 @@ class DiaryServiceImplTest {
 
         verify(dictionaryRepository).findAllById(Set.of(20L, 10L, 200L, 100L));
         verify(dictionaryRepository, never()).findById(anyLong());
+        verify(tagMetricService).validateMetricTypesAllowedForTags(entry.getTags(), List.of(20L, 10L));
+    }
+
+    @Test
+    void create_metricNotAllowedForTag_throwsBadRequest() {
+        DiaryEntryCreateDto dto = validCreateDto("hello");
+        dto.setMetrics(List.of(metricCreate(10L, 100L, BigDecimal.valueOf(3))));
+
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
+        Set<Tag> tags = Set.of(tag);
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(tags);
+        when(dictionaryRepository.findAllById(Set.of(10L, 100L))).thenReturn(List.of(
+                dictionaryItem(10L, DictionaryType.METRIC_NAME),
+                dictionaryItem(100L, DictionaryType.METRIC_UNIT)
+        ));
+        doThrow(new BadRequestException("Metric 10 is not allowed for selected tag"))
+                .when(tagMetricService)
+                .validateMetricTypesAllowedForTags(tags, List.of(10L));
+
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> service.create(dto, 10L));
+
+        assertEquals("Metric 10 is not allowed for selected tag", exception.getMessage());
+        verify(diaryRepository, never()).save(any(DiaryEntry.class));
+    }
+
+    @Test
+    void create_withMultipleTags_validatesMetricsAgainstAllTags() {
+        DiaryEntryCreateDto dto = validCreateDto("hello");
+        dto.setMetrics(List.of(
+                metricCreate(10L, 100L, BigDecimal.valueOf(3)),
+                metricCreate(30L, 300L, BigDecimal.valueOf(5))
+        ));
+
+        User user = userWithId(10L);
+        Tag firstTag = Tag.builder().name("first").build();
+        Tag secondTag = Tag.builder().name("second").build();
+        Set<Tag> tags = Set.of(firstTag, secondTag);
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(tags);
+        when(dictionaryRepository.findAllById(Set.of(10L, 30L, 100L, 300L))).thenReturn(List.of(
+                dictionaryItem(10L, DictionaryType.METRIC_NAME),
+                dictionaryItem(30L, DictionaryType.METRIC_NAME),
+                dictionaryItem(100L, DictionaryType.METRIC_UNIT),
+                dictionaryItem(300L, DictionaryType.METRIC_UNIT)
+        ));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        verify(tagMetricService).validateMetricTypesAllowedForTags(tags, List.of(10L, 30L));
     }
 
     @Test

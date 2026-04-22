@@ -37,6 +37,7 @@
     <include file="db/changelog/changes/create/v1_create_entry_metric_value_goal.xml"/>
     <include file="db/changelog/changes/create/v1_create_metric_name_unit_link.xml"/>
     <include file="db/changelog/changes/create/v1_create_tag_chart_type_link.xml"/>
+    <include file="db/changelog/changes/create/v1_create_tag_metric_link.xml"/>
     <include file="db/changelog/changes/update/v1_convert_metric_values_to_decimal.xml"/>
     <include file="db/changelog/changes/drop/v1_drop_legacy_state_tables.xml"/>
     <include file="db/changelog/changes/drop/v1_drop_legacy_telegram_accounts.xml"/>
