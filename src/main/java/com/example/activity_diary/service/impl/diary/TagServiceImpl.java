@@ -5,10 +5,14 @@ import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.TagStatus;
+import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.diary.DiaryRepository;
+import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.diary.TagService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +23,8 @@ import java.util.List;
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
+    private final DiaryRepository diaryRepository;
+    private final TagChartTypeLinkRepository tagChartTypeLinkRepository;
     private final TagMapper tagMapper;
 
     @Override
@@ -58,6 +64,30 @@ public class TagServiceImpl implements TagService {
     public void deprecate(Long tagId) {
         Tag tag = get(tagId);
         tag.setStatus(TagStatus.DEPRECATED);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTag(Long tagId) {
+        Tag tag = get(tagId);
+        ensureCanDelete(tagId);
+
+        try {
+            tagRepository.delete(tag);
+            tagRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new BadRequestException("Tag cannot be deleted because it is in use");
+        }
+    }
+
+    private void ensureCanDelete(Long tagId) {
+        if (diaryRepository.existsByTags_Id(tagId)) {
+            throw new BadRequestException("Tag cannot be deleted because it is used by diary entries");
+        }
+
+        if (tagChartTypeLinkRepository.existsByTagId(tagId)) {
+            throw new BadRequestException("Tag cannot be deleted because it has chart type links");
+        }
     }
 
     private Tag get(Long id) {

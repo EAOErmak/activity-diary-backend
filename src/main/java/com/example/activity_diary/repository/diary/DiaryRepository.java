@@ -28,6 +28,8 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
     List<DiaryEntry> findAllByUserIdAndTags_Id(Long userId, Long tagId);
 
+    boolean existsByTags_Id(Long tagId);
+
     @Query("""
         select distinct d
         from DiaryEntry d

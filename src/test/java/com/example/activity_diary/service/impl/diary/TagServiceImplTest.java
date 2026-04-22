@@ -5,13 +5,17 @@ import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.TagStatus;
+import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.diary.DiaryRepository;
+import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +23,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +34,12 @@ class TagServiceImplTest {
 
     @Mock
     private TagRepository tagRepository;
+
+    @Mock
+    private DiaryRepository diaryRepository;
+
+    @Mock
+    private TagChartTypeLinkRepository tagChartTypeLinkRepository;
 
     @Mock
     private TagMapper tagMapper;
@@ -99,5 +112,71 @@ class TagServiceImplTest {
         when(tagRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> tagService.approve(99L));
+    }
+
+    @Test
+    void deleteTag_whenTagMissing_throwsNotFound() {
+        when(tagRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> tagService.deleteTag(99L));
+
+        verify(diaryRepository, never()).existsByTags_Id(99L);
+        verify(tagRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteTag_whenDiaryEntryReferencesTag_throwsBadRequest() {
+        Tag tag = Tag.builder().status(TagStatus.APPROVED).build();
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(diaryRepository.existsByTags_Id(1L)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> tagService.deleteTag(1L));
+
+        verify(tagChartTypeLinkRepository, never()).existsByTagId(1L);
+        verify(tagRepository, never()).delete(tag);
+    }
+
+    @Test
+    void deleteTag_whenChartTypeLinkReferencesTag_throwsBadRequest() {
+        Tag tag = Tag.builder().status(TagStatus.APPROVED).build();
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(diaryRepository.existsByTags_Id(1L)).thenReturn(false);
+        when(tagChartTypeLinkRepository.existsByTagId(1L)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> tagService.deleteTag(1L));
+
+        verify(tagRepository, never()).delete(tag);
+    }
+
+    @Test
+    void deleteTag_whenNoUnsafeReferences_deletesTag() {
+        Tag tag = Tag.builder().status(TagStatus.APPROVED).build();
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(diaryRepository.existsByTags_Id(1L)).thenReturn(false);
+        when(tagChartTypeLinkRepository.existsByTagId(1L)).thenReturn(false);
+
+        tagService.deleteTag(1L);
+
+        verify(tagRepository).delete(tag);
+        verify(tagRepository).flush();
+    }
+
+    @Test
+    void deleteTag_whenDatabaseRejectsDelete_throwsBadRequest() {
+        Tag tag = Tag.builder().status(TagStatus.APPROVED).build();
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(diaryRepository.existsByTags_Id(1L)).thenReturn(false);
+        when(tagChartTypeLinkRepository.existsByTagId(1L)).thenReturn(false);
+        doThrow(new DataIntegrityViolationException("constraint"))
+                .when(tagRepository)
+                .flush();
+
+        assertThrows(BadRequestException.class, () -> tagService.deleteTag(1L));
+
+        verify(tagRepository).delete(tag);
     }
 }

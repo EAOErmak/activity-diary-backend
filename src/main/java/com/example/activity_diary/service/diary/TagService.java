@@ -14,4 +14,6 @@ public interface TagService {
     void reject(Long tagId);
 
     void deprecate(Long tagId);
+
+    void deleteTag(Long tagId);
 }

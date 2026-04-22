@@ -25,5 +25,7 @@ public interface TagChartTypeLinkRepository extends JpaRepository<TagChartTypeLi
 
     boolean existsByTagIdAndChartType(Long tagId, ChartType chartType);
 
+    boolean existsByTagId(Long tagId);
+
     void deleteByTagIdAndChartType(Long tagId, ChartType chartType);
 }
