@@ -22,6 +22,11 @@ import java.time.Instant;
 @EntityListeners(AuditingEntityListener.class)
 public class RefreshToken extends BaseEntity {
 
+    @Version
+    @Builder.Default
+    @Column(nullable = false)
+    private long version = 0L;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -46,7 +51,7 @@ public class RefreshToken extends BaseEntity {
     }
 
     public boolean isActive() {
-        return !revoked && !isExpired();
+        return !revoked && replacedBy == null && !isExpired();
     }
 
     public void revoke() {

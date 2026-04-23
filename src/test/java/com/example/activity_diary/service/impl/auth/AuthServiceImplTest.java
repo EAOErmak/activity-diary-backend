@@ -104,8 +104,7 @@ class AuthServiceImplTest {
         assertEquals("alice", result.getUsername());
         assertEquals(7L, result.getUserId());
         assertEquals("USER", result.getRole());
-        verify(refreshTokenService).revoke(stored);
-        verify(refreshTokenService).save(user, "new-refresh");
+        verify(refreshTokenService).rotate(stored, "new-refresh");
     }
 
     @Test
@@ -124,8 +123,7 @@ class AuthServiceImplTest {
         );
 
         assertEquals("Account is disabled", ex.getMessage());
-        verify(refreshTokenService, never()).revoke(stored);
-        verify(refreshTokenService, never()).save(eq(user), anyString());
+        verify(refreshTokenService, never()).rotate(eq(stored), anyString());
     }
 
     @Test
@@ -146,7 +144,6 @@ class AuthServiceImplTest {
         );
 
         assertEquals(true, ex.getMessage().startsWith("Account locked until "));
-        verify(refreshTokenService, never()).revoke(stored);
-        verify(refreshTokenService, never()).save(eq(user), anyString());
+        verify(refreshTokenService, never()).rotate(eq(stored), anyString());
     }
 }

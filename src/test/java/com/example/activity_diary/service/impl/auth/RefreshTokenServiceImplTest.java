@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,6 +88,55 @@ class RefreshTokenServiceImplTest {
         RefreshToken result = service.verify(rawToken);
 
         assertSame(stored, result);
+    }
+
+    @Test
+    void rotate_marksCurrentTokenRevokedAndLinksReplacement() {
+        User user = User.builder().username("user").build();
+        RefreshToken current = RefreshToken.builder()
+                .user(user)
+                .tokenHash("old-token-hash")
+                .expiresAt(Instant.now().plusSeconds(60))
+                .build();
+        Instant expiresAt = Instant.parse("2026-05-01T00:00:00Z");
+
+        when(jwtUtils.extractExpiration("new-token")).thenReturn(Date.from(expiresAt));
+        when(repository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        RefreshToken replacement = service.rotate(current, "new-token");
+
+        assertSame(user, replacement.getUser());
+        assertEquals(digestToBase64("new-token"), replacement.getTokenHash());
+        assertEquals(expiresAt, replacement.getExpiresAt());
+        assertEquals(true, current.isRevoked());
+        assertSame(replacement, current.getReplacedBy());
+        verify(repository).flush();
+    }
+
+    @Test
+    void rotate_whenConcurrentReuseDetected_throwsForbidden() {
+        User user = User.builder().username("user").build();
+        RefreshToken current = RefreshToken.builder()
+                .user(user)
+                .tokenHash("old-token-hash")
+                .expiresAt(Instant.now().plusSeconds(60))
+                .build();
+        Instant expiresAt = Instant.parse("2026-05-01T00:00:00Z");
+
+        when(jwtUtils.extractExpiration("new-token")).thenReturn(Date.from(expiresAt));
+        when(repository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doThrow(new ObjectOptimisticLockingFailureException(RefreshToken.class, 1L))
+                .when(repository)
+                .flush();
+
+        ForbiddenException ex = assertThrows(
+                ForbiddenException.class,
+                () -> service.rotate(current, "new-token")
+        );
+
+        assertEquals("Refresh token has already been used", ex.getMessage());
     }
 
     private static String digestToBase64(String value) {

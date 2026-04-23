@@ -163,16 +163,14 @@ public class AuthServiceImpl implements AuthService {
 
         checkForLock(user);
 
-        refreshTokenService.revoke(stored);
+        String newRefresh = jwtUtils.generateRefreshToken(
+                user.getId(), user.getUsername(), user.getRole().name()
+        );
+        refreshTokenService.rotate(stored, newRefresh);
 
         String newAccess = jwtUtils.generateAccessToken(
                 user.getId(), user.getUsername(), user.getRole().name()
         );
-        String newRefresh = jwtUtils.generateRefreshToken(
-                user.getId(), user.getUsername(), user.getRole().name()
-        );
-
-        refreshTokenService.save(user, newRefresh);
 
         return AuthResponseDto.builder()
                 .accessToken(newAccess)

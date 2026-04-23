@@ -16,11 +16,21 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
         SELECT t FROM RefreshToken t
         WHERE t.tokenHash = :tokenHash
           AND t.revoked = false
+          AND t.replacedBy IS NULL
           AND t.expiresAt > :now
     """)
     Optional<RefreshToken> findActiveByTokenHash(String tokenHash, Instant now);
 
     List<RefreshToken> findAllByUser(User user);
+
+    @Query("""
+        SELECT t FROM RefreshToken t
+        WHERE t.user = :user
+          AND t.revoked = false
+          AND t.replacedBy IS NULL
+          AND t.expiresAt > :now
+    """)
+    List<RefreshToken> findActiveByUser(User user, Instant now);
 
     @Modifying
     @Query("""

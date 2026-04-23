@@ -6,8 +6,12 @@ import com.example.activity_diary.exception.types.ForbiddenException;
 import com.example.activity_diary.repository.RefreshTokenRepository;
 import com.example.activity_diary.platform.web.security.JwtUtils;
 import com.example.activity_diary.platform.web.auth.service.RefreshTokenService;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +24,7 @@ import java.util.Base64;
 
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository repository;
@@ -56,9 +61,35 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
+    public RefreshToken rotate(RefreshToken token, String rawReplacementToken) {
+        if (!token.isActive()) {
+            throw new ForbiddenException("Invalid or expired refresh token");
+        }
+
+        try {
+            RefreshToken replacement = RefreshToken.builder()
+                    .user(token.getUser())
+                    .tokenHash(hash(rawReplacementToken))
+                    .expiresAt(jwtUtils.extractExpiration(rawReplacementToken).toInstant())
+                    .build();
+
+            repository.save(replacement);
+            token.replaceWith(replacement);
+            repository.save(token);
+            repository.flush();
+            return replacement;
+        } catch (ObjectOptimisticLockingFailureException
+                 | OptimisticLockException
+                 | PessimisticLockingFailureException e) {
+            throw new ForbiddenException("Refresh token has already been used");
+        }
+    }
+
+    @Override
     public void revoke(RefreshToken token) {
         token.revoke();
         repository.save(token);
+        repository.flush();
     }
 
     @Override
@@ -69,13 +100,25 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         repository.findActiveByTokenHash(hashed, Instant.now())
                 .ifPresent(token -> {
                     token.revoke();
-                    repository.save(token);
+                    try {
+                        repository.save(token);
+                        repository.flush();
+                    } catch (ObjectOptimisticLockingFailureException
+                             | OptimisticLockException
+                             | PessimisticLockingFailureException e) {
+                        log.debug("Refresh token already rotated or revoked during logout");
+                    }
                 });
     }
 
     @Override
     public void revokeAllByUser(User user) {
         repository.revokeAllByUser(user);
+    }
+
+    @Scheduled(cron = "${auth.refresh.cleanup-cron:0 0 * * * *}")
+    public void deleteExpiredTokens() {
+        repository.deleteAllExpired(Instant.now());
     }
 
     private String hash(String token) {
