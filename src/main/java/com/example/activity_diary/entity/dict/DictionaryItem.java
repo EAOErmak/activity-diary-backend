@@ -1,7 +1,6 @@
 package com.example.activity_diary.entity.dict;
 
 import com.example.activity_diary.entity.base.BaseEntity;
-import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
 import jakarta.persistence.*;
@@ -26,10 +25,6 @@ public class DictionaryItem extends BaseEntity {
 
     @Column(nullable = false)
     private String label;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "chart_type")
-    private ChartType chartType;
 
     @Column(nullable = false)
     @Builder.Default

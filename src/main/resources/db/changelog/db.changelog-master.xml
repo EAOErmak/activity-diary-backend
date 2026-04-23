@@ -42,6 +42,7 @@
     <include file="db/changelog/changes/update/v1_convert_metric_values_to_decimal.xml"/>
     <include file="db/changelog/changes/drop/v1_drop_legacy_state_tables.xml"/>
     <include file="db/changelog/changes/drop/v1_drop_legacy_telegram_accounts.xml"/>
+    <include file="db/changelog/changes/drop/v1_drop_dictionary_item_chart_type.xml"/>
 
     <include file="db/changelog/changes/insert/v1_insertion_test_user.xml"/>
 </databaseChangeLog>

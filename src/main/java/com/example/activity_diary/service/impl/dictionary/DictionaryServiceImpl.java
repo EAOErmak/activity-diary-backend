@@ -46,7 +46,6 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .type(dto.getType())
                 .label(cleanLabel)
                 .allowedRole(dto.getAllowedRole())
-                .chartType(dto.getChartType())
                 .active(true)
                 .build();
 

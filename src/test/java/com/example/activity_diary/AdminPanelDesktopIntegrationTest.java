@@ -172,6 +172,7 @@ class AdminPanelDesktopIntegrationTest {
         long metricNameId = metricName.path("id").asLong();
         assertThat(metricName.path("createdAt").asText()).isNotBlank();
         assertThat(metricName.path("updatedAt").asText()).isNotBlank();
+        assertThat(metricName.has("chartType")).isFalse();
 
         JsonNode metricUnit = readData(
                 mockMvc.perform(post("/api/admin/dict")
@@ -187,6 +188,7 @@ class AdminPanelDesktopIntegrationTest {
                         .andReturn()
         );
         long metricUnitId = metricUnit.path("id").asLong();
+        assertThat(metricUnit.has("chartType")).isFalse();
 
         JsonNode metricNames = readBody(
                 mockMvc.perform(get("/api/admin/dict/METRIC_NAME"))
