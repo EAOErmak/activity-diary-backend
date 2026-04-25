@@ -6,8 +6,8 @@ import com.example.activity_diary.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalTime;
 
 @Entity
@@ -51,7 +51,7 @@ public class DiaryEntryTemplate extends BaseEntity {
             orphanRemoval = true
     )
     @Builder.Default
-    private Set<EntryTemplateMetric> metrics = new HashSet<>();
+    private List<EntryTemplateMetric> metrics = new ArrayList<>();
 
     /* ---------- DOMAIN HELPERS ---------- */
 

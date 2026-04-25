@@ -7,6 +7,7 @@ import com.example.activity_diary.entity.template.EntryTemplateMetricValue;
 
 import org.mapstruct.*;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -16,12 +17,25 @@ public interface EntryTemplateMetricMapper {
     @Mapping(source = "metricType.id", target = "metricTypeId")
     @Mapping(source = "metricType.label", target = "metricTypeName")
     EntryTemplateMetricViewDto toViewDto(EntryTemplateMetric entity);
-    List<EntryTemplateMetricViewDto> toViewDtos(List<EntryTemplateMetric> entities);
+
+    default List<EntryTemplateMetricViewDto> toViewDtos(List<EntryTemplateMetric> entities) {
+        if (entities == null) return null;
+        return entities.stream()
+                .sorted(Comparator.comparing(metric -> metric.getMetricType().getId()))
+                .map(this::toViewDto)
+                .toList();
+    }
 
     // View value
     @Mapping(source = "unit.id", target = "unitId")
     @Mapping(source = "unit.label", target = "unitName")
     EntryTemplateMetricValueViewDto toValueViewDto(EntryTemplateMetricValue entity);
-    List<EntryTemplateMetricValueViewDto> toValueViewDtos(List<EntryTemplateMetricValue> entities);
-}
 
+    default List<EntryTemplateMetricValueViewDto> toValueViewDtos(List<EntryTemplateMetricValue> entities) {
+        if (entities == null) return null;
+        return entities.stream()
+                .sorted(Comparator.comparing(value -> value.getUnit().getId()))
+                .map(this::toValueViewDto)
+                .toList();
+    }
+}

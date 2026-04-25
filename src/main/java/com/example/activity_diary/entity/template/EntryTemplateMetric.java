@@ -8,8 +8,8 @@ import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -45,7 +45,7 @@ public class EntryTemplateMetric extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private Set<EntryTemplateMetricValue> values = new HashSet<>();
+    private List<EntryTemplateMetricValue> values = new ArrayList<>();
 
     /* ---------- FACTORY ---------- */
 

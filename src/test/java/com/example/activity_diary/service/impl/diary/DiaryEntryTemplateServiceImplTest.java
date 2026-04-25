@@ -9,6 +9,7 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.template.DiaryEntryTemplate;
+import com.example.activity_diary.entity.template.EntryTemplateMetric;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.UserRepository;
@@ -16,6 +17,7 @@ import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -31,6 +33,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -133,6 +136,49 @@ class DiaryEntryTemplateServiceImplTest {
     }
 
     @Test
+    void create_sortsMetricsAndValuesByDictionaryItemIdBeforeSaving() {
+        DiaryEntryTemplateCreateDto dto = validCreateDto("tpl", "#desc");
+        dto.setMetrics(List.of(
+                metric(20L, 200L, BigDecimal.valueOf(5), 100L, BigDecimal.valueOf(3)),
+                metric(10L, 300L, BigDecimal.valueOf(7))
+        ));
+
+        User user = userWithId(1L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(diaryEntryTemplateRepository.existsByUser_IdAndNameIgnoreCase(1L, "tpl")).thenReturn(false);
+        when(dictionaryRepository.findAllById(Set.of(20L, 200L, 100L, 10L, 300L)))
+                .thenReturn(List.of(
+                        dictItem(20L, DictionaryType.METRIC_NAME, "m20"),
+                        dictItem(200L, DictionaryType.METRIC_UNIT, "u200"),
+                        dictItem(100L, DictionaryType.METRIC_UNIT, "u100"),
+                        dictItem(10L, DictionaryType.METRIC_NAME, "m10"),
+                        dictItem(300L, DictionaryType.METRIC_UNIT, "u300")
+                ));
+        when(diaryEntryTemplateRepository.save(any(DiaryEntryTemplate.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.create(1L, dto);
+
+        ArgumentCaptor<DiaryEntryTemplate> templateCaptor = ArgumentCaptor.forClass(DiaryEntryTemplate.class);
+        verify(diaryEntryTemplateRepository).save(templateCaptor.capture());
+
+        DiaryEntryTemplate saved = templateCaptor.getValue();
+        assertEquals(
+                List.of(10L, 20L),
+                saved.getMetrics().stream()
+                        .map(metric -> metric.getMetricType().getId())
+                        .toList()
+        );
+        assertEquals(
+                List.of(100L, 200L),
+                saved.getMetrics().get(1).getValues().stream()
+                        .map(value -> value.getUnit().getId())
+                        .toList()
+        );
+    }
+
+    @Test
     void update_duplicateUnitId_throwsBadRequest() {
         DiaryEntryTemplate template = DiaryEntryTemplate.builder()
                 .user(userWithId(1L))
@@ -153,6 +199,52 @@ class DiaryEntryTemplateServiceImplTest {
                 .thenReturn(List.of(metricType, unit));
 
         assertThrows(BadRequestException.class, () -> service.update(1L, 11L, dto));
+    }
+
+    @Test
+    void get_sortsMetricsAndValuesInViewDto() {
+        DiaryEntryTemplate template = DiaryEntryTemplate.create(
+                userWithId(1L),
+                "tpl",
+                (short) 3,
+                "#desc",
+                null,
+                null
+        );
+        template.setId(11L);
+
+        EntryTemplateMetric secondMetric = EntryTemplateMetric.create(
+                template,
+                dictItem(20L, DictionaryType.METRIC_NAME, "m20")
+        );
+        secondMetric.addValue(dictItem(200L, DictionaryType.METRIC_UNIT, "u200"), BigDecimal.valueOf(5));
+        secondMetric.addValue(dictItem(100L, DictionaryType.METRIC_UNIT, "u100"), BigDecimal.valueOf(3));
+        template.addMetric(secondMetric);
+
+        EntryTemplateMetric firstMetric = EntryTemplateMetric.create(
+                template,
+                dictItem(10L, DictionaryType.METRIC_NAME, "m10")
+        );
+        firstMetric.addValue(dictItem(300L, DictionaryType.METRIC_UNIT, "u300"), BigDecimal.valueOf(7));
+        template.addMetric(firstMetric);
+
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(11L, 1L))
+                .thenReturn(Optional.of(template));
+
+        DiaryEntryTemplateViewDto result = service.get(1L, 11L);
+
+        assertEquals(
+                List.of(10L, 20L),
+                result.getMetrics().stream()
+                        .map(metric -> metric.getMetricTypeId())
+                        .toList()
+        );
+        assertEquals(
+                List.of(100L, 200L),
+                result.getMetrics().get(1).getValues().stream()
+                        .map(value -> value.getUnitId())
+                        .toList()
+        );
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueVie
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricViewDto;
 import com.example.activity_diary.entity.*;
 import com.example.activity_diary.entity.dict.DictionaryItem;
+import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.template.DiaryEntryTemplate;
 import com.example.activity_diary.entity.template.EntryTemplateMetric;
 import com.example.activity_diary.exception.types.BadRequestException;
@@ -179,24 +180,53 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
             throw new BadRequestException("Some dictionary items not found");
         }
 
-        for (EntryTemplateMetricUpsertDto m : incoming) {
-            DictionaryItem metricType = dictMap.get(m.getMetricTypeId());
-            EntryTemplateMetric metric = EntryTemplateMetric.create(template, metricType);
+        List<ResolvedTemplateMetric> resolvedMetrics = new ArrayList<>();
 
+        for (EntryTemplateMetricUpsertDto m : incoming) {
+            DictionaryItem metricType = resolveDictionary(dictMap, m.getMetricTypeId(), DictionaryType.METRIC_NAME);
             List<EntryTemplateMetricValueUpsertDto> values =
                     (m.getValues() == null) ? List.of() : m.getValues();
 
             Set<Long> unitIds = new HashSet<>();
+            List<ResolvedTemplateMetricValue> resolvedValues = new ArrayList<>();
             for (EntryTemplateMetricValueUpsertDto v : values) {
                 if (!unitIds.add(v.getUnitId())) {
                     throw new BadRequestException("Duplicate unitId for metricTypeId=" + m.getMetricTypeId());
                 }
-                DictionaryItem unit = dictMap.get(v.getUnitId());
-                metric.addValue(unit, v.getValue());
+                DictionaryItem unit = resolveDictionary(dictMap, v.getUnitId(), DictionaryType.METRIC_UNIT);
+                resolvedValues.add(new ResolvedTemplateMetricValue(unit, v.getValue()));
+            }
+
+            resolvedValues.sort(Comparator.comparing(value -> value.unit().getId()));
+            resolvedMetrics.add(new ResolvedTemplateMetric(metricType, resolvedValues));
+        }
+
+        resolvedMetrics.sort(Comparator.comparing(metric -> metric.metricType().getId()));
+
+        for (ResolvedTemplateMetric resolvedMetric : resolvedMetrics) {
+            EntryTemplateMetric metric = EntryTemplateMetric.create(template, resolvedMetric.metricType());
+
+            for (ResolvedTemplateMetricValue value : resolvedMetric.values()) {
+                metric.addValue(value.unit(), value.value());
             }
 
             template.addMetric(metric);
         }
+    }
+
+    private DictionaryItem resolveDictionary(
+            Map<Long, DictionaryItem> dictMap,
+            Long id,
+            DictionaryType type
+    ) {
+        DictionaryItem item = dictMap.get(id);
+        if (item == null) {
+            throw new BadRequestException("Some dictionary items not found");
+        }
+        if (item.getType() != type) {
+            throw new BadRequestException("Invalid dictionary type");
+        }
+        return item;
     }
 
     private DiaryEntryTemplateViewDto toViewDto(DiaryEntryTemplate t, boolean includeMetrics) {
@@ -204,6 +234,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         List<EntryTemplateMetricViewDto> metrics = List.of();
         if (includeMetrics) {
             metrics = (t.getMetrics() == null) ? List.of() : t.getMetrics().stream()
+                    .sorted(Comparator.comparing(metric -> metric.getMetricType().getId()))
                     .map(this::toMetricViewDto)
                     .toList();
         }
@@ -228,6 +259,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         List<EntryTemplateMetricValueViewDto> values = (m.getValues() == null)
                 ? List.of()
                 : m.getValues().stream()
+                .sorted(Comparator.comparing(value -> value.getUnit().getId()))
                 .map(v -> new EntryTemplateMetricValueViewDto(
                         v.getId(),
                         v.getUnit() == null ? null : v.getUnit().getId(),
@@ -248,5 +280,14 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         if (start != null && end != null && end.isBefore(start)) {
             throw new BadRequestException("End time cannot be before start time");
         }
+    }
+
+    private record ResolvedTemplateMetric(
+            DictionaryItem metricType,
+            List<ResolvedTemplateMetricValue> values
+    ) {
+    }
+
+    private record ResolvedTemplateMetricValue(DictionaryItem unit, java.math.BigDecimal value) {
     }
 }

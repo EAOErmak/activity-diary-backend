@@ -257,9 +257,7 @@ public class DiaryServiceImpl implements DiaryService {
         Map<Long, DictionaryItem> dictionaryItems = loadDictionaryItems(collectDictionaryIdsForCreate(metrics));
         List<ResolvedMetric> resolvedMetrics = new ArrayList<>();
 
-        for (EntryMetricCreateDto dto : metrics.stream()
-                .sorted(Comparator.comparing(EntryMetricCreateDto::getMetricTypeId))
-                .toList()) {
+        for (EntryMetricCreateDto dto : metrics) {
 
             DictionaryItem metricType = resolveDictionary(
                     dictionaryItems,
@@ -269,9 +267,7 @@ public class DiaryServiceImpl implements DiaryService {
 
             List<ResolvedMetricValue> values = new ArrayList<>();
 
-            for (EntryMetricValueCreateDto valueDto : dto.getValues().stream()
-                    .sorted(Comparator.comparing(EntryMetricValueCreateDto::getUnitId))
-                    .toList()) {
+            for (EntryMetricValueCreateDto valueDto : dto.getValues()) {
 
                 DictionaryItem unit = resolveDictionary(
                         dictionaryItems,
@@ -282,9 +278,11 @@ public class DiaryServiceImpl implements DiaryService {
                 values.add(new ResolvedMetricValue(unit, valueDto.getValue()));
             }
 
+            values.sort(Comparator.comparing(value -> value.unit().getId()));
             resolvedMetrics.add(new ResolvedMetric(metricType, values));
         }
 
+        resolvedMetrics.sort(Comparator.comparing(metric -> metric.metricType().getId()));
         return resolvedMetrics;
     }
 

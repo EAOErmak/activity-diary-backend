@@ -11,6 +11,7 @@ import com.example.activity_diary.entity.diary.Tag;
 import org.mapstruct.*;
 import org.springframework.data.domain.Slice;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -51,7 +52,13 @@ public interface DiaryEntryMapper {
     @Mapping(source = "values", target = "values")
     EntryMetricResponseDto toMetricResponseDto(EntryMetric metric);
 
-    List<EntryMetricResponseDto> toMetricResponseDtoList(List<EntryMetric> metrics);
+    default List<EntryMetricResponseDto> toMetricResponseDtoList(List<EntryMetric> metrics) {
+        if (metrics == null) return null;
+        return metrics.stream()
+                .sorted(Comparator.comparing(metric -> metric.getMetricType().getId()))
+                .map(this::toMetricResponseDto)
+                .toList();
+    }
 
     //EntryMetricValue в†’ EntryMetricValueResponseDto
     @Mapping(source = "unit.id", target = "unitId")
@@ -59,9 +66,15 @@ public interface DiaryEntryMapper {
     @Mapping(source = "value", target = "value")
     EntryMetricValueResponseDto toMetricValueResponseDto(EntryMetricValue value);
 
-    List<EntryMetricValueResponseDto> toMetricValueResponseDtoList(
+    default List<EntryMetricValueResponseDto> toMetricValueResponseDtoList(
             List<EntryMetricValue> values
-    );
+    ) {
+        if (values == null) return null;
+        return values.stream()
+                .sorted(Comparator.comparing(value -> value.getUnit().getId()))
+                .map(this::toMetricValueResponseDto)
+                .toList();
+    }
 
     //Lightweight View DTO
     @Mapping(target = "firstTag", expression = "java(firstTag(entity.getTags()))")
