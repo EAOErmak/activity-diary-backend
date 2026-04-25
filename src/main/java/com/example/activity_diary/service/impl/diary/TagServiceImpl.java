@@ -102,9 +102,9 @@ public class TagServiceImpl implements TagService {
     }
 
     private String normalizeQuery(String q) {
-        if (q == null) return null;
-        String s = q.trim();
+        String s = DiaryDescriptionTagPolicy.normalizeCanonicalTagName(q);
+        if (s == null) return null;
         if (s.isEmpty()) return null;
-        return s.toLowerCase();
+        return s;
     }
 }

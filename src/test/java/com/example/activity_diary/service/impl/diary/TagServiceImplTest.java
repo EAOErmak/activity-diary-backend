@@ -74,7 +74,7 @@ class TagServiceImplTest {
         when(tagRepository.searchVisible(7L, "sport")).thenReturn(tags);
         when(tagMapper.toDtoList(tags)).thenReturn(expected);
 
-        List<TagDto> actual = tagService.getVisibleTags(7L, Role.USER, "  Sport  ");
+        List<TagDto> actual = tagService.getVisibleTags(7L, Role.USER, "  #Sport  ");
 
         assertSame(expected, actual);
         verify(tagRepository).searchVisible(7L, "sport");

@@ -14,8 +14,8 @@ public final class DiaryEntryTagFilterNormalizer {
 
         List<String> tagNames = tags.stream()
                 .filter(s -> s != null && !s.isBlank())
-                .map(String::trim)
-                .map(String::toLowerCase)
+                .map(DiaryDescriptionTagPolicy::normalizeCanonicalTagName)
+                .filter(DiaryDescriptionTagPolicy::isValidCanonicalTagName)
                 .distinct()
                 .toList();
 

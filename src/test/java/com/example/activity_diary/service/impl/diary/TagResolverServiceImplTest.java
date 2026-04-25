@@ -52,7 +52,7 @@ class TagResolverServiceImplTest {
     private TagResolverServiceImpl service;
 
     @Test
-    void resolveFromDescription_extractsHashtagsUntilFirstWhitespace() {
+    void resolveFromDescription_extractsCanonicalNamesWithoutHash() {
         User user = userWithId(1L);
         when(userRepository.getReferenceById(1L)).thenReturn(user);
         when(tagRepository.findByNameIn(any())).thenReturn(List.of());
@@ -80,7 +80,64 @@ class TagResolverServiceImplTest {
         verify(tagRepository).findByNameIn(namesCaptor.capture());
 
         LinkedHashSet<String> names = namesCaptor.getValue();
-        assertEquals(List.of("#sport", "#test_1!", "#a"), List.copyOf(names));
+        assertEquals(List.of("sport", "test_1!", "a"), List.copyOf(names));
+    }
+
+    @Test
+    void resolveFromDescription_extractsMultipleCyrillicTags() {
+        User user = userWithId(1L);
+        when(userRepository.getReferenceById(1L)).thenReturn(user);
+        when(tagRepository.findByNameIn(any())).thenReturn(List.of());
+        when(userTagRepository.existsById(any())).thenReturn(false);
+
+        AtomicLong idSeq = new AtomicLong(100);
+        when(tagRepository.save(any(Tag.class))).thenAnswer(invocation -> {
+            Tag tag = invocation.getArgument(0);
+            tag.setId(idSeq.getAndIncrement());
+            return tag;
+        });
+
+        Set<Tag> tags = service.resolveFromDescription(
+                1L,
+                "сегодня #тренировка на #подтягивания"
+        );
+
+        assertEquals(2, tags.size());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<LinkedHashSet<String>> namesCaptor =
+                ArgumentCaptor.forClass(LinkedHashSet.class);
+        verify(tagRepository).findByNameIn(namesCaptor.capture());
+        assertEquals(List.of("тренировка", "подтягивания"), List.copyOf(namesCaptor.getValue()));
+    }
+
+    @Test
+    void resolveFromDescription_deduplicatesRepeatedTagsBeforeSavingRelations() {
+        User user = userWithId(1L);
+        when(userRepository.getReferenceById(1L)).thenReturn(user);
+        when(tagRepository.findByNameIn(any())).thenReturn(List.of());
+        when(userTagRepository.existsById(any())).thenReturn(false);
+
+        when(tagRepository.save(any(Tag.class))).thenAnswer(invocation -> {
+            Tag tag = invocation.getArgument(0);
+            tag.setId(100L);
+            return tag;
+        });
+
+        Set<Tag> tags = service.resolveFromDescription(1L, "#спорт #спорт");
+
+        assertEquals(1, tags.size());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<LinkedHashSet<String>> namesCaptor =
+                ArgumentCaptor.forClass(LinkedHashSet.class);
+        verify(tagRepository).findByNameIn(namesCaptor.capture());
+        assertEquals(List.of("спорт"), List.copyOf(namesCaptor.getValue()));
+
+        ArgumentCaptor<Tag> tagCaptor = ArgumentCaptor.forClass(Tag.class);
+        verify(tagRepository, times(1)).save(tagCaptor.capture());
+        assertEquals("спорт", tagCaptor.getValue().getName());
+        verify(userTagRepository, times(1)).save(any(UserTag.class));
     }
 
     @Test
@@ -89,7 +146,7 @@ class TagResolverServiceImplTest {
         when(userRepository.getReferenceById(2L)).thenReturn(user);
 
         Tag rejected = Tag.builder()
-                .name("#bad")
+                .name("bad")
                 .status(TagStatus.REJECTED)
                 .build();
         rejected.setId(5L);
@@ -110,7 +167,7 @@ class TagResolverServiceImplTest {
         when(userRepository.getReferenceById(3L)).thenReturn(user);
 
         Tag existing = Tag.builder()
-                .name("#ok")
+                .name("ok")
                 .status(TagStatus.APPROVED)
                 .build();
         existing.setId(7L);
@@ -132,6 +189,27 @@ class TagResolverServiceImplTest {
     }
 
     @Test
+    void resolveForUser_existingCanonicalTag_doesNotCreateHashDuplicate() {
+        User user = userWithId(3L);
+        when(userRepository.getReferenceById(3L)).thenReturn(user);
+
+        Tag existing = Tag.builder()
+                .name("sport")
+                .status(TagStatus.APPROVED)
+                .build();
+        existing.setId(7L);
+
+        when(tagRepository.findByNameIn(any())).thenReturn(List.of(existing));
+        when(userTagRepository.existsById(any())).thenReturn(true);
+
+        Set<Tag> tags = service.resolveForUser(3L, List.of("#sport"));
+
+        assertEquals(1, tags.size());
+        assertTrue(tags.stream().anyMatch(t -> t.getName().equals("sport")));
+        verify(tagRepository, never()).save(any(Tag.class));
+    }
+
+    @Test
     void resolveForUser_concurrentCreate_usesFindByName() {
         User user = userWithId(4L);
         when(userRepository.getReferenceById(4L)).thenReturn(user);
@@ -142,18 +220,18 @@ class TagResolverServiceImplTest {
                 .thenThrow(new DataIntegrityViolationException("unique"));
 
         Tag existing = Tag.builder()
-                .name("#race")
+                .name("race")
                 .status(TagStatus.PENDING)
                 .build();
         existing.setId(9L);
 
-        when(tagRepository.findByName("#race")).thenReturn(Optional.of(existing));
+        when(tagRepository.findByName("race")).thenReturn(Optional.of(existing));
 
         Set<Tag> tags = service.resolveForUser(4L, List.of("#race"));
 
         assertEquals(1, tags.size());
         assertTrue(tags.stream().anyMatch(t -> t.getId().equals(9L)));
-        verify(tagRepository).findByName("#race");
+        verify(tagRepository).findByName("race");
     }
 
     private static User userWithId(Long id) {

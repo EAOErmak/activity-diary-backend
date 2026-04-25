@@ -31,6 +31,19 @@ class DictionaryLiquibaseChangelogTest {
     }
 
     @Test
+    void masterChangelog_includesTagNameCanonicalizationMigration() throws Exception {
+        String master = readClasspathFile("db/changelog/db.changelog-master.xml");
+        String migration = readClasspathFile("db/changelog/changes/update/v1_normalize_tag_names_without_hash.xml");
+
+        assertThat(master)
+                .contains("db/changelog/changes/update/v1_normalize_tag_names_without_hash.xml");
+        assertThat(migration)
+                .contains("UPDATE tag")
+                .contains("substr(trim(name), 2)")
+                .contains("duplicate_tag_names");
+    }
+
+    @Test
     void liquibase_validatesMasterChangelogForPostgres() throws LiquibaseException {
         ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor();
         Database database = DatabaseFactory.getInstance().openDatabase(

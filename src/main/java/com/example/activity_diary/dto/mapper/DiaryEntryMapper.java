@@ -7,6 +7,7 @@ import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
 import com.example.activity_diary.entity.diary.EntryMetricValue;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.service.impl.diary.DiaryDescriptionTagPolicy;
 
 import org.mapstruct.*;
 import org.springframework.data.domain.Slice;
@@ -108,6 +109,6 @@ public interface DiaryEntryMapper {
 
     default String toApiTagName(String name) {
         if (name == null || name.isBlank()) return name;
-        return name.startsWith("#") ? name : "#" + name;
+        return DiaryDescriptionTagPolicy.normalizeCanonicalTagName(name);
     }
 }

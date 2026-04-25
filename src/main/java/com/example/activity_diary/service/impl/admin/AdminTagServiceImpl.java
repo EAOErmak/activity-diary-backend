@@ -101,9 +101,10 @@ public class AdminTagServiceImpl implements AdminTagService {
         }
         if (name.startsWith("#")
                 || name.length() > MAX_TAG_NAME_LENGTH
-                || name.chars().anyMatch(Character::isWhitespace)) {
+                || name.chars().anyMatch(Character::isWhitespace)
+                || name.contains("#")) {
             throw new BadRequestException(
-                    "Tag name must not start with '#' and must not contain spaces"
+                    "Tag name must not contain '#' or spaces"
             );
         }
     }

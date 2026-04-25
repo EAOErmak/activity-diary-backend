@@ -107,6 +107,15 @@ class AdminTagServiceImplTest {
     }
 
     @Test
+    void create_nameWithInternalHashtag_throwsBadRequest() {
+        TagCreateDto dto = dto("ta#g");
+
+        assertThrows(BadRequestException.class, () -> service.create(dto));
+        verify(tagRepository, never()).findByName(any());
+        verify(tagRepository, never()).save(any(Tag.class));
+    }
+
+    @Test
     void create_doesNotDependOnDiaryDescriptionTagPolicy() {
         boolean hasDescriptionPolicyField = Arrays.stream(AdminTagServiceImpl.class.getDeclaredFields())
                 .anyMatch(field -> field.getType().getSimpleName().equals("DiaryDescriptionTagPolicy"));

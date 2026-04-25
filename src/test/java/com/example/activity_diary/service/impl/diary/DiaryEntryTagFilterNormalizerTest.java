@@ -22,10 +22,10 @@ class DiaryEntryTagFilterNormalizerTest {
     @Test
     void normalize_blankAndDuplicateTags_filtersAndNormalizesValues() {
         var result = DiaryEntryTagFilterNormalizer.normalize(
-                java.util.Arrays.asList("  #Foo! ", "", "#BAR", "#foo!", null)
+                java.util.Arrays.asList("  #Foo! ", "", "#BAR", "#foo!", null, "ta#g")
         );
 
-        assertEquals(List.of("#foo!", "#bar"), result.tagNames());
+        assertEquals(List.of("foo!", "bar"), result.tagNames());
         assertTrue(result.hasTags());
         assertEquals(2, result.tagCount());
     }

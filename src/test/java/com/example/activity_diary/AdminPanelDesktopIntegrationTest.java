@@ -255,17 +255,17 @@ class AdminPanelDesktopIntegrationTest {
                 .build());
 
         tagRepository.save(Tag.builder()
-                .name("#rejected-tag")
+                .name("rejected-tag")
                 .status(TagStatus.REJECTED)
                 .createdBy(otherUser)
                 .build());
         tagRepository.save(Tag.builder()
-                .name("#deprecated-tag")
+                .name("deprecated-tag")
                 .status(TagStatus.DEPRECATED)
                 .createdBy(otherUser)
                 .build());
         tagRepository.save(Tag.builder()
-                .name("#pending-tag")
+                .name("pending-tag")
                 .status(TagStatus.PENDING)
                 .createdBy(otherUser)
                 .build());
@@ -286,7 +286,7 @@ class AdminPanelDesktopIntegrationTest {
         );
         List<String> sharedTagNames = extractTextField(sharedTags.path("data"), "name");
         assertThat(sharedTagNames)
-                .contains("#admin-tag", "#rejected-tag", "#deprecated-tag", "#pending-tag");
+                .contains("admin-tag", "rejected-tag", "deprecated-tag", "pending-tag");
 
         mockMvc.perform(post("/api/admin/tag-chart-types")
                         .contentType(MediaType.APPLICATION_JSON)

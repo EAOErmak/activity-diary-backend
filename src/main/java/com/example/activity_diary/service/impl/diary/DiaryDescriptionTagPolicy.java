@@ -42,29 +42,35 @@ public class DiaryDescriptionTagPolicy {
     }
 
     public String normalizeTagName(String raw) {
+        return normalizeCanonicalTagName(raw);
+    }
+
+    public static String normalizeCanonicalTagName(String raw) {
         if (raw == null) {
             return null;
         }
 
         String value = raw.trim().toLowerCase(Locale.ROOT);
-        boolean hadHash = value.startsWith("#");
 
-        while (value.startsWith("#")) {
+        if (value.startsWith("#")) {
             value = value.substring(1);
         }
 
-        value = value.trim();
-        return hadHash ? "#" + value : value;
+        return value;
     }
 
     public boolean isValidTagName(String value) {
+        return isValidCanonicalTagName(value);
+    }
+
+    public static boolean isValidCanonicalTagName(String value) {
         if (value == null || value.isBlank()) {
             return false;
         }
 
-        return value.startsWith("#")
-                && value.length() > 1
+        return !value.startsWith("#")
                 && value.length() <= MAX_TAG_NAME_LENGTH
-                && value.substring(1).chars().noneMatch(Character::isWhitespace);
+                && value.chars().noneMatch(Character::isWhitespace)
+                && !value.contains("#");
     }
 }

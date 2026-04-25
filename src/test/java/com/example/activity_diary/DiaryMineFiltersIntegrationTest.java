@@ -72,9 +72,9 @@ class DiaryMineFiltersIntegrationTest {
 
         desktopUser = userRepository.findById(currentUserProvider.getCurrentUserId()).orElseThrow();
 
-        Tag focusTag = tagRepository.save(tag("#focus"));
-        Tag fitnessTag = tagRepository.save(tag("#fitness"));
-        Tag readingTag = tagRepository.save(tag("#reading"));
+        Tag focusTag = tagRepository.save(tag("focus"));
+        Tag fitnessTag = tagRepository.save(tag("fitness"));
+        Tag readingTag = tagRepository.save(tag("reading"));
 
         plannedEntry = saveEntry(
                 "planned",
@@ -173,7 +173,7 @@ class DiaryMineFiltersIntegrationTest {
         );
 
         assertThat(extractIds(activeContent)).containsExactly(activeEntry.id());
-        assertThat(extractFirstTags(activeContent)).containsExactly("#focus");
+        assertThat(extractFirstTags(activeContent)).containsExactly("focus");
 
         JsonNode finishedContent = responseContent(
                 mockMvc.perform(get("/api/diary/mine")
@@ -185,7 +185,7 @@ class DiaryMineFiltersIntegrationTest {
         );
 
         assertThat(extractIds(finishedContent)).containsExactly(finishedEntry.id());
-        assertThat(extractFirstTags(finishedContent)).containsExactly("#fitness");
+        assertThat(extractFirstTags(finishedContent)).containsExactly("fitness");
     }
 
     @Test
@@ -200,7 +200,7 @@ class DiaryMineFiltersIntegrationTest {
         );
 
         assertThat(extractIds(content)).containsExactly(activeEntry.id());
-        assertThat(extractFirstTags(content)).containsExactly("#focus");
+        assertThat(extractFirstTags(content)).containsExactly("focus");
     }
 
     @Test

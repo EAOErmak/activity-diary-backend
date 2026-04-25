@@ -2,6 +2,7 @@ package com.example.activity_diary.dto.mapper;
 
 import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.entity.diary.Tag;
+import com.example.activity_diary.service.impl.diary.DiaryDescriptionTagPolicy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -19,6 +20,6 @@ public interface TagMapper {
         if (name == null || name.isBlank()) {
             return name;
         }
-        return name.startsWith("#") ? name : "#" + name;
+        return DiaryDescriptionTagPolicy.normalizeCanonicalTagName(name);
     }
 }

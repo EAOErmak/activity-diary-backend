@@ -4,14 +4,17 @@ import com.example.activity_diary.dto.diary.DiaryEntryDto;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.diary.DiaryEntry;
 import com.example.activity_diary.entity.diary.EntryMetric;
+import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.EntryStatus;
+import com.example.activity_diary.entity.enums.TagStatus;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,6 +50,24 @@ class DiaryEntryMapperTest {
                         .map(value -> value.getUnitId())
                         .toList()
         );
+    }
+
+    @Test
+    void toListDto_returnsCanonicalFirstTagWithoutHash() {
+        DiaryEntry entry = entry();
+        Tag first = Tag.builder()
+                .name("sport")
+                .status(TagStatus.APPROVED)
+                .build();
+        first.setId(1L);
+        Tag second = Tag.builder()
+                .name("health")
+                .status(TagStatus.APPROVED)
+                .build();
+        second.setId(2L);
+        entry.setTags(new LinkedHashSet<>(List.of(second, first)));
+
+        assertEquals("sport", mapper.toListDto(entry).getFirstTag());
     }
 
     private static DiaryEntry entry() {
