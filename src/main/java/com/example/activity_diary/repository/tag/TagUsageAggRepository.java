@@ -55,4 +55,11 @@ public interface TagUsageAggRepository extends JpaRepository<TagUsageAgg, TagUsa
             @Param("countInc") int countInc,
             @Param("durationInc") long durationInc
     );
+
+    @Modifying
+    @Query("""
+        delete from TagUsageAgg agg
+        where agg.id.tagId = :tagId
+    """)
+    void deleteByTagId(@Param("tagId") Long tagId);
 }

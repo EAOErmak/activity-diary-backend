@@ -8,9 +8,15 @@ import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.diary.DiaryRepository;
+import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
+import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
+import com.example.activity_diary.repository.tag.TagUsageAggRepository;
+import com.example.activity_diary.repository.tag.UserTagRepository;
 import com.example.activity_diary.service.admin.AdminTagService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -25,6 +31,11 @@ public class AdminTagServiceImpl implements AdminTagService {
     private static final int MAX_TAG_NAME_LENGTH = 64;
 
     private final TagRepository tagRepository;
+    private final DiaryRepository diaryRepository;
+    private final TagMetricLinkRepository tagMetricLinkRepository;
+    private final TagChartTypeLinkRepository tagChartTypeLinkRepository;
+    private final UserTagRepository userTagRepository;
+    private final TagUsageAggRepository tagUsageAggRepository;
     private final TagMapper tagMapper;
 
     @Override
@@ -56,6 +67,25 @@ public class AdminTagServiceImpl implements AdminTagService {
         tag.rename(name);
 
         return tagMapper.toDto(tagRepository.save(tag));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Tag tag = get(id);
+
+        diaryRepository.deleteTagLinksByTagId(id);
+        tagMetricLinkRepository.deleteByTagId(id);
+        tagChartTypeLinkRepository.deleteByTagId(id);
+        userTagRepository.deleteByTagId(id);
+        tagUsageAggRepository.deleteByTagId(id);
+
+        try {
+            tagRepository.delete(tag);
+            tagRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new BadRequestException("Tag cannot be deleted because it is still referenced");
+        }
     }
 
     @Override

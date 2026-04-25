@@ -54,6 +54,14 @@ public class AdminTagController {
         );
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable @Positive Long id
+    ) {
+        adminTagService.delete(id);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<Slice<TagDto>>> myTags(
             @RequestParam(defaultValue = "0") @Min(0) int page,

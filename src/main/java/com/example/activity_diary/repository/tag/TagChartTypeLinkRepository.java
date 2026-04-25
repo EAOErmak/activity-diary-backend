@@ -2,8 +2,10 @@ package com.example.activity_diary.repository.tag;
 
 import com.example.activity_diary.entity.diary.TagChartTypeLink;
 import com.example.activity_diary.entity.enums.ChartType;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -26,6 +28,13 @@ public interface TagChartTypeLinkRepository extends JpaRepository<TagChartTypeLi
     boolean existsByTagIdAndChartType(Long tagId, ChartType chartType);
 
     boolean existsByTagId(Long tagId);
+
+    @Modifying
+    @Query("""
+        delete from TagChartTypeLink link
+        where link.tag.id = :tagId
+    """)
+    void deleteByTagId(@Param("tagId") Long tagId);
 
     void deleteByTagIdAndChartType(Long tagId, ChartType chartType);
 }

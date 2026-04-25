@@ -31,6 +31,13 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
     boolean existsByTags_Id(Long tagId);
 
+    @Modifying
+    @Query(value = """
+        delete from diary_entry_tag
+        where tag_id = :tagId
+    """, nativeQuery = true)
+    void deleteTagLinksByTagId(@Param("tagId") Long tagId);
+
     @Query("""
         select distinct d
         from DiaryEntry d

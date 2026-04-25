@@ -8,13 +8,20 @@ import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.diary.DiaryRepository;
+import com.example.activity_diary.repository.tag.TagChartTypeLinkRepository;
+import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
+import com.example.activity_diary.repository.tag.TagUsageAggRepository;
+import com.example.activity_diary.repository.tag.UserTagRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -37,6 +44,21 @@ class AdminTagServiceImplTest {
 
     @Mock
     private TagMapper tagMapper;
+
+    @Mock
+    private DiaryRepository diaryRepository;
+
+    @Mock
+    private TagMetricLinkRepository tagMetricLinkRepository;
+
+    @Mock
+    private TagChartTypeLinkRepository tagChartTypeLinkRepository;
+
+    @Mock
+    private UserTagRepository userTagRepository;
+
+    @Mock
+    private TagUsageAggRepository tagUsageAggRepository;
 
     @InjectMocks
     private AdminTagServiceImpl service;
@@ -228,6 +250,65 @@ class AdminTagServiceImplTest {
         verify(tagRepository).findById(99L);
         verify(tagRepository, never()).findByName(any());
         verify(tagRepository, never()).save(any(Tag.class));
+    }
+
+    @Test
+    void delete_existingTag_removesDependenciesAndDeletesTag() {
+        Tag tag = existingTag(7L, "sport");
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+
+        service.delete(7L);
+
+        InOrder inOrder = org.mockito.Mockito.inOrder(
+                diaryRepository,
+                tagMetricLinkRepository,
+                tagChartTypeLinkRepository,
+                userTagRepository,
+                tagUsageAggRepository,
+                tagRepository
+        );
+        inOrder.verify(diaryRepository).deleteTagLinksByTagId(7L);
+        inOrder.verify(tagMetricLinkRepository).deleteByTagId(7L);
+        inOrder.verify(tagChartTypeLinkRepository).deleteByTagId(7L);
+        inOrder.verify(userTagRepository).deleteByTagId(7L);
+        inOrder.verify(tagUsageAggRepository).deleteByTagId(7L);
+        inOrder.verify(tagRepository).delete(tag);
+        inOrder.verify(tagRepository).flush();
+    }
+
+    @Test
+    void delete_nonExistingTag_throwsNotFound() {
+        when(tagRepository.findById(99L)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> service.delete(99L));
+
+        assertEquals("Tag not found", exception.getMessage());
+        verify(diaryRepository, never()).deleteTagLinksByTagId(99L);
+        verify(tagMetricLinkRepository, never()).deleteByTagId(99L);
+        verify(tagChartTypeLinkRepository, never()).deleteByTagId(99L);
+        verify(userTagRepository, never()).deleteByTagId(99L);
+        verify(tagUsageAggRepository, never()).deleteByTagId(99L);
+        verify(tagRepository, never()).delete(any(Tag.class));
+    }
+
+    @Test
+    void delete_whenDatabaseStillRejectsDelete_throwsBadRequest() {
+        Tag tag = existingTag(7L, "sport");
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+        org.mockito.Mockito.doThrow(new DataIntegrityViolationException("constraint"))
+                .when(tagRepository)
+                .flush();
+
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> service.delete(7L));
+
+        assertEquals("Tag cannot be deleted because it is still referenced", exception.getMessage());
+        verify(diaryRepository).deleteTagLinksByTagId(7L);
+        verify(tagMetricLinkRepository).deleteByTagId(7L);
+        verify(tagChartTypeLinkRepository).deleteByTagId(7L);
+        verify(userTagRepository).deleteByTagId(7L);
+        verify(tagUsageAggRepository).deleteByTagId(7L);
+        verify(tagRepository).delete(tag);
+        verify(tagRepository).flush();
     }
 
     private static TagCreateDto dto(String name) {

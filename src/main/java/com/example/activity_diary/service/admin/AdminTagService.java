@@ -12,6 +12,8 @@ public interface AdminTagService {
 
     TagDto update(Long id, TagUpdateDto dto);
 
+    void delete(Long id);
+
     Slice<TagDto> getTags(String q, Pageable pageable);
 
     void approve(Long tagId);
