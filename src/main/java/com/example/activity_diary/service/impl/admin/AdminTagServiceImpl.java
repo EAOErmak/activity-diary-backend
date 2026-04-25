@@ -9,25 +9,27 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.admin.AdminTagService;
-import com.example.activity_diary.service.impl.diary.DiaryDescriptionTagPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
 public class AdminTagServiceImpl implements AdminTagService {
 
+    private static final int MAX_TAG_NAME_LENGTH = 64;
+
     private final TagRepository tagRepository;
     private final TagMapper tagMapper;
-    private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
 
     @Override
     @Transactional
     public TagDto create(TagCreateDto dto) {
-        String name = diaryDescriptionTagPolicy.normalizeTagName(dto.getName());
+        String name = normalizeAdminTagName(dto.getName());
         validateName(name);
 
         if (tagRepository.findByName(name).isPresent()) {
@@ -53,6 +55,11 @@ public class AdminTagServiceImpl implements AdminTagService {
                 : tagRepository.searchSlice(query, pageable);
 
         return slice.map(tagMapper::toDto);
+    }
+
+    private String normalizeAdminTagName(String raw) {
+        if (raw == null) return null;
+        return raw.trim().toLowerCase(Locale.ROOT);
     }
 
     private String normalizeQuery(String q) {
@@ -92,9 +99,11 @@ public class AdminTagServiceImpl implements AdminTagService {
         if (name == null || name.isBlank()) {
             throw new BadRequestException("Tag name is required");
         }
-        if (!diaryDescriptionTagPolicy.isValidTagName(name)) {
+        if (name.startsWith("#")
+                || name.length() > MAX_TAG_NAME_LENGTH
+                || name.chars().anyMatch(Character::isWhitespace)) {
             throw new BadRequestException(
-                    "Tag name must start with '#' and must not contain spaces"
+                    "Tag name must not start with '#' and must not contain spaces"
             );
         }
     }

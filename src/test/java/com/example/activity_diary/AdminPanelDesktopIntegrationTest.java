@@ -236,7 +236,7 @@ class AdminPanelDesktopIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
-                                          "name": "#admin-tag"
+                                          "name": "admin-tag"
                                         }
                                         """))
                         .andExpect(status().isOk())
@@ -244,6 +244,8 @@ class AdminPanelDesktopIntegrationTest {
                         .andReturn()
         );
         long adminTagId = adminTag.path("id").asLong();
+        assertThat(tagRepository.findById(adminTagId).orElseThrow().getName())
+                .isEqualTo("admin-tag");
 
         User otherUser = userRepository.save(User.builder()
                 .username("other-user")
