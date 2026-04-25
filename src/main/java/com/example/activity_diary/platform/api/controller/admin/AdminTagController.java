@@ -14,7 +14,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -31,7 +30,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Validated
-@Slf4j
 public class AdminTagController {
 
     private final AdminTagService adminTagService;
@@ -41,7 +39,6 @@ public class AdminTagController {
     public ResponseEntity<ApiResponse<TagDto>> create(
             @Valid @RequestBody TagCreateDto dto
     ) {
-        log.info("Admin tag create requested: name={}", dto.getName());
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagService.create(dto))
         );
@@ -52,7 +49,6 @@ public class AdminTagController {
             @PathVariable @Positive Long id,
             @Valid @RequestBody TagUpdateDto dto
     ) {
-        log.info("Admin tag update requested: id={}, name={}", id, dto.getName());
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagService.update(id, dto))
         );
@@ -64,7 +60,6 @@ public class AdminTagController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String q
     ) {
-        log.info("Admin tags requested: page={}, size={}, q={}", page, size, q);
         Pageable pageable = PageRequest.of(
                 page, size,
                 Sort.by(Sort.Direction.ASC, "name")
@@ -78,19 +73,16 @@ public class AdminTagController {
 
     @PostMapping("/{id}/approve")
     public void approve(@PathVariable Long id) {
-        log.info("Admin tag approve requested: id={}", id);
         adminTagService.approve(id);
     }
 
     @PostMapping("/{id}/reject")
     public void reject(@PathVariable Long id) {
-        log.info("Admin tag reject requested: id={}", id);
         adminTagService.reject(id);
     }
 
     @PostMapping("/{id}/deprecate")
     public void deprecate(@PathVariable Long id) {
-        log.info("Admin tag deprecate requested: id={}", id);
         adminTagService.deprecate(id);
     }
 
@@ -98,7 +90,6 @@ public class AdminTagController {
     public ResponseEntity<ApiResponse<List<TagMetricLinkResponseDto>>> getMetrics(
             @PathVariable @Positive Long id
     ) {
-        log.info("Admin tag metrics requested: tagId={}", id);
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagMetricLinkService.getMetricsByTagId(id))
         );
@@ -109,7 +100,6 @@ public class AdminTagController {
             @PathVariable @Positive Long id,
             @Valid @RequestBody TagMetricLinkReplaceRequestDto dto
     ) {
-        log.info("Admin tag metrics replace requested: tagId={}, metricNameIds={}", id, dto.getMetricNameIds());
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagMetricLinkService.replaceLinks(id, dto))
         );
