@@ -25,6 +25,7 @@ public interface DiaryEntryMapper {
     //DiaryEntry в†’ DiaryEntryDto
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "metrics", target = "metrics")
+    @Mapping(target = "description", expression = "java(entry.getDescription())")
     DiaryEntryDto toDto(DiaryEntry entry);
 
     //Create / Update

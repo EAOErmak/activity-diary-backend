@@ -53,6 +53,25 @@ class DiaryEntryMapperTest {
     }
 
     @Test
+    void toDto_preservesDescriptionWithLeadingHash() {
+        DiaryEntry entry = entry();
+
+        DiaryEntryDto result = mapper.toDto(entry);
+
+        assertEquals("#desc", result.getDescription());
+    }
+
+    @Test
+    void toDto_preservesPlainDescription() {
+        DiaryEntry entry = entry();
+        entry.updateDescription("plain description");
+
+        DiaryEntryDto result = mapper.toDto(entry);
+
+        assertEquals("plain description", result.getDescription());
+    }
+
+    @Test
     void toListDto_returnsCanonicalFirstTagWithoutHash() {
         DiaryEntry entry = entry();
         Tag first = Tag.builder()

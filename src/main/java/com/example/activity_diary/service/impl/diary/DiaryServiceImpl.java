@@ -80,8 +80,6 @@ public class DiaryServiceImpl implements DiaryService {
             throw new BadRequestException("from must be <= to");
         }
 
-
-
         // Р’РђР–РќРћ: СЃРїРёСЃРѕРє РІСЃРµРіРґР° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РќР• null
         var normalizedTags = DiaryEntryTagFilterNormalizer.normalize(tags);
 
