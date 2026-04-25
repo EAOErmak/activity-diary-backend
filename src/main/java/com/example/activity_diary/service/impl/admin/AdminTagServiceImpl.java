@@ -2,6 +2,7 @@ package com.example.activity_diary.service.impl.admin;
 
 import com.example.activity_diary.dto.diary.TagCreateDto;
 import com.example.activity_diary.dto.diary.TagDto;
+import com.example.activity_diary.dto.diary.TagUpdateDto;
 import com.example.activity_diary.dto.mapper.TagMapper;
 import com.example.activity_diary.entity.diary.Tag;
 import com.example.activity_diary.entity.enums.TagStatus;
@@ -31,10 +32,7 @@ public class AdminTagServiceImpl implements AdminTagService {
     public TagDto create(TagCreateDto dto) {
         String name = normalizeAdminTagName(dto.getName());
         validateName(name);
-
-        if (tagRepository.findByName(name).isPresent()) {
-            throw new BadRequestException("Tag already exists");
-        }
+        validateDuplicateName(name, null);
 
         Tag saved = tagRepository.save(
                 Tag.builder()
@@ -44,6 +42,20 @@ public class AdminTagServiceImpl implements AdminTagService {
         );
 
         return tagMapper.toDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public TagDto update(Long id, TagUpdateDto dto) {
+        Tag tag = get(id);
+
+        String name = normalizeAdminTagNameForUpdate(dto.getName());
+        validateName(name);
+        validateDuplicateName(name, id);
+
+        tag.rename(name);
+
+        return tagMapper.toDto(tagRepository.save(tag));
     }
 
     @Override
@@ -60,6 +72,17 @@ public class AdminTagServiceImpl implements AdminTagService {
     private String normalizeAdminTagName(String raw) {
         if (raw == null) return null;
         return raw.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeAdminTagNameForUpdate(String raw) {
+        if (raw == null) return null;
+
+        String normalized = raw.trim().toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("#")) {
+            normalized = normalized.substring(1);
+        }
+
+        return normalized;
     }
 
     private String normalizeQuery(String q) {
@@ -93,6 +116,14 @@ public class AdminTagServiceImpl implements AdminTagService {
     private Tag get(Long id) {
         return tagRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Tag not found"));
+    }
+
+    private void validateDuplicateName(String name, Long currentTagId) {
+        tagRepository.findByName(name)
+                .filter(existing -> currentTagId == null || !existing.getId().equals(currentTagId))
+                .ifPresent(existing -> {
+                    throw new BadRequestException("Tag already exists");
+                });
     }
 
     private void validateName(String name) {

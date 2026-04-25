@@ -5,6 +5,7 @@ import com.example.activity_diary.dto.admin.TagMetricLinkReplaceRequestDto;
 import com.example.activity_diary.dto.admin.TagMetricLinkResponseDto;
 import com.example.activity_diary.dto.diary.TagCreateDto;
 import com.example.activity_diary.dto.diary.TagDto;
+import com.example.activity_diary.dto.diary.TagUpdateDto;
 import com.example.activity_diary.service.admin.AdminTagMetricLinkService;
 import com.example.activity_diary.service.admin.AdminTagService;
 
@@ -43,6 +44,17 @@ public class AdminTagController {
         log.info("Admin tag create requested: name={}", dto.getName());
         return ResponseEntity.ok(
                 ApiResponse.ok(adminTagService.create(dto))
+        );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TagDto>> update(
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody TagUpdateDto dto
+    ) {
+        log.info("Admin tag update requested: id={}, name={}", id, dto.getName());
+        return ResponseEntity.ok(
+                ApiResponse.ok(adminTagService.update(id, dto))
         );
     }
 
