@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-019-entry-template-metric" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE entry_template_metric (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                template_id BIGINT NOT NULL,
+                metric_type_id BIGINT NOT NULL,
+                CONSTRAINT fk_entry_template_metric_template
+                    FOREIGN KEY (template_id)
+                    REFERENCES diary_entry_template (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_entry_template_metric_type
+                    FOREIGN KEY (metric_type_id)
+                    REFERENCES dictionary_item (id)
+                    ON DELETE RESTRICT
+            );
+
+            CREATE INDEX idx_entry_template_metric_template ON entry_template_metric (template_id);
+            CREATE INDEX idx_entry_template_metric_type ON entry_template_metric (metric_type_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

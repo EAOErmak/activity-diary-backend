@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-024-template-entry-item" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE template_entry_item (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                day_template_id BIGINT NOT NULL,
+                entry_template_id BIGINT NOT NULL,
+                position INTEGER NOT NULL,
+                CONSTRAINT uk_entry_item_pos UNIQUE (day_template_id, position),
+                CONSTRAINT fk_entry_item_day_tpl
+                    FOREIGN KEY (day_template_id)
+                    REFERENCES day_template (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_entry_item_entry_tpl
+                    FOREIGN KEY (entry_template_id)
+                    REFERENCES diary_entry_template (id)
+                    ON DELETE RESTRICT
+            );
+
+            CREATE INDEX idx_entry_item_day_tpl ON template_entry_item (day_template_id);
+            CREATE INDEX idx_entry_item_entry_tpl ON template_entry_item (entry_template_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

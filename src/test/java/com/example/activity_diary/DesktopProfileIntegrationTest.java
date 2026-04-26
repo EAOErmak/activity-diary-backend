@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,8 +34,15 @@ class DesktopProfileIntegrationTest {
     @Autowired
     private CurrentUserProvider currentUserProvider;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
     void desktopProfileBootstrapsTrustedUserAndAllowsRequestsWithoutAuth() throws Exception {
+        assertThat(tableExists("DATABASECHANGELOG")).isTrue();
+        assertThat(tableExists("DATABASECHANGELOGLOCK")).isTrue();
+        assertThat(appliedBaselineCount()).isGreaterThan(0);
+
         User desktopUser = userAccountRepository
                 .findUserByProviderAndProviderId(ProviderType.LOCAL, "desktop-local-user")
                 .orElseThrow();
@@ -63,5 +71,26 @@ class DesktopProfileIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isNotFound());
+    }
+
+    private boolean tableExists(String tableName) {
+        Integer matches = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sqlite_master
+                where type = 'table' and lower(name) = lower(?)
+                """,
+                Integer.class,
+                tableName
+        );
+        return matches != null && matches > 0;
+    }
+
+    private int appliedBaselineCount() {
+        Integer count = jdbcTemplate.queryForObject(
+                "select count(*) from DATABASECHANGELOG where ID like 'sqlite-baseline-%'",
+                Integer.class
+        );
+        return count == null ? 0 : count;
     }
 }

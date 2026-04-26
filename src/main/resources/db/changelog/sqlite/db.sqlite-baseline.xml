@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <include file="db/changelog/sqlite/baseline/001-users.xml"/>
+    <include file="db/changelog/sqlite/baseline/002-dictionary-item.xml"/>
+    <include file="db/changelog/sqlite/baseline/003-tag.xml"/>
+    <include file="db/changelog/sqlite/baseline/004-user-accounts.xml"/>
+    <include file="db/changelog/sqlite/baseline/005-verification-codes.xml"/>
+    <include file="db/changelog/sqlite/baseline/006-refresh-token.xml"/>
+    <include file="db/changelog/sqlite/baseline/007-login-event.xml"/>
+    <include file="db/changelog/sqlite/baseline/008-registration-event.xml"/>
+    <include file="db/changelog/sqlite/baseline/009-general-food.xml"/>
+    <include file="db/changelog/sqlite/baseline/010-user-food.xml"/>
+    <include file="db/changelog/sqlite/baseline/011-diary-entry.xml"/>
+    <include file="db/changelog/sqlite/baseline/012-entry-metric.xml"/>
+    <include file="db/changelog/sqlite/baseline/013-entry-metric-value.xml"/>
+    <include file="db/changelog/sqlite/baseline/014-user-tag.xml"/>
+    <include file="db/changelog/sqlite/baseline/015-diary-entry-tag.xml"/>
+    <include file="db/changelog/sqlite/baseline/016-tag-usage-agg.xml"/>
+    <include file="db/changelog/sqlite/baseline/017-metric-usage-agg.xml"/>
+    <include file="db/changelog/sqlite/baseline/018-diary-entry-template.xml"/>
+    <include file="db/changelog/sqlite/baseline/019-entry-template-metric.xml"/>
+    <include file="db/changelog/sqlite/baseline/020-entry-template-metric-value.xml"/>
+    <include file="db/changelog/sqlite/baseline/021-day-template.xml"/>
+    <include file="db/changelog/sqlite/baseline/022-week-template.xml"/>
+    <include file="db/changelog/sqlite/baseline/023-template-day-item.xml"/>
+    <include file="db/changelog/sqlite/baseline/024-template-entry-item.xml"/>
+    <include file="db/changelog/sqlite/baseline/025-week-goal.xml"/>
+    <include file="db/changelog/sqlite/baseline/026-day-goal.xml"/>
+    <include file="db/changelog/sqlite/baseline/027-diary-entry-goal.xml"/>
+    <include file="db/changelog/sqlite/baseline/028-entry-metric-goal.xml"/>
+    <include file="db/changelog/sqlite/baseline/029-entry-metric-value-goal.xml"/>
+    <include file="db/changelog/sqlite/baseline/030-metric-name-unit-link.xml"/>
+    <include file="db/changelog/sqlite/baseline/031-tag-chart-type-link.xml"/>
+    <include file="db/changelog/sqlite/baseline/032-tag-metric-link.xml"/>
+</databaseChangeLog>

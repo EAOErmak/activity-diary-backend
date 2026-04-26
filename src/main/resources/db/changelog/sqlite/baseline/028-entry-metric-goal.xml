@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-028-entry-metric-goal" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE entry_metric_goal (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                entry_goal_id BIGINT NOT NULL,
+                metric_type_id BIGINT NOT NULL,
+                CONSTRAINT uk_metric_goal_entry_type UNIQUE (entry_goal_id, metric_type_id),
+                CONSTRAINT fk_metric_goal_entry_goal
+                    FOREIGN KEY (entry_goal_id)
+                    REFERENCES diary_entry_goal (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_metric_goal_type
+                    FOREIGN KEY (metric_type_id)
+                    REFERENCES dictionary_item (id)
+            );
+
+            CREATE INDEX idx_metric_goal_entry_goal ON entry_metric_goal (entry_goal_id);
+            CREATE INDEX idx_metric_goal_type ON entry_metric_goal (metric_type_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

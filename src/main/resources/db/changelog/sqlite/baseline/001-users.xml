@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-001-users" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                username VARCHAR(64) NOT NULL UNIQUE,
+                full_name VARCHAR(128),
+                enabled BOOLEAN NOT NULL DEFAULT 0,
+                role VARCHAR(50) NOT NULL,
+                account_locked BOOLEAN NOT NULL DEFAULT 0,
+                lock_until TIMESTAMP,
+                failed_2fa_attempts INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE INDEX idx_user_username ON users (username);
+            CREATE INDEX idx_user_locked ON users (account_locked);
+            CREATE INDEX idx_user_created ON users (created_at);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

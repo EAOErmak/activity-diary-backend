@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!--
+      Shared changesets go here after both database-specific entrypoints.
+      PostgreSQL-only changesets must use dbms="postgresql".
+      SQLite-only changesets must use dbms="sqlite".
+      Shared changesets must avoid PostgreSQL-specific SQL/types and SQLite-incompatible ALTER patterns.
+    -->
+</databaseChangeLog>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-026-day-goal" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE day_goal (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                week_goal_id BIGINT NOT NULL,
+                day_index INTEGER NOT NULL,
+                target_date DATE,
+                when_started TIMESTAMP NOT NULL,
+                when_ended TIMESTAMP NOT NULL,
+                completeness INTEGER NOT NULL DEFAULT 0,
+                CONSTRAINT uk_day_goal_week_day_index UNIQUE (week_goal_id, day_index),
+                CONSTRAINT fk_day_goal_week
+                    FOREIGN KEY (week_goal_id)
+                    REFERENCES week_goal (id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE INDEX idx_day_goal_week ON day_goal (week_goal_id);
+            CREATE INDEX idx_day_goal_date ON day_goal (target_date);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

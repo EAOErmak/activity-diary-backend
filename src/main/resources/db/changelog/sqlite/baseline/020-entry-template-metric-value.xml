@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-020-entry-template-metric-value" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE entry_template_metric_value (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                template_metric_id BIGINT NOT NULL,
+                unit_id BIGINT NOT NULL,
+                value NUMERIC(19,5) NOT NULL,
+                CONSTRAINT uk_entry_template_metric_value_unique_unit UNIQUE (template_metric_id, unit_id),
+                CONSTRAINT fk_entry_template_metric_value_metric
+                    FOREIGN KEY (template_metric_id)
+                    REFERENCES entry_template_metric (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_entry_template_metric_value_unit
+                    FOREIGN KEY (unit_id)
+                    REFERENCES dictionary_item (id)
+                    ON DELETE RESTRICT
+            );
+
+            CREATE INDEX idx_entry_template_metric_value_metric ON entry_template_metric_value (template_metric_id);
+            CREATE INDEX idx_entry_template_metric_value_unit ON entry_template_metric_value (unit_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-008-registration-event" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE registration_event (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                ip VARCHAR(45) NOT NULL,
+                user_id BIGINT NOT NULL,
+                success BOOLEAN NOT NULL,
+                CONSTRAINT fk_registration_event_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES users (id)
+            );
+
+            CREATE INDEX idx_reg_ip ON registration_event (ip);
+            CREATE INDEX idx_reg_user ON registration_event (user_id);
+            CREATE INDEX idx_reg_success ON registration_event (success);
+            CREATE INDEX idx_reg_created_at ON registration_event (created_at);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

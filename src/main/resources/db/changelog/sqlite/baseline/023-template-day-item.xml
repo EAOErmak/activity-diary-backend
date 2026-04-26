@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-023-template-day-item" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE template_day_item (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                week_template_id BIGINT NOT NULL,
+                day_template_id BIGINT NOT NULL,
+                day_of_week INTEGER NOT NULL,
+                CONSTRAINT uk_day_item_dayofweek UNIQUE (week_template_id, day_of_week),
+                CONSTRAINT fk_day_item_week_tpl
+                    FOREIGN KEY (week_template_id)
+                    REFERENCES week_template (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_day_item_day_tpl
+                    FOREIGN KEY (day_template_id)
+                    REFERENCES day_template (id)
+                    ON DELETE RESTRICT
+            );
+
+            CREATE INDEX idx_day_item_week_tpl ON template_day_item (week_template_id);
+            CREATE INDEX idx_day_item_day_tpl ON template_day_item (day_template_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

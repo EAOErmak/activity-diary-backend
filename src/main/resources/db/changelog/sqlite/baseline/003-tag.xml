@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-003-tag" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE tag (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                name VARCHAR(64) NOT NULL,
+                status VARCHAR(16) NOT NULL,
+                created_by_user_id BIGINT,
+                CONSTRAINT uq_tag_name UNIQUE (name),
+                CONSTRAINT fk_tag_created_by_user
+                    FOREIGN KEY (created_by_user_id)
+                    REFERENCES users (id)
+                    ON DELETE SET NULL
+            );
+
+            CREATE INDEX idx_tag_name ON tag (name);
+            CREATE INDEX idx_tag_status ON tag (status);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-015-diary-entry-tag" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE diary_entry_tag (
+                entry_id BIGINT NOT NULL,
+                tag_id BIGINT NOT NULL,
+                CONSTRAINT pk_diary_entry_tag PRIMARY KEY (entry_id, tag_id),
+                CONSTRAINT fk_entry_tag_entry
+                    FOREIGN KEY (entry_id)
+                    REFERENCES diary_entry (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_entry_tag_tag
+                    FOREIGN KEY (tag_id)
+                    REFERENCES tag (id)
+                    ON DELETE RESTRICT
+            );
+
+            CREATE INDEX idx_entry_tag_entry ON diary_entry_tag (entry_id);
+            CREATE INDEX idx_entry_tag_tag ON diary_entry_tag (tag_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

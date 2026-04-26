@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-018-diary-entry-template" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE diary_entry_template (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                user_id BIGINT NOT NULL,
+                name VARCHAR(120) NOT NULL,
+                mood SMALLINT,
+                description VARCHAR(1000),
+                time_start TIME,
+                time_end TIME,
+                CONSTRAINT uk_diary_entry_template_user_name UNIQUE (user_id, name),
+                CONSTRAINT fk_diary_entry_template_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES users (id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE INDEX idx_diary_entry_template_user ON diary_entry_template (user_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

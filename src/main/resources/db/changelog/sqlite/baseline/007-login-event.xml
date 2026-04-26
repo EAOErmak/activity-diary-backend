@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-007-login-event" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE login_event (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                user_id BIGINT,
+                ip VARCHAR(255) NOT NULL,
+                user_agent VARCHAR(1000) NOT NULL,
+                success BOOLEAN NOT NULL
+            );
+
+            CREATE INDEX idx_login_event_user ON login_event (user_id);
+            CREATE INDEX idx_login_event_ip ON login_event (ip);
+            CREATE INDEX idx_login_event_success ON login_event (success);
+            CREATE INDEX idx_login_event_created ON login_event (created_at);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

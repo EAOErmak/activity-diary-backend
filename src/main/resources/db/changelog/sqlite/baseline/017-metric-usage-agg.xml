@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-017-metric-usage-agg" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE metric_usage_agg (
+                user_id BIGINT NOT NULL,
+                metric_type_id BIGINT NOT NULL,
+                unit_id BIGINT NOT NULL,
+                bucket VARCHAR(16) NOT NULL,
+                bucket_start DATE NOT NULL,
+                value_sum NUMERIC(24,5) NOT NULL DEFAULT 0,
+                value_count INTEGER NOT NULL DEFAULT 0,
+                CONSTRAINT pk_metric_usage_agg PRIMARY KEY (user_id, metric_type_id, unit_id, bucket, bucket_start)
+            );
+
+            CREATE INDEX idx_metric_usage_user_bucket_start ON metric_usage_agg (user_id, bucket, bucket_start);
+            CREATE INDEX idx_metric_usage_user_type_unit_bucket_start
+                ON metric_usage_agg (user_id, metric_type_id, unit_id, bucket, bucket_start);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

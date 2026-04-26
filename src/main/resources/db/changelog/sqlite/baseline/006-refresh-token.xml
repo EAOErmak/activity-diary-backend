@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-006-refresh-token" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE refresh_token (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                version BIGINT NOT NULL DEFAULT 0,
+                user_id BIGINT NOT NULL,
+                token_hash VARCHAR(128) NOT NULL UNIQUE,
+                expires_at TIMESTAMP NOT NULL,
+                revoked BOOLEAN NOT NULL,
+                replaced_by_id BIGINT,
+                CONSTRAINT fk_refresh_token_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES users (id),
+                CONSTRAINT fk_refresh_token_replaced
+                    FOREIGN KEY (replaced_by_id)
+                    REFERENCES refresh_token (id)
+            );
+
+            CREATE INDEX idx_refresh_token_hash ON refresh_token (token_hash);
+            CREATE INDEX idx_refresh_token_user ON refresh_token (user_id);
+            CREATE INDEX idx_refresh_token_expires ON refresh_token (expires_at);
+            CREATE INDEX idx_refresh_token_revoked ON refresh_token (revoked);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-032-tag-metric-link" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE tag_metric_link (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                tag_id BIGINT NOT NULL,
+                metric_name_id BIGINT NOT NULL,
+                CONSTRAINT uk_tag_metric_link_tag_metric_name UNIQUE (tag_id, metric_name_id),
+                CONSTRAINT fk_tag_metric_link_tag
+                    FOREIGN KEY (tag_id)
+                    REFERENCES tag (id),
+                CONSTRAINT fk_tag_metric_link_metric_name
+                    FOREIGN KEY (metric_name_id)
+                    REFERENCES dictionary_item (id)
+            );
+
+            CREATE INDEX idx_tag_metric_link_tag ON tag_metric_link (tag_id);
+            CREATE INDEX idx_tag_metric_link_metric_name ON tag_metric_link (metric_name_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-031-tag-chart-type-link" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE tag_chart_type_link (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                tag_id BIGINT NOT NULL,
+                chart_type VARCHAR(64) NOT NULL,
+                CONSTRAINT uk_tag_chart_type_link_tag_chart_type UNIQUE (tag_id, chart_type),
+                CONSTRAINT fk_tag_chart_type_link_tag
+                    FOREIGN KEY (tag_id)
+                    REFERENCES tag (id)
+            );
+
+            CREATE INDEX idx_tag_chart_type_link_tag ON tag_chart_type_link (tag_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

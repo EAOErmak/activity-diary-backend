@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="sqlite-baseline-010-user-food" author="codex" dbms="sqlite" context="desktop">
+        <sql splitStatements="true" stripComments="true" endDelimiter=";">
+            CREATE TABLE user_food (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                user_id BIGINT NOT NULL,
+                dictionary_item_id BIGINT NOT NULL,
+                protein NUMERIC(10,2) NOT NULL DEFAULT 0,
+                fat NUMERIC(10,2) NOT NULL DEFAULT 0,
+                carbs NUMERIC(10,2) NOT NULL DEFAULT 0,
+                callories NUMERIC(10,2) NOT NULL DEFAULT 0,
+                CONSTRAINT uk_user_food_user_dictionary_item UNIQUE (user_id, dictionary_item_id),
+                CONSTRAINT fk_user_food_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES users (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_user_food_dictionary_item
+                    FOREIGN KEY (dictionary_item_id)
+                    REFERENCES dictionary_item (id)
+            );
+
+            CREATE INDEX idx_user_food_user ON user_food (user_id);
+            CREATE INDEX idx_user_food_dictionary_item ON user_food (dictionary_item_id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

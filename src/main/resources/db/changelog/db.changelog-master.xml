@@ -4,45 +4,14 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="
         http://www.liquibase.org/xml/ns/dbchangelog
-        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
 
-    <include file="db/changelog/changes/create/v1_create_users.xml"/>
-    <include file="db/changelog/changes/create/v1_create_dictionary_item.xml"/>
-    <include file="db/changelog/changes/create/v1_create_general_food.xml"/>
-    <include file="db/changelog/changes/create/v1_create_user_food.xml"/>
-    <include file="db/changelog/changes/create/v1_create_diary_entry.xml"/>
-    <include file="db/changelog/changes/create/v1_create_entry_metric.xml"/>
-    <include file="db/changelog/changes/create/v1_create_entry_metric_value.xml"/>
-    <include file="db/changelog/changes/create/v1_create_login_event.xml"/>
-    <include file="db/changelog/changes/create/v1_create_registration_event.xml"/>
-    <include file="db/changelog/changes/create/v1_create_refresh_token.xml"/>
-    <include file="db/changelog/changes/create/v1_create_verification_codes.xml"/>
-    <include file="db/changelog/changes/create/v1_create_user_accounts.xml"/>
-    <include file="db/changelog/changes/create/v1_create_tag.xml"/>
-    <include file="db/changelog/changes/create/v1_create_diary_entry_tag.xml"/>
-    <include file="db/changelog/changes/create/v1_create_user_tag.xml"/>
-    <include file="db/changelog/changes/create/v1_create_tag_usage_agg.xml"/>
-    <include file="db/changelog/changes/create/v1_create_metric_usage_agg.xml"/>
-    <include file="db/changelog/changes/create/v1_create_diary_entry_template.xml"/>
-    <include file="db/changelog/changes/create/v1_create_entry_template_metric.xml"/>
-    <include file="db/changelog/changes/create/v1_create_entry_template_metric_value.xml"/>
-    <include file="db/changelog/changes/create/v1_create_day_template.xml"/>
-    <include file="db/changelog/changes/create/v1_create_week_template.xml"/>
-    <include file="db/changelog/changes/create/v1_create_template_day_item.xml"/>
-    <include file="db/changelog/changes/create/v1_create_template_entry_item.xml"/>
-    <include file="db/changelog/changes/create/v1_create_week_goal.xml"/>
-    <include file="db/changelog/changes/create/v1_create_day_goal.xml"/>
-    <include file="db/changelog/changes/create/v1_create_diary_entry_goal.xml"/>
-    <include file="db/changelog/changes/create/v1_create_entry_metric_goal.xml"/>
-    <include file="db/changelog/changes/create/v1_create_entry_metric_value_goal.xml"/>
-    <include file="db/changelog/changes/create/v1_create_metric_name_unit_link.xml"/>
-    <include file="db/changelog/changes/create/v1_create_tag_chart_type_link.xml"/>
-    <include file="db/changelog/changes/create/v1_create_tag_metric_link.xml"/>
-    <include file="db/changelog/changes/update/v1_add_refresh_token_version.xml"/>
-    <include file="db/changelog/changes/update/v1_convert_metric_values_to_decimal.xml"/>
-    <include file="db/changelog/changes/drop/v1_drop_legacy_state_tables.xml"/>
-    <include file="db/changelog/changes/drop/v1_drop_legacy_telegram_accounts.xml"/>
-    <include file="db/changelog/changes/drop/v1_drop_dictionary_item_chart_type.xml"/>
+    <!-- PostgreSQL/web keeps the historical migration chain unchanged. -->
+    <include file="db/changelog/postgres/db.postgres-master.xml" contextFilter="web"/>
 
-    <include file="db/changelog/changes/insert/v1_insertion_test_user.xml"/>
+    <!-- SQLite/desktop starts from a fresh baseline of the current schema. -->
+    <include file="db/changelog/sqlite/db.sqlite-baseline.xml" contextFilter="desktop"/>
+
+    <!-- Future shared changesets should stay database-agnostic. -->
+    <include file="db/changelog/shared/db.shared-master.xml"/>
 </databaseChangeLog>
