@@ -39,7 +39,12 @@ public class TrainingMetrcisChartStrategy implements ChartCalculationStrategy {
     @Override
     public ChartResponseDto calculate(Long userId, ChartFilterDto filter) {
 
-        List<DiaryEntry> diaryEntryList = diaryRepository.findAllByUserIdAndTags_Id(userId ,filter.getTagId());
+        List<DiaryEntry> diaryEntryList = diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(
+                userId,
+                filter.getTagId(),
+                filter.getDateFrom(),
+                filter.getDateTo()
+        );
 
         List<ChartSeriesDto> chartSeriesDtoList = new ArrayList<>();
 
