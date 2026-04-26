@@ -5,10 +5,12 @@ import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.enums.ProviderType;
 import com.example.activity_diary.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Profile("desktop")
 @RequiredArgsConstructor
 public class DesktopCurrentUserProvider implements CurrentUserProvider {
 
