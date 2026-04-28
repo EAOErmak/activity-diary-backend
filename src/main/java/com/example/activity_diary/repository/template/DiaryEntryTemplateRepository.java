@@ -13,7 +13,7 @@ public interface DiaryEntryTemplateRepository extends JpaRepository<DiaryEntryTe
     List<DiaryEntryTemplate> findAllByIdInAndUserId(Collection<Long> ids, Long userId);
     boolean existsByUser_IdAndNameIgnoreCase(Long userId, String name);
 
-    @EntityGraph(attributePaths = {"metrics", "metrics.values"})
+    @EntityGraph(attributePaths = {"metrics"})
     Optional<DiaryEntryTemplate> findByIdAndUser_Id(Long id, Long userId);
 
     Page<DiaryEntryTemplate> findAllByUser_Id(Long userId, Pageable pageable);
