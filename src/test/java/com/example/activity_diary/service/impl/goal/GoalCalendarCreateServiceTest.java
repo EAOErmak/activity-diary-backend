@@ -13,7 +13,9 @@ import com.example.activity_diary.entity.goal.WeekGoal;
 import com.example.activity_diary.entity.template.DayTemplate;
 import com.example.activity_diary.entity.template.DiaryEntryTemplate;
 import com.example.activity_diary.entity.template.EntryTemplateMetric;
+import com.example.activity_diary.entity.template.EntryTemplateMetricValue;
 import com.example.activity_diary.entity.template.TemplateEntryItem;
+import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.goal.DayGoalRepository;
 import com.example.activity_diary.repository.goal.DiaryEntryGoalRepository;
@@ -40,9 +42,12 @@ import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -122,6 +127,139 @@ class GoalCalendarCreateServiceTest {
         assertEquals(List.of(100L, 101L), metricTypeIds);
         assertTrue(saved.getMetricGoals().stream().allMatch(metricGoal -> metricGoal.getEntryGoal() == saved));
         assertTrue(saved.getMetricGoals().stream().allMatch(metricGoal -> metricGoal.getValues().size() == 1));
+    }
+
+    @Test
+    void createEntryGoal_allowsMultipleMetricGoalsWithSameMetricType() {
+        Long userId = 10L;
+        Long templateId = 20L;
+        LocalDate targetDate = LocalDate.parse("2026-04-05");
+
+        User user = user(userId);
+        DiaryEntryTemplate template = template(user);
+        DictionaryItem water = metricType(100L, "Water");
+        addTemplateMetric(template, water, unit(200L, "ml"), BigDecimal.valueOf(500));
+        addTemplateMetric(template, water, unit(201L, "oz"), BigDecimal.valueOf(16));
+
+        WeekGoal week = weekGoal(user);
+        DayGoal day = dayGoal(week, targetDate);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
+        when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
+        when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(goalMapper.toEntryView(any(DiaryEntryGoal.class))).thenReturn(new DiaryEntryGoalDetailDto());
+
+        service.createEntryGoal(userId, templateId, targetDate);
+
+        ArgumentCaptor<DiaryEntryGoal> goalCaptor = ArgumentCaptor.forClass(DiaryEntryGoal.class);
+        verify(diaryEntryGoalRepository).save(goalCaptor.capture());
+
+        DiaryEntryGoal saved = goalCaptor.getValue();
+        assertEquals(2, saved.getMetricGoals().size());
+        assertEquals(
+                List.of(100L, 100L),
+                saved.getMetricGoals().stream()
+                        .map(EntryMetricGoal::getMetricType)
+                        .map(DictionaryItem::getId)
+                        .sorted()
+                        .toList()
+        );
+        assertEquals(
+                List.of(200L, 201L),
+                saved.getMetricGoals().stream()
+                        .map(metricGoal -> metricGoal.getValues().getFirst().getUnit().getId())
+                        .sorted()
+                        .toList()
+        );
+        assertTrue(saved.getMetricGoals().stream().allMatch(metricGoal -> metricGoal.getValues().size() == 1));
+    }
+
+    @Test
+    void createEntryGoal_duplicateUnitWithinMetricGoal_throwsBadRequestBeforeSave() {
+        Long userId = 10L;
+        Long templateId = 20L;
+        LocalDate targetDate = LocalDate.parse("2026-04-05");
+
+        User user = user(userId);
+        DiaryEntryTemplate template = template(user);
+
+        DictionaryItem milliliters = unit(200L, "ml");
+
+        EntryTemplateMetric templateMetric = mock(EntryTemplateMetric.class);
+        EntryTemplateMetricValue value1 = mock(EntryTemplateMetricValue.class);
+        EntryTemplateMetricValue value2 = mock(EntryTemplateMetricValue.class);
+
+        when(templateMetric.getValues()).thenReturn(List.of(value1, value2));
+        when(value1.getUnit()).thenReturn(milliliters);
+        when(value2.getUnit()).thenReturn(milliliters);
+
+        template.setMetrics(List.of(templateMetric));
+
+        WeekGoal week = weekGoal(user);
+        DayGoal day = dayGoal(week, targetDate);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
+        when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> service.createEntryGoal(userId, templateId, targetDate)
+        );
+
+        assertEquals(
+                "Metric goal cannot contain duplicate values with the same unit",
+                exception.getMessage()
+        );
+        verify(diaryEntryGoalRepository, never()).save(any(DiaryEntryGoal.class));
+    }
+
+    @Test
+    void createEntryGoal_allowsMultipleValuesWithDifferentUnitsInSingleMetricGoal() {
+        Long userId = 10L;
+        Long templateId = 20L;
+        LocalDate targetDate = LocalDate.parse("2026-04-05");
+
+        User user = user(userId);
+        DiaryEntryTemplate template = template(user);
+        addTemplateMetric(
+                template,
+                metricType(100L, "Water"),
+                unit(200L, "ml"),
+                BigDecimal.valueOf(500),
+                unit(201L, "oz"),
+                BigDecimal.valueOf(16)
+        );
+
+        WeekGoal week = weekGoal(user);
+        DayGoal day = dayGoal(week, targetDate);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
+        when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
+        when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(goalMapper.toEntryView(any(DiaryEntryGoal.class))).thenReturn(new DiaryEntryGoalDetailDto());
+
+        service.createEntryGoal(userId, templateId, targetDate);
+
+        ArgumentCaptor<DiaryEntryGoal> goalCaptor = ArgumentCaptor.forClass(DiaryEntryGoal.class);
+        verify(diaryEntryGoalRepository).save(goalCaptor.capture());
+
+        DiaryEntryGoal saved = goalCaptor.getValue();
+        EntryMetricGoal metricGoal = saved.getMetricGoals().iterator().next();
+
+        assertEquals(1, saved.getMetricGoals().size());
+        assertEquals(
+                List.of(200L, 201L),
+                metricGoal.getValues().stream()
+                        .map(value -> value.getUnit().getId())
+                        .sorted()
+                        .toList()
+        );
     }
 
     @Test
@@ -244,6 +382,20 @@ class GoalCalendarCreateServiceTest {
     ) {
         EntryTemplateMetric metric = EntryTemplateMetric.create(template, metricType);
         metric.addValue(unit, value);
+        template.addMetric(metric);
+    }
+
+    private static void addTemplateMetric(
+            DiaryEntryTemplate template,
+            DictionaryItem metricType,
+            DictionaryItem unit1,
+            BigDecimal value1,
+            DictionaryItem unit2,
+            BigDecimal value2
+    ) {
+        EntryTemplateMetric metric = EntryTemplateMetric.create(template, metricType);
+        metric.addValue(unit1, value1);
+        metric.addValue(unit2, value2);
         template.addMetric(metric);
     }
 

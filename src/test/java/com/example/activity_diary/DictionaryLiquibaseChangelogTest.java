@@ -76,6 +76,19 @@ class DictionaryLiquibaseChangelogTest {
     }
 
     @Test
+    void sharedMaster_includesEntryMetricGoalConstraintFix() throws Exception {
+        String sharedMaster = readClasspathFile("db/changelog/shared/db.shared-master.xml");
+        String migration = readClasspathFile("db/changelog/shared/001-fix-entry-metric-goal-constraints.xml");
+
+        assertThat(sharedMaster)
+                .contains("db/changelog/shared/001-fix-entry-metric-goal-constraints.xml");
+        assertThat(migration)
+                .contains("dropUniqueConstraint")
+                .contains("uk_metric_goal_entry_type")
+                .contains("uk_metric_value_goal_metric_unit");
+    }
+
+    @Test
     void sqliteBaseline_entrypointIncludesSingleChangeSetFilesInOrder() throws Exception {
         String sqliteBaseline = readClasspathFile("db/changelog/sqlite/db.sqlite-baseline.xml");
 
@@ -95,6 +108,16 @@ class DictionaryLiquibaseChangelogTest {
                 .doesNotContain("006-templates.xml")
                 .doesNotContain("007-goals.xml")
                 .doesNotContain("008-admin-links.xml");
+    }
+
+    @Test
+    void sqliteBaseline_entryMetricGoalDoesNotEnforceMetricTypeUniquenessPerEntryGoal() throws Exception {
+        String changelog = readClasspathFile("db/changelog/sqlite/baseline/028-entry-metric-goal.xml");
+
+        assertThat(changelog)
+                .contains("CREATE TABLE entry_metric_goal")
+                .doesNotContain("uk_metric_goal_entry_type")
+                .doesNotContain("UNIQUE (entry_goal_id, metric_type_id)");
     }
 
     @Test

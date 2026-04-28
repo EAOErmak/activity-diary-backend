@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <changeSet id="shared-001-drop-entry-metric-goal-metric-type-unique" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <uniqueConstraintExists
+                    tableName="entry_metric_goal"
+                    constraintName="uk_metric_goal_entry_type"/>
+        </preConditions>
+
+        <dropUniqueConstraint
+                tableName="entry_metric_goal"
+                constraintName="uk_metric_goal_entry_type"/>
+    </changeSet>
+
+    <changeSet id="shared-002-ensure-entry-metric-value-goal-unit-unique" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <uniqueConstraintExists
+                        tableName="entry_metric_value_goal"
+                        constraintName="uk_metric_value_goal_metric_unit"/>
+            </not>
+        </preConditions>
+
+        <addUniqueConstraint
+                tableName="entry_metric_value_goal"
+                constraintName="uk_metric_value_goal_metric_unit"
+                columnNames="metric_goal_id,unit_id"/>
+    </changeSet>
+</databaseChangeLog>

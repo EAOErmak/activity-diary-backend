@@ -12,4 +12,5 @@
       SQLite-only changesets must use dbms="sqlite".
       Shared changesets must avoid PostgreSQL-specific SQL/types and SQLite-incompatible ALTER patterns.
     -->
+    <include file="db/changelog/shared/001-fix-entry-metric-goal-constraints.xml"/>
 </databaseChangeLog>

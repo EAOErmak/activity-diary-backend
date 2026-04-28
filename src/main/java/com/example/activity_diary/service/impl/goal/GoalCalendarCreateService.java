@@ -35,6 +35,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +45,8 @@ public class GoalCalendarCreateService {
 
     private static final int DEFAULT_TEMPLATE_DURATION_MIN = 60;
     private static final LocalTime END_OF_DAY = LocalTime.of(23, 59, 59);
+    private static final String DUPLICATE_METRIC_GOAL_UNIT_MESSAGE =
+            "Metric goal cannot contain duplicate values with the same unit";
 
     private final UserRepository userRepository;
 
@@ -208,6 +212,8 @@ public class GoalCalendarCreateService {
 
     private void copyMetricsFromTemplate(DiaryEntryGoal goal, DiaryEntryTemplate template) {
         for (EntryTemplateMetric templateMetric : template.getMetrics()) {
+            validateMetricGoalValues(templateMetric);
+
             EntryMetricGoal metricGoal = EntryMetricGoal.create(goal, templateMetric.getMetricType());
 
             for (EntryTemplateMetricValue templateValue : templateMetric.getValues()) {
@@ -215,6 +221,17 @@ public class GoalCalendarCreateService {
             }
 
             goal.addMetricGoal(metricGoal);
+        }
+    }
+
+    private void validateMetricGoalValues(EntryTemplateMetric templateMetric) {
+        Set<Long> unitIds = new HashSet<>();
+
+        for (EntryTemplateMetricValue templateValue : templateMetric.getValues()) {
+            Long unitId = templateValue.getUnit() == null ? null : templateValue.getUnit().getId();
+            if (!unitIds.add(unitId)) {
+                throw new BadRequestException(DUPLICATE_METRIC_GOAL_UNIT_MESSAGE);
+            }
         }
     }
 

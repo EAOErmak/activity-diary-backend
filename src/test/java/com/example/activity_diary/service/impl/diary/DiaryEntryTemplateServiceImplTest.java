@@ -5,6 +5,7 @@ import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateUpdateDto
 import com.example.activity_diary.dto.template.diary.DiaryEntryTemplateViewDto;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricUpsertDto;
 import com.example.activity_diary.dto.template.diary.EntryTemplateMetricValueUpsertDto;
+import com.example.activity_diary.dto.template.diary.EntryTemplateMetricViewDto;
 import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
@@ -133,6 +134,38 @@ class DiaryEntryTemplateServiceImplTest {
         assertEquals("tpl", result.getName());
         assertEquals(1, result.getMetrics().size());
         assertEquals(new BigDecimal("5.00000"), result.getMetrics().getFirst().getValues().getFirst().getValue());
+    }
+
+    @Test
+    void create_allowsMultipleMetricsWithSameMetricType() {
+        DiaryEntryTemplateCreateDto dto = validCreateDto("tpl", "#desc");
+        dto.setMetrics(List.of(
+                metric(10L, 20L, BigDecimal.valueOf(5)),
+                metric(10L, 21L, BigDecimal.valueOf(6))
+        ));
+
+        User user = userWithId(1L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(diaryEntryTemplateRepository.existsByUser_IdAndNameIgnoreCase(1L, "tpl")).thenReturn(false);
+        when(dictionaryRepository.findAllById(Set.of(10L, 20L, 21L)))
+                .thenReturn(List.of(
+                        dictItem(10L, DictionaryType.METRIC_NAME, "m"),
+                        dictItem(20L, DictionaryType.METRIC_UNIT, "u20"),
+                        dictItem(21L, DictionaryType.METRIC_UNIT, "u21")
+                ));
+        when(diaryEntryTemplateRepository.save(any(DiaryEntryTemplate.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        DiaryEntryTemplateViewDto result = service.create(1L, dto);
+
+        assertEquals(2, result.getMetrics().size());
+        assertEquals(
+                List.of(10L, 10L),
+                result.getMetrics().stream()
+                        .map(EntryTemplateMetricViewDto::getMetricTypeId)
+                        .toList()
+        );
     }
 
     @Test

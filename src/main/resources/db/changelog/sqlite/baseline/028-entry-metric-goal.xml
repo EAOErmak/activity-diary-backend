@@ -14,7 +14,6 @@
                 updated_at TIMESTAMP NOT NULL,
                 entry_goal_id BIGINT NOT NULL,
                 metric_type_id BIGINT NOT NULL,
-                CONSTRAINT uk_metric_goal_entry_type UNIQUE (entry_goal_id, metric_type_id),
                 CONSTRAINT fk_metric_goal_entry_goal
                     FOREIGN KEY (entry_goal_id)
                     REFERENCES diary_entry_goal (id)
