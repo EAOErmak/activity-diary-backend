@@ -46,6 +46,24 @@ public class SecurityContextCurrentUserProvider implements CurrentUserProvider {
     @Override
     @Transactional(readOnly = true)
     public Long getCurrentUserId() {
-        return getCurrentUser().getId();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("Unauthenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof LightUserDetails lightUserDetails) {
+            return lightUserDetails.getId();
+        }
+
+        if (principal instanceof UserDetails userDetails) {
+            return userRepository.findByUsername(userDetails.getUsername())
+                    .map(User::getId)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        }
+
+        throw new IllegalStateException("Invalid principal type");
     }
 }

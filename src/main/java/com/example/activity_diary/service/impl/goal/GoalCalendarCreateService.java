@@ -18,13 +18,13 @@ import com.example.activity_diary.entity.template.TemplateEntryItem;
 import com.example.activity_diary.entity.template.WeekTemplate;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
-import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.goal.DayGoalRepository;
 import com.example.activity_diary.repository.goal.DiaryEntryGoalRepository;
 import com.example.activity_diary.repository.goal.WeekGoalRepository;
 import com.example.activity_diary.repository.template.DayTemplateRepository;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
 import com.example.activity_diary.repository.template.WeekTemplateRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,7 @@ public class GoalCalendarCreateService {
     private static final String DUPLICATE_METRIC_GOAL_UNIT_MESSAGE =
             "Metric goal cannot contain duplicate values with the same unit";
 
-    private final UserRepository userRepository;
+    private final EntityManager entityManager;
 
     private final DiaryEntryTemplateRepository diaryEntryTemplateRepository;
     private final DayTemplateRepository dayTemplateRepository;
@@ -61,33 +61,29 @@ public class GoalCalendarCreateService {
     private final GoalMapper goalMapper;
 
     public DiaryEntryGoalDetailDto createEntryGoal(Long userId, Long templateId, LocalDate targetDate) {
+        User userRef = entityManager.getReference(User.class, userId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        DiaryEntryTemplate template = diaryEntryTemplateRepository.findById(templateId)
+        DiaryEntryTemplate template = diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)
                 .orElseThrow(() -> new NotFoundException("Entry template not found"));
 
-        WeekGoal week = findOrCreateWeekGoal(user, targetDate);
+        WeekGoal week = findOrCreateWeekGoal(userId, userRef, targetDate);
         DayGoal day = findOrCreateDayGoal(week, targetDate);
 
         GoalSchedule schedule = resolveGoalSchedule(template, targetDate, true);
 
-        DiaryEntryGoal created = createEntryGoalFromTemplate(user, day, template, schedule);
+        DiaryEntryGoal created = createEntryGoalFromTemplate(userRef, day, template, schedule);
         diaryEntryGoalRepository.save(created);
 
         return goalMapper.toEntryView(created);
     }
 
     public DayGoalDetailDto createDayGoal(Long userId, Long templateId, LocalDate targetDate) {
+        User userRef = entityManager.getReference(User.class, userId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        DayTemplate template = dayTemplateRepository.findById(templateId)
+        DayTemplate template = dayTemplateRepository.findByIdAndUser_Id(templateId, userId)
                 .orElseThrow(() -> new NotFoundException("Day template not found"));
 
-        WeekGoal week = findOrCreateWeekGoal(user, targetDate);
+        WeekGoal week = findOrCreateWeekGoal(userId, userRef, targetDate);
         DayGoal day = findOrCreateDayGoal(week, targetDate);
 
         for (TemplateEntryItem item : template.getItems()) {
@@ -95,7 +91,7 @@ public class GoalCalendarCreateService {
             GoalSchedule schedule = resolveGoalSchedule(entryTemplate, targetDate, false);
 
             DiaryEntryGoal created = createEntryGoalFromTemplate(
-                    user,
+                    userRef,
                     day,
                     entryTemplate,
                     schedule
@@ -107,15 +103,13 @@ public class GoalCalendarCreateService {
     }
 
     public WeekGoalDetailDto createWeekGoal(Long userId, Long templateId, LocalDate targetDate) {
+        User userRef = entityManager.getReference(User.class, userId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        WeekTemplate template = weekTemplateRepository.findById(templateId)
+        WeekTemplate template = weekTemplateRepository.findByIdAndUser_Id(templateId, userId)
                 .orElseThrow(() -> new NotFoundException("Week template not found"));
 
         LocalDate monday = targetDate.with(DayOfWeek.MONDAY);
-        WeekGoal week = findOrCreateWeekGoal(user, targetDate);
+        WeekGoal week = findOrCreateWeekGoal(userId, userRef, targetDate);
 
         for (TemplateDayItem dayItem : template.getItems()) {
             LocalDate date = monday.plusDays(dayItem.getDayOfWeek() - 1L);
@@ -127,7 +121,7 @@ public class GoalCalendarCreateService {
                 GoalSchedule schedule = resolveGoalSchedule(entryTemplate, date, false);
 
                 DiaryEntryGoal created = createEntryGoalFromTemplate(
-                        user,
+                        userRef,
                         day,
                         entryTemplate,
                         schedule
@@ -139,7 +133,7 @@ public class GoalCalendarCreateService {
         return goalMapper.toWeekView(week);
     }
 
-    private WeekGoal findOrCreateWeekGoal(User user, LocalDate date) {
+    private WeekGoal findOrCreateWeekGoal(Long userId, User userRef, LocalDate date) {
         ZoneId zone = ZoneId.systemDefault();
 
         LocalDate monday = date.with(DayOfWeek.MONDAY);
@@ -148,10 +142,10 @@ public class GoalCalendarCreateService {
         Instant start = monday.atStartOfDay(zone).toInstant();
         Instant end = sunday.atTime(23, 59, 59).atZone(zone).toInstant();
 
-        return weekGoalRepository.findByUser_IdAndWhenStarted(user.getId(), start)
+        return weekGoalRepository.findByUser_IdAndWhenStarted(userId, start)
                 .orElseGet(() -> weekGoalRepository.save(
                         WeekGoal.builder()
-                                .user(user)
+                                .user(userRef)
                                 .whenStarted(start)
                                 .whenEnded(end)
                                 .completeness(0)

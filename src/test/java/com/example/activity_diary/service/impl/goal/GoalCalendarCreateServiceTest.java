@@ -16,13 +16,13 @@ import com.example.activity_diary.entity.template.EntryTemplateMetric;
 import com.example.activity_diary.entity.template.EntryTemplateMetricValue;
 import com.example.activity_diary.entity.template.TemplateEntryItem;
 import com.example.activity_diary.exception.types.BadRequestException;
-import com.example.activity_diary.repository.UserRepository;
 import com.example.activity_diary.repository.goal.DayGoalRepository;
 import com.example.activity_diary.repository.goal.DiaryEntryGoalRepository;
 import com.example.activity_diary.repository.goal.WeekGoalRepository;
 import com.example.activity_diary.repository.template.DayTemplateRepository;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
 import com.example.activity_diary.repository.template.WeekTemplateRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
 class GoalCalendarCreateServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private EntityManager entityManager;
 
     @Mock
     private DiaryEntryTemplateRepository diaryEntryTemplateRepository;
@@ -97,8 +97,8 @@ class GoalCalendarCreateServiceTest {
         DayGoal day = dayGoal(week, targetDate);
         DiaryEntryGoalDetailDto mapped = new DiaryEntryGoalDetailDto();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)).thenReturn(Optional.of(template));
         when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
         when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
         when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -144,8 +144,8 @@ class GoalCalendarCreateServiceTest {
         WeekGoal week = weekGoal(user);
         DayGoal day = dayGoal(week, targetDate);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)).thenReturn(Optional.of(template));
         when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
         when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
         when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -200,8 +200,8 @@ class GoalCalendarCreateServiceTest {
         WeekGoal week = weekGoal(user);
         DayGoal day = dayGoal(week, targetDate);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)).thenReturn(Optional.of(template));
         when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
         when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
 
@@ -237,8 +237,8 @@ class GoalCalendarCreateServiceTest {
         WeekGoal week = weekGoal(user);
         DayGoal day = dayGoal(week, targetDate);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)).thenReturn(Optional.of(template));
         when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
         when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
         when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -295,8 +295,8 @@ class GoalCalendarCreateServiceTest {
         DayGoal day = dayGoal(week, targetDate);
         DayGoalDetailDto mapped = new DayGoalDetailDto();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(dayTemplateRepository.findById(templateId)).thenReturn(Optional.of(dayTemplate));
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(dayTemplateRepository.findByIdAndUser_Id(templateId, userId)).thenReturn(Optional.of(dayTemplate));
         when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
         when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
         when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -332,8 +332,8 @@ class GoalCalendarCreateServiceTest {
         DiaryEntryGoalDetailDto firstMapped = new DiaryEntryGoalDetailDto();
         DiaryEntryGoalDetailDto secondMapped = new DiaryEntryGoalDetailDto();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(diaryEntryTemplateRepository.findById(templateId)).thenReturn(Optional.of(template));
+        when(entityManager.getReference(User.class, userId)).thenReturn(user);
+        when(diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)).thenReturn(Optional.of(template));
         when(weekGoalRepository.findByUser_IdAndWhenStarted(eq(userId), any(Instant.class))).thenReturn(Optional.of(week));
         when(dayGoalRepository.findByWeekGoal_IdAndTargetDate(week.getId(), targetDate)).thenReturn(Optional.of(day));
         when(diaryEntryGoalRepository.save(any(DiaryEntryGoal.class))).thenAnswer(invocation -> invocation.getArgument(0));
