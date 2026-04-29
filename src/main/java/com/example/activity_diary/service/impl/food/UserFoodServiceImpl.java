@@ -3,7 +3,6 @@ package com.example.activity_diary.service.impl.food;
 import com.example.activity_diary.dto.food.FoodUpsertDto;
 import com.example.activity_diary.dto.food.UserFoodResponseDto;
 import com.example.activity_diary.dto.mapper.FoodMapper;
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.food.UserFood;
 import com.example.activity_diary.exception.types.BadRequestException;
@@ -51,7 +50,7 @@ public class UserFoodServiceImpl implements UserFoodService {
         validateUniqueDictionaryItem(userId, dto.getDictionaryItemId(), null);
 
         UserFood userFood = UserFood.builder()
-                .user(getUser(userId))
+                .user(userRepository.getReferenceById(userId))
                 .dictionaryItem(getDictionaryItem(dto.getDictionaryItemId()))
                 .protein(normalizeValue(dto.getProtein(), "Protein"))
                 .fat(normalizeValue(dto.getFat(), "Fat"))
@@ -86,11 +85,6 @@ public class UserFoodServiceImpl implements UserFoodService {
     private UserFood getUserFood(Long userId, Long id) {
         return userFoodRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new NotFoundException("User food not found"));
-    }
-
-    private User getUser(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     private DictionaryItem getDictionaryItem(Long dictionaryItemId) {
