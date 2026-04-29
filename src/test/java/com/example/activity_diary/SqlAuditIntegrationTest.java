@@ -36,6 +36,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +114,20 @@ class SqlAuditIntegrationTest {
                 .andExpect(status().isOk()));
 
         result.print("GET /api/diary/mine?status=ACTIVE");
+        assertThat(result.statements()).isNotEmpty();
+    }
+
+    @Test
+    void auditDiaryRange() throws Exception {
+        Tag focusTag = saveVisibleTag("focus");
+        saveEntry("inside", EntryStatus.ACTIVE, localInstant("2026-02-10T10:15:00"), 60, focusTag);
+
+        SqlAuditResult result = captureRequest(() -> mockMvc.perform(get("/api/diary/range")
+                        .param("from", "2026-02-10T10:00:00")
+                        .param("to", "2026-02-10T12:00:00"))
+                .andExpect(status().isOk()));
+
+        result.print("GET /api/diary/range");
         assertThat(result.statements()).isNotEmpty();
     }
 
@@ -254,6 +270,10 @@ class SqlAuditIntegrationTest {
 
     private Instant instant(String value) {
         return Instant.parse(value);
+    }
+
+    private Instant localInstant(String value) {
+        return LocalDateTime.parse(value).atZone(ZoneId.systemDefault()).toInstant();
     }
 
     @FunctionalInterface

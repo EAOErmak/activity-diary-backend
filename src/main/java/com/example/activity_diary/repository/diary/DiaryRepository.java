@@ -14,7 +14,6 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.Optional;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
@@ -129,8 +128,8 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
     """)
     List<DiaryEntry> findByUserAndDateRange(
             @Param("userId") Long userId,
-            @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
+            @Param("from") Instant from,
+            @Param("to") Instant to
     );
 
     @Query("""

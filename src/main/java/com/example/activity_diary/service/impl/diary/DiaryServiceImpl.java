@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -44,6 +45,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class DiaryServiceImpl implements DiaryService {
+
+    private static final ZoneId RANGE_QUERY_ZONE = ZoneId.systemDefault();
 
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
@@ -116,11 +119,14 @@ public class DiaryServiceImpl implements DiaryService {
             throw new BadRequestException("Invalid date range");
         }
 
+        Instant fromInstant = from.atZone(RANGE_QUERY_ZONE).toInstant();
+        Instant toInstant = to.atZone(RANGE_QUERY_ZONE).toInstant();
+
         return diaryRepository
                 .findByUserAndDateRange(
                         userId,
-                        from,
-                        to
+                        fromInstant,
+                        toInstant
                 )
                 .stream()
                 .map(mapper::toListDto)

@@ -38,6 +38,7 @@ import org.springframework.data.domain.SliceImpl;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -95,6 +96,37 @@ class DiaryServiceImplTest {
     void getEntriesByDateRange_invalidRange_throwsBadRequest() {
         assertThrows(BadRequestException.class, () ->
                 service.getEntriesByDateRange(1L, null, LocalDateTime.now()));
+    }
+
+    @Test
+    void getEntriesByDateRange_convertsLocalDateTimeToSystemZoneInstants() {
+        LocalDateTime from = LocalDateTime.of(2026, 2, 10, 10, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 2, 10, 12, 0);
+        Instant fromInstant = from.atZone(ZoneId.systemDefault()).toInstant();
+        Instant toInstant = to.atZone(ZoneId.systemDefault()).toInstant();
+
+        User user = userWithId(7L);
+        DiaryEntry entry = entryForUser(
+                user,
+                fromInstant.plusSeconds(900),
+                fromInstant.plusSeconds(1800)
+        );
+        DiaryEntryViewDto mapped = new DiaryEntryViewDto(
+                1L,
+                EntryStatus.ACTIVE,
+                fromInstant.plusSeconds(900),
+                fromInstant.plusSeconds(1800),
+                "#focus"
+        );
+
+        when(diaryRepository.findByUserAndDateRange(7L, fromInstant, toInstant))
+                .thenReturn(List.of(entry));
+        when(mapper.toListDto(entry)).thenReturn(mapped);
+
+        List<DiaryEntryViewDto> result = service.getEntriesByDateRange(7L, from, to);
+
+        assertEquals(List.of(mapped), result);
+        verify(diaryRepository).findByUserAndDateRange(7L, fromInstant, toInstant);
     }
 
     @Test
