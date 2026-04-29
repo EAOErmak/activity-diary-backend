@@ -55,6 +55,7 @@ public class DiaryServiceImpl implements DiaryService {
     private final TagUsageAggService tagUsageAggService;
     private final MetricUsageAggService metricUsageAggService;
     private final TagMetricService tagMetricService;
+    private final EntryMetricDetailsLoader entryMetricDetailsLoader;
 
     @Override
     @Transactional(readOnly = true)
@@ -129,7 +130,10 @@ public class DiaryServiceImpl implements DiaryService {
     @Override
     @Transactional(readOnly = true)
     public DiaryEntryDto getMyEntryById(Long id, Long userId) {
-        return mapper.toDto(getEntryGraphForUser(id, userId));
+        DiaryEntry entry = diaryRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
+
+        return mapper.toDetailedDto(entry, entryMetricDetailsLoader.loadForEntry(id));
     }
 
     @Override
@@ -137,8 +141,7 @@ public class DiaryServiceImpl implements DiaryService {
 
         validationService.validateCreate(dto);
 
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new BadRequestException("User not found"));
+        var user = userRepository.getReferenceById(userId);
 
         // 1) РќРѕСЂРјР°Р»РёР·СѓРµРј РѕРїРёСЃР°РЅРёРµ
         String desc = dto.getDescription() == null ? null : dto.getDescription().trim();

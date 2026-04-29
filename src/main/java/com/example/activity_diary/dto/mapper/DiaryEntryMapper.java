@@ -28,6 +28,11 @@ public interface DiaryEntryMapper {
     @Mapping(target = "description", expression = "java(entry.getDescription())")
     DiaryEntryDto toDto(DiaryEntry entry);
 
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(target = "metrics", ignore = true)
+    @Mapping(target = "description", expression = "java(entry.getDescription())")
+    DiaryEntryDto toDtoWithoutMetrics(DiaryEntry entry);
+
     //Create / Update
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
@@ -76,6 +81,14 @@ public interface DiaryEntryMapper {
                 .sorted(Comparator.comparing(value -> value.getUnit().getId()))
                 .map(this::toMetricValueResponseDto)
                 .toList();
+    }
+
+    default DiaryEntryDto toDetailedDto(DiaryEntry entry, List<EntryMetric> metrics) {
+        if (entry == null) return null;
+
+        DiaryEntryDto dto = toDtoWithoutMetrics(entry);
+        dto.setMetrics(toMetricResponseDtoList(metrics));
+        return dto;
     }
 
     //Lightweight View DTO

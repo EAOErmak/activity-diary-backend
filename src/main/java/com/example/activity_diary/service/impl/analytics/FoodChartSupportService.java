@@ -13,6 +13,7 @@ import com.example.activity_diary.entity.food.UserFood;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.repository.food.GeneralFoodRepository;
 import com.example.activity_diary.repository.food.UserFoodRepository;
+import com.example.activity_diary.service.impl.diary.EntryMetricDetailsLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,15 +68,18 @@ public class FoodChartSupportService {
     private final DiaryRepository diaryRepository;
     private final UserFoodRepository userFoodRepository;
     private final GeneralFoodRepository generalFoodRepository;
+    private final EntryMetricDetailsLoader entryMetricDetailsLoader;
 
     public FoodChartSupportService(
             DiaryRepository diaryRepository,
             UserFoodRepository userFoodRepository,
-            GeneralFoodRepository generalFoodRepository
+            GeneralFoodRepository generalFoodRepository,
+            EntryMetricDetailsLoader entryMetricDetailsLoader
     ) {
         this.diaryRepository = diaryRepository;
         this.userFoodRepository = userFoodRepository;
         this.generalFoodRepository = generalFoodRepository;
+        this.entryMetricDetailsLoader = entryMetricDetailsLoader;
     }
 
     public ChartResponseDto buildCaloriesPerDay(ChartType chartType, Long userId, ChartFilterDto filter) {
@@ -84,7 +88,8 @@ public class FoodChartSupportService {
             return emptyResponse(chartType);
         }
 
-        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, entries);
+        Map<Long, List<EntryMetric>> metricsByEntryId = loadDetailedMetrics(entries);
+        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, metricsByEntryId);
         Map<LocalDate, NutritionTotals> totalsByDay = new TreeMap<>();
 
         for (DiaryEntry entry : entries) {
@@ -93,7 +98,7 @@ public class FoodChartSupportService {
             }
 
             LocalDate day = entry.getWhenStarted().atZone(ZoneOffset.UTC).toLocalDate();
-            totalsByDay.merge(day, calculateEntryNutrition(entry, foodProfiles), NutritionTotals::add);
+            totalsByDay.merge(day, calculateEntryNutrition(entry.getId(), metricsByEntryId, foodProfiles), NutritionTotals::add);
         }
 
         List<ChartSeriesDto> series = totalsByDay.values().stream()
@@ -109,9 +114,10 @@ public class FoodChartSupportService {
             return emptyResponse(chartType);
         }
 
-        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, entries);
+        Map<Long, List<EntryMetric>> metricsByEntryId = loadDetailedMetrics(entries);
+        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, metricsByEntryId);
         List<ChartSeriesDto> series = entries.stream()
-                .map(entry -> toCaloriesSeries(calculateEntryNutrition(entry, foodProfiles)))
+                .map(entry -> toCaloriesSeries(calculateEntryNutrition(entry.getId(), metricsByEntryId, foodProfiles)))
                 .toList();
 
         return new ChartResponseDto(chartType, series);
@@ -123,7 +129,8 @@ public class FoodChartSupportService {
             return emptyResponse(chartType);
         }
 
-        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, entries);
+        Map<Long, List<EntryMetric>> metricsByEntryId = loadDetailedMetrics(entries);
+        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, metricsByEntryId);
         Map<LocalDate, NutritionTotals> totalsByDay = new TreeMap<>();
 
         for (DiaryEntry entry : entries) {
@@ -132,7 +139,7 @@ public class FoodChartSupportService {
             }
 
             LocalDate day = entry.getWhenStarted().atZone(ZoneOffset.UTC).toLocalDate();
-            totalsByDay.merge(day, calculateEntryNutrition(entry, foodProfiles), NutritionTotals::add);
+            totalsByDay.merge(day, calculateEntryNutrition(entry.getId(), metricsByEntryId, foodProfiles), NutritionTotals::add);
         }
 
         List<ChartSeriesDto> series = totalsByDay.values().stream()
@@ -148,9 +155,10 @@ public class FoodChartSupportService {
             return emptyResponse(chartType);
         }
 
-        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, entries);
+        Map<Long, List<EntryMetric>> metricsByEntryId = loadDetailedMetrics(entries);
+        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, metricsByEntryId);
         List<ChartSeriesDto> series = entries.stream()
-                .map(entry -> toPfcSeries(calculateEntryNutrition(entry, foodProfiles)))
+                .map(entry -> toPfcSeries(calculateEntryNutrition(entry.getId(), metricsByEntryId, foodProfiles)))
                 .toList();
 
         return new ChartResponseDto(chartType, series);
@@ -162,11 +170,12 @@ public class FoodChartSupportService {
             return emptyResponse(chartType);
         }
 
-        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, entries);
+        Map<Long, List<EntryMetric>> metricsByEntryId = loadDetailedMetrics(entries);
+        Map<Long, FoodProfile> foodProfiles = loadFoodProfiles(userId, metricsByEntryId);
         List<ChartSeriesDto> series = new ArrayList<>();
 
         for (DiaryEntry entry : entries) {
-            for (EntryMetric metric : sortMetrics(entry.getMetrics())) {
+            for (EntryMetric metric : sortMetrics(metricsByEntryId.get(entry.getId()))) {
                 calculateMetricNutrition(metric, foodProfiles)
                         .map(this::toPfcSeries)
                         .ifPresent(series::add);
@@ -187,9 +196,15 @@ public class FoodChartSupportService {
                 .toList();
     }
 
-    private Map<Long, FoodProfile> loadFoodProfiles(Long userId, List<DiaryEntry> entries) {
-        Set<Long> dictionaryItemIds = entries.stream()
-                .flatMap(entry -> sortMetrics(entry.getMetrics()).stream())
+    private Map<Long, List<EntryMetric>> loadDetailedMetrics(List<DiaryEntry> entries) {
+        return entryMetricDetailsLoader.loadForEntries(
+                entries.stream().map(DiaryEntry::getId).toList()
+        );
+    }
+
+    private Map<Long, FoodProfile> loadFoodProfiles(Long userId, Map<Long, List<EntryMetric>> metricsByEntryId) {
+        Set<Long> dictionaryItemIds = metricsByEntryId.values().stream()
+                .flatMap(List::stream)
                 .map(EntryMetric::getMetricType)
                 .filter(metricType -> metricType != null && metricType.getId() != null)
                 .map(metricType -> metricType.getId())
@@ -212,10 +227,14 @@ public class FoodChartSupportService {
         return foodProfiles;
     }
 
-    private NutritionTotals calculateEntryNutrition(DiaryEntry entry, Map<Long, FoodProfile> foodProfiles) {
+    private NutritionTotals calculateEntryNutrition(
+            Long entryId,
+            Map<Long, List<EntryMetric>> metricsByEntryId,
+            Map<Long, FoodProfile> foodProfiles
+    ) {
         NutritionTotals total = NutritionTotals.zero();
 
-        for (EntryMetric metric : sortMetrics(entry.getMetrics())) {
+        for (EntryMetric metric : sortMetrics(metricsByEntryId.get(entryId))) {
             total = total.add(calculateMetricNutrition(metric, foodProfiles).orElseGet(NutritionTotals::zero));
         }
 

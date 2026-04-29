@@ -85,6 +85,9 @@ class DiaryServiceImplTest {
     @Mock
     private TagMetricService tagMetricService;
 
+    @Mock
+    private EntryMetricDetailsLoader entryMetricDetailsLoader;
+
     @InjectMocks
     private DiaryServiceImpl service;
 
@@ -174,17 +177,26 @@ class DiaryServiceImplTest {
 
     @Test
     void getMyEntryById_missing_throwsNotFound() {
-        when(diaryRepository.findGraphByIdAndUser_Id(1L, 10L)).thenReturn(Optional.empty());
+        when(diaryRepository.findByIdAndUserId(1L, 10L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service.getMyEntryById(1L, 10L));
     }
 
     @Test
-    void create_userMissing_throwsBadRequest() {
+    void create_usesUserReferenceInsteadOfSelect() {
         DiaryEntryCreateDto dto = validCreateDto("desc");
-        when(userRepository.findById(10L)).thenReturn(Optional.empty());
+        User user = userWithId(10L);
+        Tag tag = Tag.builder().name("tag").build();
 
-        assertThrows(BadRequestException.class, () -> service.create(dto, 10L));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
+        when(tagResolverService.resolveFromDescription(10L, "desc")).thenReturn(Set.of(tag));
+        when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
+
+        service.create(dto, 10L);
+
+        verify(userRepository).getReferenceById(10L);
+        verify(userRepository, never()).findById(anyLong());
         verify(validationService).validateCreate(dto);
     }
 
@@ -200,7 +212,7 @@ class DiaryServiceImplTest {
         );
 
         assertEquals("Duplicate unit is not allowed inside one metric", exception.getMessage());
-        verify(userRepository, never()).findById(anyLong());
+        verify(userRepository, never()).getReferenceById(anyLong());
         verify(diaryRepository, never()).save(any(DiaryEntry.class));
     }
 
@@ -208,7 +220,7 @@ class DiaryServiceImplTest {
     void create_blankDescription_throwsBadRequest() {
         DiaryEntryCreateDto dto = validCreateDto("   ");
         User user = userWithId(10L);
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
 
         assertThrows(BadRequestException.class, () -> service.create(dto, 10L));
         verify(tagResolverService, never()).resolveFromDescription(any(), any());
@@ -218,7 +230,7 @@ class DiaryServiceImplTest {
     void create_noTags_throwsBadRequest() {
         DiaryEntryCreateDto dto = validCreateDto("hello");
         User user = userWithId(10L);
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of());
 
         assertThrows(BadRequestException.class, () -> service.create(dto, 10L));
@@ -231,7 +243,7 @@ class DiaryServiceImplTest {
         Tag tag = Tag.builder().name("tag").build();
         Set<Tag> tags = Set.of(tag);
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(tags);
 
         when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -256,7 +268,7 @@ class DiaryServiceImplTest {
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
         when(dictionaryRepository.findAllById(Set.of(20L, 10L, 200L, 100L))).thenReturn(List.of(
                 dictionaryItem(20L, DictionaryType.METRIC_NAME),
@@ -302,7 +314,7 @@ class DiaryServiceImplTest {
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
         when(dictionaryRepository.findAllById(Set.of(10L, 200L, 100L))).thenReturn(List.of(
                 dictionaryItem(10L, DictionaryType.METRIC_NAME),
@@ -368,7 +380,7 @@ class DiaryServiceImplTest {
         Tag tag = Tag.builder().name("tag").build();
         Set<Tag> tags = Set.of(tag);
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(tags);
         when(dictionaryRepository.findAllById(Set.of(10L, 100L))).thenReturn(List.of(
                 dictionaryItem(10L, DictionaryType.METRIC_NAME),
@@ -397,7 +409,7 @@ class DiaryServiceImplTest {
         Tag secondTag = Tag.builder().name("second").build();
         Set<Tag> tags = Set.of(firstTag, secondTag);
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(tags);
         when(dictionaryRepository.findAllById(Set.of(10L, 30L, 100L, 300L))).thenReturn(List.of(
                 dictionaryItem(10L, DictionaryType.METRIC_NAME),
@@ -437,7 +449,7 @@ class DiaryServiceImplTest {
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
         when(dictionaryRepository.findAllById(Set.of(10L, 100L))).thenReturn(List.of(
                 dictionaryItem(10L, DictionaryType.METRIC_NAME),
@@ -463,7 +475,7 @@ class DiaryServiceImplTest {
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
         when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
@@ -485,7 +497,7 @@ class DiaryServiceImplTest {
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
         when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());
@@ -507,7 +519,7 @@ class DiaryServiceImplTest {
         User user = userWithId(10L);
         Tag tag = Tag.builder().name("tag").build();
 
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(10L)).thenReturn(user);
         when(tagResolverService.resolveFromDescription(10L, "hello")).thenReturn(Set.of(tag));
         when(diaryRepository.save(any(DiaryEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mapper.toDto(any(DiaryEntry.class))).thenReturn(new DiaryEntryDto());

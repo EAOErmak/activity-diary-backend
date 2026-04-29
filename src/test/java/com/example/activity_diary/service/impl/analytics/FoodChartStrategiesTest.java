@@ -14,6 +14,7 @@ import com.example.activity_diary.entity.food.UserFood;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.repository.food.GeneralFoodRepository;
 import com.example.activity_diary.repository.food.UserFoodRepository;
+import com.example.activity_diary.service.impl.diary.EntryMetricDetailsLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -43,6 +45,9 @@ class FoodChartStrategiesTest {
     @Mock
     private GeneralFoodRepository generalFoodRepository;
 
+    @Mock
+    private EntryMetricDetailsLoader entryMetricDetailsLoader;
+
     private CaloriesPerDayChartStrategy caloriesPerDayChartStrategy;
     private CaloriesPerDiaryChartStrategy caloriesPerDiaryChartStrategy;
     private PfcPerDayChartStrategy pfcPerDayChartStrategy;
@@ -54,7 +59,8 @@ class FoodChartStrategiesTest {
         FoodChartSupportService supportService = new FoodChartSupportService(
                 diaryRepository,
                 userFoodRepository,
-                generalFoodRepository
+                generalFoodRepository,
+                entryMetricDetailsLoader
         );
 
         caloriesPerDayChartStrategy = new CaloriesPerDayChartStrategy(supportService);
@@ -70,6 +76,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(sampleEntries());
+        stubDetailedMetrics(sampleEntries());
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
                         generalFood(1L, "Apple", "100.00", "999.00", "999.00", "999.00"),
@@ -98,6 +105,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(first, second));
+        stubDetailedMetrics(List.of(first, second));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00")));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
@@ -116,6 +124,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(sampleEntries());
+        stubDetailedMetrics(sampleEntries());
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
                         generalFood(1L, "Apple", "100.00", "999.00", "999.00", "999.00"),
@@ -139,6 +148,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(sampleEntries());
+        stubDetailedMetrics(sampleEntries());
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
                         generalFood(1L, "Apple", "100.00", "999.00", "999.00", "999.00"),
@@ -167,6 +177,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(entry));
+        stubDetailedMetrics(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
                         generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00"),
@@ -190,6 +201,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(entry));
+        stubDetailedMetrics(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00")));
         when(userFoodRepository.findAllByUserIdAndDictionaryItemIdIn(eq(11L), anyCollection()))
@@ -210,6 +222,7 @@ class FoodChartStrategiesTest {
 
         when(diaryRepository.findAllByUserIdAndTagIdAndWhenStartedRange(11L, 7L, filter.getDateFrom(), filter.getDateTo()))
                 .thenReturn(List.of(entry));
+        stubDetailedMetrics(List.of(entry));
         when(generalFoodRepository.findAllByDictionaryItemIdIn(anyCollection()))
                 .thenReturn(List.of(
                         generalFood(1L, "Apple", "200.00", "10.00", "20.00", "30.00"),
@@ -246,6 +259,16 @@ class FoodChartStrategiesTest {
                 Instant.parse("2026-02-10T00:00:00Z"),
                 chartType
         );
+    }
+
+    private void stubDetailedMetrics(List<DiaryEntry> entries) {
+        when(entryMetricDetailsLoader.loadForEntries(anyCollection()))
+                .thenReturn(entries.stream().collect(
+                        java.util.stream.Collectors.toMap(
+                                DiaryEntry::getId,
+                                DiaryEntry::getMetrics
+                        )
+                ));
     }
 
     private static List<DiaryEntry> sampleEntries() {

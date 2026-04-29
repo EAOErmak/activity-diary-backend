@@ -11,6 +11,7 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.ChartType;
 import com.example.activity_diary.repository.diary.DiaryRepository;
 import com.example.activity_diary.service.analytics.ChartCalculationStrategy;
+import com.example.activity_diary.service.impl.diary.EntryMetricDetailsLoader;
 import com.example.activity_diary.util.MetricValueNormalizer;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -31,11 +33,14 @@ public class TrainingComputedChartStrategy implements ChartCalculationStrategy {
     private static final MathContext ROOT_CONTEXT = new MathContext(20, RoundingMode.HALF_UP);
 
     private final DiaryRepository diaryRepository;
+    private final EntryMetricDetailsLoader entryMetricDetailsLoader;
 
     public TrainingComputedChartStrategy(
-            DiaryRepository diaryRepository
+            DiaryRepository diaryRepository,
+            EntryMetricDetailsLoader entryMetricDetailsLoader
     ) {
         this.diaryRepository = diaryRepository;
+        this.entryMetricDetailsLoader = entryMetricDetailsLoader;
     }
 
     @Override
@@ -51,12 +56,15 @@ public class TrainingComputedChartStrategy implements ChartCalculationStrategy {
                 filter.getDateFrom(),
                 filter.getDateTo()
         );
+        Map<Long, List<EntryMetric>> metricsByEntryId = entryMetricDetailsLoader.loadForEntries(
+                diaryEntryList.stream().map(DiaryEntry::getId).toList()
+        );
 
         List<ChartSeriesDto> chartSeriesDtoList = new ArrayList<>();
 
         for (DiaryEntry diaryEntry : diaryEntryList) {
             HashMap<DictionaryItem, BigDecimal> total = new HashMap<>();
-            List<EntryMetric> metrics = diaryEntry.getMetrics();
+            List<EntryMetric> metrics = metricsByEntryId.getOrDefault(diaryEntry.getId(), List.of());
 
             for (EntryMetric metric : metrics) {
                 List<EntryMetricValue> values = metric.getValues();
