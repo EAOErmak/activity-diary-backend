@@ -2,6 +2,7 @@ package com.example.activity_diary.platform.desktop.security;
 
 import com.example.activity_diary.core.usercontext.CurrentUserProvider;
 import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.ProviderType;
 import com.example.activity_diary.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +33,11 @@ public class DesktopCurrentUserProvider implements CurrentUserProvider {
     @Transactional(readOnly = true)
     public Long getCurrentUserId() {
         return getCurrentUser().getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Role getCurrentUserRole() {
+        return getCurrentUser().getRole();
     }
 }

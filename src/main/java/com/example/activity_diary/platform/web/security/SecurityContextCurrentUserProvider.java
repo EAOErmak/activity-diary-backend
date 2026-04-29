@@ -2,6 +2,7 @@ package com.example.activity_diary.platform.web.security;
 
 import com.example.activity_diary.core.usercontext.CurrentUserProvider;
 import com.example.activity_diary.entity.User;
+import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -61,6 +62,34 @@ public class SecurityContextCurrentUserProvider implements CurrentUserProvider {
         if (principal instanceof UserDetails userDetails) {
             return userRepository.findByUsername(userDetails.getUsername())
                     .map(User::getId)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        }
+
+        throw new IllegalStateException("Invalid principal type");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Role getCurrentUserRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("Unauthenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof LightUserDetails lightUserDetails) {
+            return lightUserDetails.getRole();
+        }
+
+        if (principal instanceof CustomUserDetails customUserDetails) {
+            return customUserDetails.getRole();
+        }
+
+        if (principal instanceof UserDetails userDetails) {
+            return userRepository.findByUsername(userDetails.getUsername())
+                    .map(User::getRole)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         }
 
