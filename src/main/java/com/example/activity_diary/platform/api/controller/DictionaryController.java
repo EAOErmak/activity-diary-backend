@@ -24,7 +24,7 @@ public class DictionaryController {
 
     @GetMapping("/all")
     public  ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getAll() {
-        Role role = currentUserProvider.getCurrentUser().getRole();
+        Role role = currentUserProvider.getCurrentUserRole();
 
         return  ResponseEntity.ok(
                 ApiResponse.ok(
@@ -35,7 +35,7 @@ public class DictionaryController {
 
     @GetMapping("/{type}")
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> getForUser(@PathVariable DictionaryType type) {
-        Role role = currentUserProvider.getCurrentUser().getRole();
+        Role role = currentUserProvider.getCurrentUserRole();
 
         return ResponseEntity.ok(
                 ApiResponse.ok(
@@ -46,7 +46,7 @@ public class DictionaryController {
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<DictionaryResponseDto>>> search(@RequestParam String query) {
-        Role role = currentUserProvider.getCurrentUser().getRole();
+        Role role = currentUserProvider.getCurrentUserRole();
 
         return ResponseEntity.ok(
                 ApiResponse.ok(

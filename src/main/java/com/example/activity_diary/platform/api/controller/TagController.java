@@ -4,7 +4,6 @@ import com.example.activity_diary.dto.ApiResponse;
 import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.dto.diary.TagDto;
 import com.example.activity_diary.core.usercontext.CurrentUserProvider;
-import com.example.activity_diary.entity.User;
 import com.example.activity_diary.service.diary.TagMetricService;
 import com.example.activity_diary.service.diary.TagService;
 import jakarta.validation.constraints.Positive;
@@ -33,18 +32,18 @@ public class TagController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<TagDto>>> getTags(@RequestParam(required = false) String q) {
-        User currentUser = currentUserProvider.getCurrentUser();
+        Long currentUserId = currentUserProvider.getCurrentUserId();
         return ResponseEntity.ok(
-                ApiResponse.success(tagService.getVisibleTags(currentUser.getId(), currentUser.getRole(), q))
+                ApiResponse.success(tagService.getVisibleTags(currentUserId, currentUserProvider.getCurrentUserRole(), q))
         );
     }
 
     @GetMapping("/{id}/metrics")
     public ResponseEntity<ApiResponse<List<DictionaryOptionDto>>> getMetricsByTag(@PathVariable @Positive Long id) {
-        User currentUser = currentUserProvider.getCurrentUser();
+        Long currentUserId = currentUserProvider.getCurrentUserId();
         return ResponseEntity.ok(
                 ApiResponse.ok(
-                        tagMetricService.getMetricsByTagId(id, currentUser.getId(), currentUser.getRole())
+                        tagMetricService.getMetricsByTagId(id, currentUserId, currentUserProvider.getCurrentUserRole())
                 )
         );
     }
@@ -53,10 +52,10 @@ public class TagController {
     public ResponseEntity<ApiResponse<List<DictionaryOptionDto>>> getMetricsByTags(
             @RequestParam(required = false) List<@Positive Long> tagIds
     ) {
-        User currentUser = currentUserProvider.getCurrentUser();
+        Long currentUserId = currentUserProvider.getCurrentUserId();
         return ResponseEntity.ok(
                 ApiResponse.ok(
-                        tagMetricService.getMetricsByTagIds(tagIds, currentUser.getId(), currentUser.getRole())
+                        tagMetricService.getMetricsByTagIds(tagIds, currentUserId, currentUserProvider.getCurrentUserRole())
                 )
         );
     }

@@ -30,7 +30,7 @@ public class DictionaryMetricNameController {
                 ApiResponse.ok(
                         dictionaryService.getUnitsByMetricNameId(
                                 metricNameId,
-                                currentUserProvider.getCurrentUser().getRole()
+                                currentUserProvider.getCurrentUserRole()
                         )
                 )
         );
