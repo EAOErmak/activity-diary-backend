@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.Optional;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
@@ -25,6 +26,20 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
             "metrics.metricType",
     })
     Optional<DiaryEntry> findGraphByIdAndUser_Id(Long id, Long userId);
+
+    @Query("""
+        select distinct d
+        from DiaryEntry d
+        left join fetch d.tags tag
+        left join fetch d.metrics metric
+        left join fetch metric.metricType metricType
+        where d.user.id = :userId
+          and d.id in :entryIds
+    """)
+    List<DiaryEntry> findAllGraphByIdInAndUser_Id(
+            @Param("entryIds") Collection<Long> entryIds,
+            @Param("userId") Long userId
+    );
 
     List<DiaryEntry> findAllByUserIdAndTags_Id(Long userId, Long tagId);
 
@@ -119,8 +134,9 @@ public interface DiaryRepository extends JpaRepository<DiaryEntry, Long> {
 
 
     @Query("""
-        select d
+        select distinct d
         from DiaryEntry d
+        left join fetch d.tags t
         where d.user.id = :userId
           and d.whenStarted < :to
           and d.whenEnded   > :from

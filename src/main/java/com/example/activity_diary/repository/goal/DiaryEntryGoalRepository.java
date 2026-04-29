@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,12 +18,25 @@ public interface DiaryEntryGoalRepository extends JpaRepository<DiaryEntryGoal, 
     Optional<DiaryEntryGoal> findSummaryByIdAndUser_Id(Long id, Long userId);
 
     @EntityGraph(attributePaths = {
+            "currentEntry",
             "metricGoals",
             "metricGoals.metricType",
             "metricGoals.values",
             "metricGoals.values.unit"
     })
     Optional<DiaryEntryGoal> findDetailByIdAndUser_Id(Long id, Long userId);
+
+    @Query("""
+        select distinct g
+        from DiaryEntryGoal g
+        left join fetch g.currentEntry currentEntry
+        left join fetch g.metricGoals metricGoal
+        left join fetch metricGoal.metricType metricType
+        left join fetch metricGoal.values value
+        left join fetch value.unit unit
+        where g.id in :goalIds
+    """)
+    List<DiaryEntryGoal> findAllMetricDetailsByIdIn(@Param("goalIds") Collection<Long> goalIds);
 
     @Query("""
         select g
