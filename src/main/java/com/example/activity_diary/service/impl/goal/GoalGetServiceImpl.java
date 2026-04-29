@@ -17,6 +17,7 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -58,6 +59,7 @@ public class GoalGetServiceImpl implements GoalGetService {
     public DayGoalDetailDto getDayGoalDetail(Long userId, Long dayGoalId) {
         var d = dayGoalRepo.findDetailByIdAndWeekGoal_User_Id(dayGoalId, userId)
                 .orElseThrow(() -> new NotFoundException("DayGoal not found"));
+        initializeEntryGoalDetails(d.getEntryGoals());
         return goalGetMapper.toDayDetail(d);
     }
 
@@ -74,6 +76,11 @@ public class GoalGetServiceImpl implements GoalGetService {
     public WeekGoalDetailDto getWeekGoalDetail(Long userId, Long weekGoalId) {
         var w = weekGoalRepo.findDetailByIdAndUser_Id(weekGoalId, userId)
                 .orElseThrow(() -> new NotFoundException("WeekGoal not found"));
+        initializeEntryGoalDetails(
+                w.getDays().stream()
+                        .flatMap(day -> day.getEntryGoals().stream())
+                        .toList()
+        );
         return goalGetMapper.toWeekDetail(w);
     }
 
@@ -120,5 +127,18 @@ public class GoalGetServiceImpl implements GoalGetService {
     @Transactional(readOnly = true)
     public List<DiaryEntryGoalSummaryDto> listEntrySummariesByDayGoal(Long userId, Long dayGoalId) {
         return goalGetMapper.toEntrySummaryList(entryGoalRepo.findAllByUserAndDayGoal(userId, dayGoalId));
+    }
+
+    private void initializeEntryGoalDetails(Collection<com.example.activity_diary.entity.goal.DiaryEntryGoal> goals) {
+        List<Long> goalIds = goals == null
+                ? List.of()
+                : goals.stream()
+                        .map(com.example.activity_diary.entity.goal.DiaryEntryGoal::getId)
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+
+        if (!goalIds.isEmpty()) {
+            entryGoalRepo.findAllMetricDetailsByIdIn(goalIds);
+        }
     }
 }

@@ -23,7 +23,10 @@ import com.example.activity_diary.repository.goal.DiaryEntryGoalRepository;
 import com.example.activity_diary.repository.goal.WeekGoalRepository;
 import com.example.activity_diary.repository.template.DayTemplateRepository;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
+import com.example.activity_diary.repository.template.TemplateDayItemRepository;
+import com.example.activity_diary.repository.template.TemplateEntryItemRepository;
 import com.example.activity_diary.repository.template.WeekTemplateRepository;
+import com.example.activity_diary.service.impl.diary.EntryTemplateMetricDetailsLoader;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +38,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -53,12 +59,15 @@ public class GoalCalendarCreateService {
     private final DiaryEntryTemplateRepository diaryEntryTemplateRepository;
     private final DayTemplateRepository dayTemplateRepository;
     private final WeekTemplateRepository weekTemplateRepository;
+    private final TemplateEntryItemRepository templateEntryItemRepository;
+    private final TemplateDayItemRepository templateDayItemRepository;
 
     private final WeekGoalRepository weekGoalRepository;
     private final DayGoalRepository dayGoalRepository;
     private final DiaryEntryGoalRepository diaryEntryGoalRepository;
 
     private final GoalMapper goalMapper;
+    private final EntryTemplateMetricDetailsLoader entryTemplateMetricDetailsLoader;
 
     public DiaryEntryGoalDetailDto createEntryGoal(Long userId, Long templateId, LocalDate targetDate) {
         User userRef = entityManager.getReference(User.class, userId);
@@ -70,8 +79,9 @@ public class GoalCalendarCreateService {
         DayGoal day = findOrCreateDayGoal(week, targetDate);
 
         GoalSchedule schedule = resolveGoalSchedule(template, targetDate, true);
+        List<EntryTemplateMetric> templateMetrics = entryTemplateMetricDetailsLoader.loadForTemplate(templateId);
 
-        DiaryEntryGoal created = createEntryGoalFromTemplate(userRef, day, template, schedule);
+        DiaryEntryGoal created = createEntryGoalFromTemplate(userRef, day, template, templateMetrics, schedule);
         diaryEntryGoalRepository.save(created);
 
         return goalMapper.toEntryView(created);
@@ -86,7 +96,12 @@ public class GoalCalendarCreateService {
         WeekGoal week = findOrCreateWeekGoal(userId, userRef, targetDate);
         DayGoal day = findOrCreateDayGoal(week, targetDate);
 
-        for (TemplateEntryItem item : template.getItems()) {
+        List<TemplateEntryItem> items = templateEntryItemRepository.findAllByDayTemplateIdInWithEntryTemplate(
+                List.of(template.getId())
+        );
+        Map<Long, List<EntryTemplateMetric>> metricsByTemplateId = loadTemplateMetrics(items);
+
+        for (TemplateEntryItem item : items) {
             DiaryEntryTemplate entryTemplate = item.getEntryTemplate();
             GoalSchedule schedule = resolveGoalSchedule(entryTemplate, targetDate, false);
 
@@ -94,6 +109,7 @@ public class GoalCalendarCreateService {
                     userRef,
                     day,
                     entryTemplate,
+                    metricsByTemplateId.getOrDefault(entryTemplate.getId(), List.of()),
                     schedule
             );
             diaryEntryGoalRepository.save(created);
@@ -111,12 +127,30 @@ public class GoalCalendarCreateService {
         LocalDate monday = targetDate.with(DayOfWeek.MONDAY);
         WeekGoal week = findOrCreateWeekGoal(userId, userRef, targetDate);
 
-        for (TemplateDayItem dayItem : template.getItems()) {
+        List<TemplateDayItem> dayItems = templateDayItemRepository.findAllByWeekTemplateIdInWithDayTemplate(
+                List.of(template.getId())
+        );
+        List<Long> dayTemplateIds = dayItems.stream()
+                .map(TemplateDayItem::getDayTemplate)
+                .filter(java.util.Objects::nonNull)
+                .map(com.example.activity_diary.entity.template.DayTemplate::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        List<TemplateEntryItem> entryItems = templateEntryItemRepository.findAllByDayTemplateIdInWithEntryTemplate(dayTemplateIds);
+        Map<Long, List<TemplateEntryItem>> entryItemsByDayTemplateId = entryItems.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        item -> item.getDayTemplate().getId(),
+                        java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.toList()
+                ));
+        Map<Long, List<EntryTemplateMetric>> metricsByTemplateId = loadTemplateMetrics(entryItems);
+
+        for (TemplateDayItem dayItem : dayItems) {
             LocalDate date = monday.plusDays(dayItem.getDayOfWeek() - 1L);
             DayGoal day = findOrCreateDayGoal(week, date);
 
             DayTemplate dayTemplate = dayItem.getDayTemplate();
-            for (TemplateEntryItem entryItem : dayTemplate.getItems()) {
+            for (TemplateEntryItem entryItem : entryItemsByDayTemplateId.getOrDefault(dayTemplate.getId(), List.of())) {
                 DiaryEntryTemplate entryTemplate = entryItem.getEntryTemplate();
                 GoalSchedule schedule = resolveGoalSchedule(entryTemplate, date, false);
 
@@ -124,6 +158,7 @@ public class GoalCalendarCreateService {
                         userRef,
                         day,
                         entryTemplate,
+                        metricsByTemplateId.getOrDefault(entryTemplate.getId(), List.of()),
                         schedule
                 );
                 diaryEntryGoalRepository.save(created);
@@ -178,6 +213,7 @@ public class GoalCalendarCreateService {
             User user,
             DayGoal day,
             DiaryEntryTemplate template,
+            Collection<EntryTemplateMetric> templateMetrics,
             GoalSchedule schedule
     ) {
         int position = day.getEntryGoals().stream()
@@ -199,13 +235,17 @@ public class GoalCalendarCreateService {
                 .build();
 
         day.addEntryGoal(goal);
-        copyMetricsFromTemplate(goal, template);
+        copyMetricsFromTemplate(goal, templateMetrics);
 
         return goal;
     }
 
-    private void copyMetricsFromTemplate(DiaryEntryGoal goal, DiaryEntryTemplate template) {
-        for (EntryTemplateMetric templateMetric : template.getMetrics()) {
+    private void copyMetricsFromTemplate(DiaryEntryGoal goal, Collection<EntryTemplateMetric> templateMetrics) {
+        if (templateMetrics == null || templateMetrics.isEmpty()) {
+            return;
+        }
+
+        for (EntryTemplateMetric templateMetric : templateMetrics) {
             validateMetricGoalValues(templateMetric);
 
             EntryMetricGoal metricGoal = EntryMetricGoal.create(goal, templateMetric.getMetricType());
@@ -227,6 +267,20 @@ public class GoalCalendarCreateService {
                 throw new BadRequestException(DUPLICATE_METRIC_GOAL_UNIT_MESSAGE);
             }
         }
+    }
+
+    private Map<Long, List<EntryTemplateMetric>> loadTemplateMetrics(Collection<TemplateEntryItem> items) {
+        List<Long> templateIds = items == null
+                ? List.of()
+                : items.stream()
+                        .map(TemplateEntryItem::getEntryTemplate)
+                        .filter(java.util.Objects::nonNull)
+                        .map(DiaryEntryTemplate::getId)
+                        .filter(java.util.Objects::nonNull)
+                        .distinct()
+                        .toList();
+
+        return entryTemplateMetricDetailsLoader.loadForTemplates(templateIds);
     }
 
     private GoalSchedule resolveGoalSchedule(DiaryEntryTemplate template, LocalDate date, boolean requireTemplateTime) {

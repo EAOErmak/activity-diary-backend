@@ -17,9 +17,15 @@ import com.example.activity_diary.repository.goal.DayGoalRepository;
 import com.example.activity_diary.repository.goal.DiaryEntryGoalRepository;
 import com.example.activity_diary.repository.goal.WeekGoalRepository;
 import com.example.activity_diary.service.diary.DiaryService;
+import com.example.activity_diary.service.impl.diary.EntryMetricDetailsLoader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +40,10 @@ public class GoalCalendarProgressService {
     private final DiaryService diaryService;
     private final GoalMapper goalMapper;
     private final GoalDiaryEntryCommandFactory goalDiaryEntryCommandFactory;
+    private final EntryMetricDetailsLoader entryMetricDetailsLoader;
 
     public DiaryEntryGoalDetailDto confirmEntryGoal(Long userId, Long goalId, GoalDiaryEntryCommand command) {
-        DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
+        DiaryEntryGoal goal = getOwnedEntryGoalWithDetails(userId, goalId);
         DiaryEntry entry = upsertConfirmedEntry(userId, goal, command);
 
         goal.setCurrentEntry(entry);
@@ -46,7 +53,7 @@ public class GoalCalendarProgressService {
     }
 
     public DiaryEntryGoalDetailDto confirmEntryGoalSimple(Long userId, Long goalId) {
-        DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
+        DiaryEntryGoal goal = getOwnedEntryGoalWithDetails(userId, goalId);
         DiaryEntry entry = upsertConfirmedEntry(userId, goal, goalDiaryEntryCommandFactory.fromGoal(goal));
 
         goal.setCurrentEntry(entry);
@@ -56,7 +63,7 @@ public class GoalCalendarProgressService {
     }
 
     public DiaryEntryGoalDetailDto updateConfirmedEntryGoal(Long userId, Long goalId, GoalDiaryEntryCommand command) {
-        DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
+        DiaryEntryGoal goal = getOwnedEntryGoalWithDetails(userId, goalId);
 
         if (goal.getCurrentEntry() == null) {
             throw new BadRequestException("Goal not confirmed yet");
@@ -76,32 +83,27 @@ public class GoalCalendarProgressService {
     }
 
     public DayGoalDetailDto confirmDayGoal(Long userId, Long dayGoalId) {
-        DayGoal day = dayGoalRepository.findById(dayGoalId)
+        DayGoal day = dayGoalRepository.findDetailByIdAndWeekGoal_User_Id(dayGoalId, userId)
                 .orElseThrow(() -> new NotFoundException("DayGoal not found"));
+        initializeGoalDetails(day.getEntryGoals());
 
-        if (!day.getWeekGoal().getUser().getId().equals(userId)) {
-            throw new NotFoundException("DayGoal not found");
-        }
+        List<DiaryEntryGoal> goalsToCreate = day.getEntryGoals().stream()
+                .filter(goal -> goal.getCurrentEntry() == null)
+                .toList();
 
+        Map<Long, DiaryEntry> createdEntriesByGoalId = createEntriesForGoals(userId, goalsToCreate);
         for (DiaryEntryGoal goal : day.getEntryGoals()) {
-            if (goal.getCurrentEntry() != null) {
-                continue;
+            DiaryEntry createdEntry = createdEntriesByGoalId.get(goal.getId());
+            if (createdEntry != null) {
+                goal.setCurrentEntry(createdEntry);
+                goal.setCompleteness(100);
             }
-
-            DiaryEntry createdEntry = createEntry(userId, goalDiaryEntryCommandFactory.fromGoal(goal));
-
-            goal.setCurrentEntry(createdEntry);
-            goal.setCompleteness(100);
-
-            diaryEntryGoalRepository.save(goal);
         }
 
         day.setCompleteness(100);
-        dayGoalRepository.save(day);
 
         WeekGoal week = day.getWeekGoal();
         GoalCompletenessCalculator.recalcWeekGoal(week);
-        weekGoalRepository.save(week);
 
         return goalMapper.toDayView(day);
     }
@@ -109,6 +111,12 @@ public class GoalCalendarProgressService {
     private DiaryEntryGoal getOwnedEntryGoal(Long userId, Long goalId) {
         return diaryEntryGoalRepository.findByIdAndUser_Id(goalId, userId)
                 .orElseThrow(() -> new NotFoundException("DiaryEntryGoal not found"));
+    }
+
+    private DiaryEntryGoal getOwnedEntryGoalWithDetails(Long userId, Long goalId) {
+        DiaryEntryGoal goal = getOwnedEntryGoal(userId, goalId);
+        initializeGoalDetails(List.of(goal));
+        return goal;
     }
 
     private DiaryEntry upsertConfirmedEntry(Long userId, DiaryEntryGoal goal, GoalDiaryEntryCommand command) {
@@ -134,21 +142,77 @@ public class GoalCalendarProgressService {
         return getCreatedEntry(userId, createdDto.getId());
     }
 
+    private Map<Long, DiaryEntry> createEntriesForGoals(Long userId, List<DiaryEntryGoal> goals) {
+        if (goals == null || goals.isEmpty()) {
+            return Map.of();
+        }
+
+        List<DiaryEntryDto> createdEntries = diaryService.createAll(
+                goals.stream()
+                        .map(goalDiaryEntryCommandFactory::fromGoal)
+                        .map(goalDiaryEntryCommandFactory::toCreateDto)
+                        .toList(),
+                userId,
+                DiaryEntryCreateMode.CONFIRM_GOAL
+        );
+        Map<Long, DiaryEntry> entriesById = loadEntriesById(
+                userId,
+                createdEntries.stream()
+                        .map(DiaryEntryDto::getId)
+                        .toList()
+        );
+
+        Map<Long, DiaryEntry> entriesByGoalId = new LinkedHashMap<>();
+        for (int index = 0; index < goals.size(); index++) {
+            Long entryId = createdEntries.get(index).getId();
+            DiaryEntry entry = entriesById.get(entryId);
+            if (entry == null) {
+                throw new NotFoundException("Entry not found");
+            }
+            entriesByGoalId.put(goals.get(index).getId(), entry);
+        }
+
+        return entriesByGoalId;
+    }
+
     private DiaryEntry getCreatedEntry(Long userId, Long entryId) {
-        return diaryRepository.findGraphByIdAndUser_Id(entryId, userId)
+        DiaryEntry entry = diaryRepository.findGraphByIdAndUser_Id(entryId, userId)
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
+        entryMetricDetailsLoader.loadForEntry(entryId);
+        return entry;
+    }
+
+    private Map<Long, DiaryEntry> loadEntriesById(Long userId, List<Long> entryIds) {
+        if (entryIds == null || entryIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<DiaryEntry> entries = diaryRepository.findAllGraphByIdInAndUser_Id(entryIds, userId);
+        entryMetricDetailsLoader.loadForEntries(entryIds);
+        return entries.stream()
+                .collect(java.util.stream.Collectors.toMap(DiaryEntry::getId, entry -> entry));
     }
 
     private void recalcUp(DiaryEntryGoal goal, DiaryEntry entry) {
         GoalCompletenessCalculator.recalcEntryGoal(goal, entry);
-        diaryEntryGoalRepository.save(goal);
 
         DayGoal day = goal.getDayGoal();
         GoalCompletenessCalculator.recalcDayGoal(day);
-        dayGoalRepository.save(day);
 
         WeekGoal week = day.getWeekGoal();
         GoalCompletenessCalculator.recalcWeekGoal(week);
-        weekGoalRepository.save(week);
+    }
+
+    private void initializeGoalDetails(Collection<DiaryEntryGoal> goals) {
+        List<Long> goalIds = goals == null
+                ? List.of()
+                : goals.stream()
+                        .map(DiaryEntryGoal::getId)
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+
+        if (!goalIds.isEmpty()) {
+            diaryEntryGoalRepository.findAllMetricDetailsByIdIn(goalIds);
+        }
     }
 }
