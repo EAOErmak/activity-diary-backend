@@ -13,6 +13,7 @@ import com.example.activity_diary.entity.template.WeekTemplate;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.template.DayTemplateRepository;
+import com.example.activity_diary.repository.template.TemplateDayItemRepository;
 import com.example.activity_diary.repository.template.WeekTemplateRepository;
 import com.example.activity_diary.service.diary.WeekTemplateService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
 
     private final WeekTemplateRepository weekTemplateRepository;
     private final DayTemplateRepository dayTemplateRepository;
+    private final TemplateDayItemRepository templateDayItemRepository;
 
     private final WeekTemplateMapper mapper;
 
@@ -43,8 +45,14 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
     @Transactional(readOnly = true)
     public Page<WeekTemplateViewDto> list(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        return weekTemplateRepository.findAllByUser_Id(userId, pageable)
-                .map(mapper::toView);
+        Page<WeekTemplate> templatesPage = weekTemplateRepository.findAllByUser_Id(userId, pageable);
+        Map<Long, List<TemplateDayItem>> itemsByTemplateId = loadItemsByWeekTemplateId(templatesPage.getContent());
+
+        List<WeekTemplateViewDto> content = templatesPage.getContent().stream()
+                .map(template -> toView(template, itemsByTemplateId.getOrDefault(template.getId(), List.of())))
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(content, pageable, templatesPage.getTotalElements());
     }
 
     @Override
@@ -83,7 +91,14 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
             applyItemsReplace(userId, tpl, dto.getItems());
         }
 
-        return mapper.toView(tpl);
+        if (dto.getItems() != null) {
+            return mapper.toView(tpl);
+        }
+
+        return toView(
+                tpl,
+                loadItemsByWeekTemplateId(List.of(tpl)).getOrDefault(tpl.getId(), List.of())
+        );
     }
 
     @Override
@@ -91,7 +106,10 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
     public WeekTemplateViewDto get(Long userId, Long id) {
         WeekTemplate tpl = weekTemplateRepository.findByIdAndUser_Id(id, userId)
                 .orElseThrow(() -> new NotFoundException("Week template not found"));
-        return mapper.toView(tpl);
+        return toView(
+                tpl,
+                loadItemsByWeekTemplateId(List.of(tpl)).getOrDefault(tpl.getId(), List.of())
+        );
     }
 
     @Override
@@ -147,6 +165,32 @@ public class WeekTemplateServiceImpl implements WeekTemplateService {
         User u = new User();
         u.setId(userId);
         return u;
+    }
+
+    private Map<Long, List<TemplateDayItem>> loadItemsByWeekTemplateId(List<WeekTemplate> templates) {
+        List<Long> templateIds = templates.stream()
+                .map(BaseEntity::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        if (templateIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return templateDayItemRepository.findAllByWeekTemplateIdInWithDayTemplate(templateIds).stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getWeekTemplate().getId(),
+                        java.util.LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+    }
+
+    private WeekTemplateViewDto toView(WeekTemplate template, List<TemplateDayItem> items) {
+        WeekTemplateViewDto dto = new WeekTemplateViewDto();
+        dto.setId(template.getId());
+        dto.setName(template.getName());
+        dto.setItems(items.stream().map(mapper::toViewItem).toList());
+        return dto;
     }
 }
 

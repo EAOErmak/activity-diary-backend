@@ -37,11 +37,11 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
     private final UserRepository userRepository;
     private final DictionaryRepository dictionaryRepository;
     private final DiaryDescriptionTagPolicy diaryDescriptionTagPolicy;
+    private final EntryTemplateMetricDetailsLoader entryTemplateMetricDetailsLoader;
 
     @Override
     public DiaryEntryTemplateViewDto create(Long userId, DiaryEntryTemplateCreateDto dto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        User user = userRepository.getReferenceById(userId);
 
         String name = normalize(dto.getName());
         if (name == null || name.isBlank()) {
@@ -75,7 +75,7 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         }
 
         DiaryEntryTemplate saved = diaryEntryTemplateRepository.save(template);
-        return toViewDto(saved, true);
+        return toViewDto(saved, saved.getMetrics(), true);
     }
 
     @Override
@@ -122,20 +122,23 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         }
 
         DiaryEntryTemplate saved = diaryEntryTemplateRepository.save(template);
-        return toViewDto(saved, true);
+        List<EntryTemplateMetric> metrics = dto.getMetrics() != null
+                ? saved.getMetrics()
+                : entryTemplateMetricDetailsLoader.loadForTemplate(saved.getId());
+        return toViewDto(saved, metrics, true);
     }
 
     @Override
     public DiaryEntryTemplateViewDto get(Long userId, Long templateId) {
         DiaryEntryTemplate template = diaryEntryTemplateRepository.findByIdAndUser_Id(templateId, userId)
                 .orElseThrow(() -> new NotFoundException("Template not found"));
-        return toViewDto(template, true);
+        return toViewDto(template, entryTemplateMetricDetailsLoader.loadForTemplate(templateId), true);
     }
 
     @Override
     public Page<DiaryEntryTemplateViewDto> list(Long userId, Pageable pageable) {
         Page<DiaryEntryTemplate> page = diaryEntryTemplateRepository.findAllByUser_Id(userId, pageable);
-        return page.map(t -> toViewDto(t, false));
+        return page.map(t -> toViewDto(t, List.of(), false));
     }
 
     @Override
@@ -229,11 +232,16 @@ public class DiaryEntryTemplateServiceImpl implements DiaryEntryTemplateService 
         return item;
     }
 
-    private DiaryEntryTemplateViewDto toViewDto(DiaryEntryTemplate t, boolean includeMetrics) {
+    private DiaryEntryTemplateViewDto toViewDto(
+            DiaryEntryTemplate t,
+            List<EntryTemplateMetric> metricDetails,
+            boolean includeMetrics
+    ) {
         if (t == null) return null;
         List<EntryTemplateMetricViewDto> metrics = List.of();
         if (includeMetrics) {
-            metrics = (t.getMetrics() == null) ? List.of() : t.getMetrics().stream()
+            List<EntryTemplateMetric> sourceMetrics = metricDetails == null ? List.of() : metricDetails;
+            metrics = sourceMetrics.stream()
                     .sorted(Comparator.comparing(metric -> metric.getMetricType().getId()))
                     .map(this::toMetricViewDto)
                     .toList();

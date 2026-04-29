@@ -15,6 +15,7 @@ import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.template.DiaryEntryTemplateRepository;
 import com.example.activity_diary.repository.template.DayTemplateRepository;
+import com.example.activity_diary.repository.template.TemplateEntryItemRepository;
 import com.example.activity_diary.service.diary.DayTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,7 @@ public class DayTemplateServiceImpl implements DayTemplateService {
 
     private final DayTemplateRepository dayTemplateRepository;
     private final DiaryEntryTemplateRepository entryTemplateRepository;
+    private final TemplateEntryItemRepository templateEntryItemRepository;
 
     private final DayTemplateMapper mapper;
 
@@ -44,8 +46,14 @@ public class DayTemplateServiceImpl implements DayTemplateService {
     @Transactional(readOnly = true)
     public Page<DayTemplateViewDto> list(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        return dayTemplateRepository.findAllByUser_Id(userId, pageable)
-                .map(mapper::toView);
+        Page<DayTemplate> templatesPage = dayTemplateRepository.findAllByUser_Id(userId, pageable);
+        Map<Long, List<TemplateEntryItem>> itemsByTemplateId = loadItemsByDayTemplateId(templatesPage.getContent());
+
+        List<DayTemplateViewDto> content = templatesPage.getContent().stream()
+                .map(template -> toView(template, itemsByTemplateId.getOrDefault(template.getId(), List.of())))
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(content, pageable, templatesPage.getTotalElements());
     }
 
     @Override
@@ -84,7 +92,14 @@ public class DayTemplateServiceImpl implements DayTemplateService {
             applyItemsReplace(userId, tpl, dto.getItems());
         }
 
-        return mapper.toView(tpl);
+        if (dto.getItems() != null) {
+            return mapper.toView(tpl);
+        }
+
+        return toView(
+                tpl,
+                loadItemsByDayTemplateId(List.of(tpl)).getOrDefault(tpl.getId(), List.of())
+        );
     }
 
     @Override
@@ -92,7 +107,10 @@ public class DayTemplateServiceImpl implements DayTemplateService {
     public DayTemplateViewDto get(Long userId, Long id) {
         DayTemplate tpl = dayTemplateRepository.findByIdAndUser_Id(id, userId)
                 .orElseThrow(() -> new NotFoundException("Day template not found"));
-        return mapper.toView(tpl);
+        return toView(
+                tpl,
+                loadItemsByDayTemplateId(List.of(tpl)).getOrDefault(tpl.getId(), List.of())
+        );
     }
 
     @Override
@@ -147,6 +165,32 @@ public class DayTemplateServiceImpl implements DayTemplateService {
         User u = new User();
         u.setId(userId);
         return u;
+    }
+
+    private Map<Long, List<TemplateEntryItem>> loadItemsByDayTemplateId(List<DayTemplate> templates) {
+        List<Long> templateIds = templates.stream()
+                .map(BaseEntity::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        if (templateIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return templateEntryItemRepository.findAllByDayTemplateIdInWithEntryTemplate(templateIds).stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getDayTemplate().getId(),
+                        java.util.LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+    }
+
+    private DayTemplateViewDto toView(DayTemplate template, List<TemplateEntryItem> items) {
+        DayTemplateViewDto dto = new DayTemplateViewDto();
+        dto.setId(template.getId());
+        dto.setName(template.getName());
+        dto.setItems(items.stream().map(mapper::toViewItem).toList());
+        return dto;
     }
 }
 
