@@ -34,6 +34,8 @@ public interface DiaryService {
         return create(dto, userId, DiaryEntryCreateMode.NORMAL);
     }
 
+    List<DiaryEntryDto> createAll(List<DiaryEntryCreateDto> dtos, Long userId, DiaryEntryCreateMode mode);
+
     DiaryEntryDto update(Long id, DiaryEntryUpdateDto dto, Long userId);
 
     void delete(Long id, Long userId);
