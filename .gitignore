@@ -38,7 +38,10 @@ out/
 
 # Environment files
 .env
+.env.local
+.env.*.local
 *.env
+!.env.example
 .gradle-local/
 
 # Local admin database cleanup files
