@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -45,19 +46,37 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
                 SELECT d
                 FROM DictionaryItem d
                 WHERE d.type = :type
-                  AND (:query IS NULL OR lower(d.label) LIKE lower(concat('%', :query, '%')))
                 ORDER BY lower(d.label) ASC, d.id ASC
             """,
             countQuery = """
                 SELECT count(d)
                 FROM DictionaryItem d
                 WHERE d.type = :type
-                  AND (:query IS NULL OR lower(d.label) LIKE lower(concat('%', :query, '%')))
             """
     )
     Page<DictionaryItem> findAdminPageByType(
-            DictionaryType type,
-            String query,
+            @Param("type") DictionaryType type,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                SELECT d
+                FROM DictionaryItem d
+                WHERE d.type = :type
+                  AND lower(d.label) LIKE concat('%', :query, '%')
+                ORDER BY lower(d.label) ASC, d.id ASC
+            """,
+            countQuery = """
+                SELECT count(d)
+                FROM DictionaryItem d
+                WHERE d.type = :type
+                  AND lower(d.label) LIKE concat('%', :query, '%')
+            """
+    )
+    Page<DictionaryItem> findAdminPageByTypeAndLabelSearch(
+            @Param("type") DictionaryType type,
+            @Param("query") String query,
             Pageable pageable
     );
 

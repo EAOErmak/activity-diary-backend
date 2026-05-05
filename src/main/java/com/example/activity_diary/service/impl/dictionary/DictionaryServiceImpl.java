@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.List;
 
 @Service
@@ -100,7 +101,9 @@ public class DictionaryServiceImpl implements DictionaryService {
     @Transactional(readOnly = true)
     public PageResponseDto<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type, String q, Pageable pageable) {
         String query = normalizeQuery(q);
-        Page<DictionaryResponseDto> page = dictionaryRepository.findAdminPageByType(type, query, pageable)
+        Page<DictionaryResponseDto> page = (query == null
+                ? dictionaryRepository.findAdminPageByType(type, pageable)
+                : dictionaryRepository.findAdminPageByTypeAndLabelSearch(type, query, pageable))
                 .map(mapper::toDto);
         return PageResponseDto.from(page);
     }
@@ -178,7 +181,7 @@ public class DictionaryServiceImpl implements DictionaryService {
             return null;
         }
 
-        return query.trim();
+        return query.trim().toLowerCase(Locale.ROOT);
     }
 
     private boolean isVisibleForRole(DictionaryItem item, Role role) {

@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -121,7 +122,7 @@ class DictionaryServiceImplTest {
         DictionaryResponseDto alphaDto = dto(1L, DictionaryType.METRIC_NAME, "Alpha");
         DictionaryResponseDto betaDto = dto(2L, DictionaryType.METRIC_NAME, "beta");
 
-        when(dictionaryRepository.findAdminPageByType(
+        when(dictionaryRepository.findAdminPageByTypeAndLabelSearch(
                 DictionaryType.METRIC_NAME,
                 "bench",
                 PageRequest.of(0, 20)
@@ -138,20 +139,21 @@ class DictionaryServiceImplTest {
         assertEquals(2, result.totalPages());
         assertEquals(true, result.hasNext());
         assertEquals(false, result.hasPrevious());
+        verify(dictionaryRepository, never()).findAdminPageByType(DictionaryType.METRIC_NAME, PageRequest.of(0, 20));
     }
 
     @Test
     void getByTypeForAdmin_blankQueryDoesNotFilter() {
         when(dictionaryRepository.findAdminPageByType(
                 DictionaryType.METRIC_UNIT,
-                null,
                 PageRequest.of(1, 10)
         )).thenReturn(new PageImpl<>(List.of(), PageRequest.of(1, 10), 0));
 
         var result = service.getByTypeForAdmin(DictionaryType.METRIC_UNIT, "   ", PageRequest.of(1, 10));
 
         assertEquals(List.of(), result.items());
-        verify(dictionaryRepository).findAdminPageByType(DictionaryType.METRIC_UNIT, null, PageRequest.of(1, 10));
+        verify(dictionaryRepository).findAdminPageByType(DictionaryType.METRIC_UNIT, PageRequest.of(1, 10));
+        verify(dictionaryRepository, never()).findAdminPageByTypeAndLabelSearch(any(), any(), any());
     }
 
     private static DictionaryItem dictionaryItem(Long id, DictionaryType type, String label) {

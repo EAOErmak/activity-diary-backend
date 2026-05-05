@@ -72,16 +72,59 @@ class AdminDictionaryPaginationIntegrationTest {
     }
 
     @Test
+    void getByType_switchingPagesReturnsDifferentSlices() throws Exception {
+        DictionaryItem alpha = save(DictionaryType.METRIC_NAME, "Alpha");
+        DictionaryItem beta = save(DictionaryType.METRIC_NAME, "beta");
+        DictionaryItem delta = save(DictionaryType.METRIC_NAME, "Delta");
+        DictionaryItem gamma = save(DictionaryType.METRIC_NAME, "Gamma");
+
+        JsonNode firstPage = readBody(
+                mockMvc.perform(get("/api/admin/dict/METRIC_NAME")
+                                .param("page", "0")
+                                .param("limit", "2"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.data.items.length()").value(2))
+                        .andExpect(jsonPath("$.data.page").value(0))
+                        .andExpect(jsonPath("$.data.limit").value(2))
+                        .andExpect(jsonPath("$.data.totalElements").value(4))
+                        .andExpect(jsonPath("$.data.totalPages").value(2))
+                        .andExpect(jsonPath("$.data.hasNext").value(true))
+                        .andExpect(jsonPath("$.data.hasPrevious").value(false))
+                        .andReturn()
+        );
+
+        JsonNode secondPage = readBody(
+                mockMvc.perform(get("/api/admin/dict/METRIC_NAME")
+                                .param("page", "1")
+                                .param("limit", "2"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.data.items.length()").value(2))
+                        .andExpect(jsonPath("$.data.page").value(1))
+                        .andExpect(jsonPath("$.data.limit").value(2))
+                        .andExpect(jsonPath("$.data.totalElements").value(4))
+                        .andExpect(jsonPath("$.data.totalPages").value(2))
+                        .andExpect(jsonPath("$.data.hasNext").value(false))
+                        .andExpect(jsonPath("$.data.hasPrevious").value(true))
+                        .andReturn()
+        );
+
+        assertThat(extractLongField(firstPage.path("data").path("items"), "id"))
+                .containsExactly(alpha.getId(), beta.getId());
+        assertThat(extractLongField(secondPage.path("data").path("items"), "id"))
+                .containsExactly(delta.getId(), gamma.getId());
+    }
+
+    @Test
     void getByType_searchesCaseInsensitiveByLabel() throws Exception {
-        DictionaryItem bench = save(DictionaryType.METRIC_NAME, "Bench Press");
-        DictionaryItem inclined = save(DictionaryType.METRIC_NAME, "Incline bench");
+        DictionaryItem lowercase = save(DictionaryType.METRIC_NAME, "test");
+        DictionaryItem titlecase = save(DictionaryType.METRIC_NAME, "Test Bench");
         save(DictionaryType.METRIC_NAME, "Deadlift");
 
-        JsonNode body = readBody(
+        JsonNode lowerCaseSearch = readBody(
                 mockMvc.perform(get("/api/admin/dict/METRIC_NAME")
                                 .param("page", "0")
                                 .param("limit", "20")
-                                .param("q", "BeNcH"))
+                                .param("q", "test"))
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.data.items.length()").value(2))
                         .andExpect(jsonPath("$.data.totalElements").value(2))
@@ -89,12 +132,53 @@ class AdminDictionaryPaginationIntegrationTest {
                         .andReturn()
         );
 
-        assertThat(extractLongField(body.path("data").path("items"), "id"))
-                .containsExactly(bench.getId(), inclined.getId());
+        JsonNode upperCaseSearch = readBody(
+                mockMvc.perform(get("/api/admin/dict/METRIC_NAME")
+                                .param("page", "0")
+                                .param("limit", "20")
+                                .param("q", "TEST"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.data.items.length()").value(2))
+                        .andExpect(jsonPath("$.data.totalElements").value(2))
+                        .andExpect(jsonPath("$.data.totalPages").value(1))
+                        .andReturn()
+        );
+
+        assertThat(extractLongField(lowerCaseSearch.path("data").path("items"), "id"))
+                .containsExactly(lowercase.getId(), titlecase.getId());
+        assertThat(extractLongField(upperCaseSearch.path("data").path("items"), "id"))
+                .containsExactly(lowercase.getId(), titlecase.getId());
     }
 
     @Test
     void getByType_blankQueryBehavesLikeNoFilter() throws Exception {
+        save(DictionaryType.METRIC_NAME, "Alpha");
+        save(DictionaryType.METRIC_NAME, "Beta");
+
+        mockMvc.perform(get("/api/admin/dict/METRIC_NAME")
+                        .param("page", "0")
+                        .param("limit", "20")
+                        .param("q", ""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(2))
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+    }
+
+    @Test
+    void getByType_omittedQueryBehavesLikeNoFilter() throws Exception {
+        save(DictionaryType.METRIC_NAME, "Alpha");
+        save(DictionaryType.METRIC_NAME, "Beta");
+
+        mockMvc.perform(get("/api/admin/dict/METRIC_NAME")
+                        .param("page", "0")
+                        .param("limit", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(2))
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+    }
+
+    @Test
+    void getByType_whitespaceQueryBehavesLikeNoFilter() throws Exception {
         save(DictionaryType.METRIC_NAME, "Alpha");
         save(DictionaryType.METRIC_NAME, "Beta");
 
