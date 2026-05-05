@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AdminTagMetricLinkServiceImpl implements AdminTagMetricLinkService {
 
     private final TagMetricLinkRepository tagMetricLinkRepository;
@@ -34,6 +33,7 @@ public class AdminTagMetricLinkServiceImpl implements AdminTagMetricLinkService 
     private final DictionaryRepository dictionaryRepository;
 
     @Override
+    @Transactional
     public TagMetricLinkResponseDto createLink(Long tagId, Long metricNameId) {
         Tag tag = getTag(tagId);
         DictionaryItem metricName = getMetricName(metricNameId);
@@ -54,6 +54,7 @@ public class AdminTagMetricLinkServiceImpl implements AdminTagMetricLinkService 
     }
 
     @Override
+    @Transactional
     public void deleteLink(Long tagId, Long metricNameId) {
         getTag(tagId);
         getMetricName(metricNameId);
@@ -76,6 +77,7 @@ public class AdminTagMetricLinkServiceImpl implements AdminTagMetricLinkService 
     }
 
     @Override
+    @Transactional
     public List<TagMetricLinkResponseDto> replaceLinks(Long tagId, Collection<Long> metricNameIds) {
         Tag tag = getTag(tagId);
         List<DictionaryItem> metricNames = getMetricNames(metricNameIds);

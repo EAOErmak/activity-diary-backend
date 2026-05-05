@@ -109,7 +109,7 @@ public class AdminTagController {
             @Valid @RequestBody TagMetricLinkReplaceRequestDto dto
     ) {
         return ResponseEntity.ok(
-                ApiResponse.ok(adminTagMetricLinkService.replaceLinks(id, dto))
+                ApiResponse.ok(adminTagMetricLinkService.replaceLinks(id, dto.getMetricNameIds()))
         );
     }
 }

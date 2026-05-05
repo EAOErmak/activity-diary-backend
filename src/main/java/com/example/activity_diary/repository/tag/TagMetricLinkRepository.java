@@ -3,8 +3,10 @@ package com.example.activity_diary.repository.tag;
 import com.example.activity_diary.entity.diary.TagMetricLink;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.Role;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
@@ -58,7 +60,18 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
 
     boolean existsByTagId(Long tagId);
 
-    void deleteByTagIdAndMetricNameId(Long tagId, Long metricNameId);
+    @Modifying
+    @Query("""
+        delete from TagMetricLink link
+        where link.tag.id = :tagId
+          and link.metricName.id = :metricNameId
+    """)
+    void deleteByTagIdAndMetricNameId(@Param("tagId") Long tagId, @Param("metricNameId") Long metricNameId);
 
-    void deleteByTagId(Long tagId);
+    @Modifying
+    @Query("""
+        delete from TagMetricLink link
+        where link.tag.id = :tagId
+    """)
+    void deleteByTagId(@Param("tagId") Long tagId);
 }

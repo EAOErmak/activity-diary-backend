@@ -181,6 +181,17 @@ class AdminTagMetricLinkServiceImplTest {
     }
 
     @Test
+    void replaceLinks_missingMetricId_throwsBadRequest() {
+        Tag tag = tag(7L);
+
+        when(tagRepository.findById(7L)).thenReturn(Optional.of(tag));
+        when(dictionaryRepository.findAllById(java.util.Set.of(10L))).thenReturn(List.of());
+
+        assertThrows(BadRequestException.class, () -> service.replaceLinks(7L, List.of(10L)));
+        verify(tagMetricLinkRepository, never()).deleteByTagId(7L);
+    }
+
+    @Test
     void replaceLinks_wrongDictionaryType_throwsBadRequest() {
         Tag tag = tag(7L);
         DictionaryItem unit = dictionaryItem(10L, DictionaryType.METRIC_UNIT, "kg");

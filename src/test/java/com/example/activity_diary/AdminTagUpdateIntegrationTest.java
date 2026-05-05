@@ -271,11 +271,122 @@ class AdminTagUpdateIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Tag not found"));
     }
 
+    @Test
+    void replaceTagMetrics_emptyToNonEmpty_replacesLinks() throws Exception {
+        Tag tag = saveApprovedTag("replace-metrics-add");
+        DictionaryItem metricA = saveMetricName("distance");
+        DictionaryItem metricB = saveMetricName("weight");
+
+        mockMvc.perform(put("/api/admin/tags/{id}/metrics", tag.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(metricReplaceRequest(metricB.getId(), metricA.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].metricNameId").value(metricA.getId()))
+                .andExpect(jsonPath("$.data[1].metricNameId").value(metricB.getId()));
+
+        assertThat(tagMetricLinkRepository.findByTagId(tag.getId()))
+                .extracting(link -> link.getMetricName().getId())
+                .containsExactly(metricA.getId(), metricB.getId());
+    }
+
+    @Test
+    void replaceTagMetrics_existingToDifferentList_replacesLinksWithoutDuplicates() throws Exception {
+        Tag tag = saveApprovedTag("replace-metrics-swap");
+        DictionaryItem metricA = saveMetricName("distance");
+        DictionaryItem metricB = saveMetricName("weight");
+        DictionaryItem metricC = saveMetricName("calories");
+        tagMetricLinkRepository.save(TagMetricLink.create(tag, metricA));
+        tagMetricLinkRepository.save(TagMetricLink.create(tag, metricB));
+
+        mockMvc.perform(put("/api/admin/tags/{id}/metrics", tag.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(metricReplaceRequest(metricC.getId(), metricC.getId(), metricB.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].metricNameId").value(metricC.getId()))
+                .andExpect(jsonPath("$.data[1].metricNameId").value(metricB.getId()));
+
+        assertThat(tagMetricLinkRepository.findByTagId(tag.getId()))
+                .extracting(link -> link.getMetricName().getId())
+                .containsExactly(metricC.getId(), metricB.getId());
+    }
+
+    @Test
+    void replaceTagMetrics_withEmptyList_clearsLinks() throws Exception {
+        Tag tag = saveApprovedTag("replace-metrics-clear");
+        DictionaryItem metricA = saveMetricName("distance");
+        tagMetricLinkRepository.save(TagMetricLink.create(tag, metricA));
+
+        mockMvc.perform(put("/api/admin/tags/{id}/metrics", tag.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(metricReplaceRequest())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        assertThat(tagMetricLinkRepository.findByTagId(tag.getId())).isEmpty();
+    }
+
+    @Test
+    void replaceTagMetrics_invalidMetricId_returnsBadRequestAndKeepsLinks() throws Exception {
+        Tag tag = saveApprovedTag("replace-metrics-invalid-id");
+        DictionaryItem metricA = saveMetricName("distance");
+        tagMetricLinkRepository.save(TagMetricLink.create(tag, metricA));
+
+        mockMvc.perform(put("/api/admin/tags/{id}/metrics", tag.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(metricReplaceRequest(999999L))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Metric name not found"));
+
+        assertThat(tagMetricLinkRepository.findByTagId(tag.getId()))
+                .extracting(link -> link.getMetricName().getId())
+                .containsExactly(metricA.getId());
+    }
+
+    @Test
+    void replaceTagMetrics_invalidDictionaryType_returnsBadRequestAndKeepsLinks() throws Exception {
+        Tag tag = saveApprovedTag("replace-metrics-invalid-type");
+        DictionaryItem metricA = saveMetricName("distance");
+        DictionaryItem unit = dictionaryRepository.save(DictionaryItem.builder()
+                .type(DictionaryType.METRIC_UNIT)
+                .label(unique("kg"))
+                .active(true)
+                .build());
+        tagMetricLinkRepository.save(TagMetricLink.create(tag, metricA));
+
+        mockMvc.perform(put("/api/admin/tags/{id}/metrics", tag.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(metricReplaceRequest(unit.getId()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Metric name must be of type METRIC_NAME"));
+
+        assertThat(tagMetricLinkRepository.findByTagId(tag.getId()))
+                .extracting(link -> link.getMetricName().getId())
+                .containsExactly(metricA.getId());
+    }
+
     private Tag saveApprovedTag(String baseName) {
         return tagRepository.save(Tag.builder()
                 .name(unique(baseName))
                 .status(TagStatus.APPROVED)
                 .build());
+    }
+
+    private DictionaryItem saveMetricName(String baseLabel) {
+        return dictionaryRepository.save(DictionaryItem.builder()
+                .type(DictionaryType.METRIC_NAME)
+                .label(unique(baseLabel))
+                .active(true)
+                .build());
+    }
+
+    private Object metricReplaceRequest(Long... metricNameIds) {
+        return java.util.Map.of("metricNameIds", List.of(metricNameIds));
     }
 
     private String unique(String prefix) {
