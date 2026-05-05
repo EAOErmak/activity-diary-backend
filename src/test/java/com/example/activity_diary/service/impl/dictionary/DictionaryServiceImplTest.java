@@ -8,7 +8,6 @@ import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.exception.types.BadRequestException;
-import com.example.activity_diary.exception.types.NotFoundException;
 import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
 import org.junit.jupiter.api.Test;
@@ -84,25 +83,27 @@ class DictionaryServiceImplTest {
     void getUnitsByMetricNameId_returnsVisibleLinkedUnits() {
         DictionaryItem metricName = dictionaryItem(10L, DictionaryType.METRIC_NAME, "Weight");
         DictionaryItem visibleUnit = dictionaryItem(20L, DictionaryType.METRIC_UNIT, "kg");
-        DictionaryItem hiddenUnit = dictionaryItem(21L, DictionaryType.METRIC_UNIT, "lb");
-        hiddenUnit.setAllowedRole(Role.PREMIUM);
-
         DictionaryOptionDto visibleDto = new DictionaryOptionDto(20L, "kg");
 
         when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(metricName));
-        when(metricNameUnitLinkRepository.findUnitsByMetricNameId(10L)).thenReturn(List.of(visibleUnit, hiddenUnit));
+        when(metricNameUnitLinkRepository.findVisibleUnitsPageByMetricNameId(10L, Role.USER, PageRequest.of(0, 6)))
+                .thenReturn(new PageImpl<>(List.of(visibleUnit), PageRequest.of(0, 6), 1));
         when(mapper.toOptionDto(visibleUnit)).thenReturn(visibleDto);
 
-        List<DictionaryOptionDto> result = service.getUnitsByMetricNameId(10L, Role.USER);
+        var result = service.getUnitsByMetricNameId(10L, Role.USER, null, PageRequest.of(0, 6));
 
-        assertEquals(List.of(visibleDto), result);
+        assertEquals(List.of(visibleDto), result.items());
+        assertEquals(1L, result.totalElements());
     }
 
     @Test
-    void getUnitsByMetricNameId_missingMetricName_throwsNotFound() {
+    void getUnitsByMetricNameId_missingMetricName_returnsEmptyPage() {
         when(dictionaryRepository.findById(10L)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> service.getUnitsByMetricNameId(10L, Role.USER));
+        var result = service.getUnitsByMetricNameId(10L, Role.USER, null, PageRequest.of(0, 6));
+
+        assertEquals(List.of(), result.items());
+        assertEquals(0L, result.totalElements());
         verifyNoInteractions(metricNameUnitLinkRepository, mapper);
     }
 
@@ -111,7 +112,7 @@ class DictionaryServiceImplTest {
         DictionaryItem metricUnit = dictionaryItem(10L, DictionaryType.METRIC_UNIT, "kg");
         when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(metricUnit));
 
-        assertThrows(BadRequestException.class, () -> service.getUnitsByMetricNameId(10L, Role.USER));
+        assertThrows(BadRequestException.class, () -> service.getUnitsByMetricNameId(10L, Role.USER, null, PageRequest.of(0, 6)));
         verifyNoInteractions(metricNameUnitLinkRepository, mapper);
     }
 

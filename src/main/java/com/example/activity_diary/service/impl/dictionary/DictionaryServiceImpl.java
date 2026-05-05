@@ -73,18 +73,27 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryOptionDto> getUnitsByMetricNameId(Long metricNameId, Role role) {
-        DictionaryItem metricName = dictionaryRepository.findById(metricNameId)
-                .orElseThrow(() -> new NotFoundException("Dictionary item not found"));
+    public PageResponseDto<DictionaryOptionDto> getUnitsByMetricNameId(
+            Long metricNameId,
+            Role role,
+            String q,
+            Pageable pageable
+    ) {
+        DictionaryItem metricName = dictionaryRepository.findById(metricNameId).orElse(null);
+        if (metricName == null) {
+            return PageResponseDto.from(Page.empty(pageable));
+        }
 
         if (metricName.getType() != DictionaryType.METRIC_NAME) {
             throw new BadRequestException("Dictionary item is not a metric name");
         }
 
-        return metricNameUnitLinkRepository.findUnitsByMetricNameId(metricNameId).stream()
-                .filter(item -> isVisibleForRole(item, role))
-                .map(mapper::toOptionDto)
-                .toList();
+        String query = normalizeQuery(q);
+        Page<DictionaryOptionDto> page = (query == null
+                ? metricNameUnitLinkRepository.findVisibleUnitsPageByMetricNameId(metricNameId, role, pageable)
+                : metricNameUnitLinkRepository.findVisibleUnitsPageByMetricNameIdAndLabelSearch(metricNameId, role, query, pageable))
+                .map(mapper::toOptionDto);
+        return PageResponseDto.from(page);
     }
 
     @Override
@@ -182,9 +191,5 @@ public class DictionaryServiceImpl implements DictionaryService {
         }
 
         return query.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private boolean isVisibleForRole(DictionaryItem item, Role role) {
-        return item.getAllowedRole() == null || item.getAllowedRole() == role;
     }
 }

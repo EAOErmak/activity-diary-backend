@@ -3,6 +3,8 @@ package com.example.activity_diary.repository.tag;
 import com.example.activity_diary.entity.diary.TagMetricLink;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -46,6 +48,63 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
         order by metric.label asc
     """)
     List<DictionaryItem> findVisibleMetricNamesByTagIds(Collection<Long> tagIds, Role role);
+
+    @Query(
+            value = """
+                select distinct metric
+                from TagMetricLink link
+                join link.metricName metric
+                where link.tag.id in :tagIds
+                  and metric.active = true
+                  and metric.type = com.example.activity_diary.entity.enums.DictionaryType.METRIC_NAME
+                  and (metric.allowedRole is null or metric.allowedRole = :role)
+                order by lower(metric.label) asc, metric.id asc
+            """,
+            countQuery = """
+                select count(distinct metric.id)
+                from TagMetricLink link
+                join link.metricName metric
+                where link.tag.id in :tagIds
+                  and metric.active = true
+                  and metric.type = com.example.activity_diary.entity.enums.DictionaryType.METRIC_NAME
+                  and (metric.allowedRole is null or metric.allowedRole = :role)
+            """
+    )
+    Page<DictionaryItem> findVisibleMetricNamesPageByTagIds(
+            @Param("tagIds") Collection<Long> tagIds,
+            @Param("role") Role role,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                select distinct metric
+                from TagMetricLink link
+                join link.metricName metric
+                where link.tag.id in :tagIds
+                  and metric.active = true
+                  and metric.type = com.example.activity_diary.entity.enums.DictionaryType.METRIC_NAME
+                  and (metric.allowedRole is null or metric.allowedRole = :role)
+                  and lower(metric.label) like concat('%', :query, '%')
+                order by lower(metric.label) asc, metric.id asc
+            """,
+            countQuery = """
+                select count(distinct metric.id)
+                from TagMetricLink link
+                join link.metricName metric
+                where link.tag.id in :tagIds
+                  and metric.active = true
+                  and metric.type = com.example.activity_diary.entity.enums.DictionaryType.METRIC_NAME
+                  and (metric.allowedRole is null or metric.allowedRole = :role)
+                  and lower(metric.label) like concat('%', :query, '%')
+            """
+    )
+    Page<DictionaryItem> findVisibleMetricNamesPageByTagIdsAndLabelSearch(
+            @Param("tagIds") Collection<Long> tagIds,
+            @Param("role") Role role,
+            @Param("query") String query,
+            Pageable pageable
+    );
 
     @Query("""
         select distinct metric.id

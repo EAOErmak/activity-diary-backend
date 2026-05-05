@@ -17,6 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Set;
@@ -69,16 +71,17 @@ class TagMetricServiceImplTest {
         DictionaryOptionDto thirdDto = new DictionaryOptionDto(30L, "Weight");
 
         when(tagRepository.findAllById(Set.of(7L, 8L))).thenReturn(List.of(firstTag, secondTag));
-        when(tagMetricLinkRepository.findVisibleMetricNamesByTagIds(Set.of(7L, 8L), Role.USER))
-                .thenReturn(List.of(firstMetric, secondMetric, thirdMetric));
+        when(tagMetricLinkRepository.findVisibleMetricNamesPageByTagIds(Set.of(7L, 8L), Role.USER, PageRequest.of(0, 6)))
+                .thenReturn(new PageImpl<>(List.of(firstMetric, secondMetric, thirdMetric), PageRequest.of(0, 6), 3));
         when(dictionaryMapper.toOptionDto(firstMetric)).thenReturn(firstDto);
         when(dictionaryMapper.toOptionDto(secondMetric)).thenReturn(secondDto);
         when(dictionaryMapper.toOptionDto(thirdMetric)).thenReturn(thirdDto);
 
-        List<DictionaryOptionDto> result = service.getMetricsByTagIds(List.of(7L, 8L), 5L, Role.USER);
+        var result = service.getMetricsByTagIds(List.of(7L, 8L), 5L, Role.USER, null, PageRequest.of(0, 6));
 
-        assertEquals(List.of(firstDto, secondDto, thirdDto), result);
-        verify(tagMetricLinkRepository).findVisibleMetricNamesByTagIds(Set.of(7L, 8L), Role.USER);
+        assertEquals(List.of(firstDto, secondDto, thirdDto), result.items());
+        assertEquals(3L, result.totalElements());
+        verify(tagMetricLinkRepository).findVisibleMetricNamesPageByTagIds(Set.of(7L, 8L), Role.USER, PageRequest.of(0, 6));
     }
 
     @Test
@@ -88,7 +91,7 @@ class TagMetricServiceImplTest {
 
         assertThrows(NotFoundException.class, () -> service.getMetricsByTagId(7L, 5L, Role.USER));
 
-        verify(tagMetricLinkRepository, never()).findVisibleMetricNamesByTagIds(Set.of(7L), Role.USER);
+        verify(tagMetricLinkRepository, never()).findVisibleMetricNamesPageByTagIds(Set.of(7L), Role.USER, PageRequest.of(0, 6));
     }
 
     @Test

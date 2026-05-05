@@ -21,7 +21,12 @@ public interface DictionaryService {
             Role role
     );
 
-    List<DictionaryOptionDto> getUnitsByMetricNameId(Long metricNameId, Role role);
+    PageResponseDto<DictionaryOptionDto> getUnitsByMetricNameId(
+            Long metricNameId,
+            Role role,
+            String q,
+            Pageable pageable
+    );
 
     PageResponseDto<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type, String q, Pageable pageable);
 

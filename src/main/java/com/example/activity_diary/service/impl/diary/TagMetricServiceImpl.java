@@ -1,5 +1,6 @@
 package com.example.activity_diary.service.impl.diary;
 
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.dto.mapper.DictionaryMapper;
 import com.example.activity_diary.entity.diary.Tag;
@@ -11,12 +12,15 @@ import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.diary.TagMetricService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,16 +36,27 @@ public class TagMetricServiceImpl implements TagMetricService {
 
     @Override
     public List<DictionaryOptionDto> getMetricsByTagId(Long tagId, Long userId, Role role) {
-        return getMetricsByTagIds(List.of(requireTagId(tagId)), userId, role);
-    }
-
-    @Override
-    public List<DictionaryOptionDto> getMetricsByTagIds(Collection<Long> tagIds, Long userId, Role role) {
-        Set<Long> visibleTagIds = getVisibleTagIds(tagIds, userId, role);
-
+        Set<Long> visibleTagIds = getVisibleTagIds(List.of(requireTagId(tagId)), userId, role);
         return tagMetricLinkRepository.findVisibleMetricNamesByTagIds(visibleTagIds, role).stream()
                 .map(dictionaryMapper::toOptionDto)
                 .toList();
+    }
+
+    @Override
+    public PageResponseDto<DictionaryOptionDto> getMetricsByTagIds(
+            Collection<Long> tagIds,
+            Long userId,
+            Role role,
+            String q,
+            Pageable pageable
+    ) {
+        Set<Long> visibleTagIds = getVisibleTagIds(tagIds, userId, role);
+        String query = normalizeQuery(q);
+        Page<DictionaryOptionDto> page = (query == null
+                ? tagMetricLinkRepository.findVisibleMetricNamesPageByTagIds(visibleTagIds, role, pageable)
+                : tagMetricLinkRepository.findVisibleMetricNamesPageByTagIdsAndLabelSearch(visibleTagIds, role, query, pageable))
+                .map(dictionaryMapper::toOptionDto);
+        return PageResponseDto.from(page);
     }
 
     @Override
@@ -123,5 +138,13 @@ public class TagMetricServiceImpl implements TagMetricService {
 
         Long createdById = tag.getCreatedBy() == null ? null : tag.getCreatedBy().getId();
         return tag.getStatus() == TagStatus.PENDING && Objects.equals(createdById, userId);
+    }
+
+    private String normalizeQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+
+        return query.trim().toLowerCase(Locale.ROOT);
     }
 }
