@@ -1,5 +1,6 @@
 package com.example.activity_diary.repository.tag;
 
+import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.entity.diary.TagMetricLink;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.Role;
@@ -51,13 +52,14 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
 
     @Query(
             value = """
-                select distinct metric.id
+                select new com.example.activity_diary.dto.dictionary.DictionaryOptionDto(metric.id, metric.label)
                 from TagMetricLink link
                 join link.metricName metric
                 where link.tag.id in :tagIds
                   and metric.active = true
                   and metric.type = com.example.activity_diary.entity.enums.DictionaryType.METRIC_NAME
                   and (metric.allowedRole is null or metric.allowedRole = :role)
+                group by metric.id, metric.label
                 order by lower(metric.label) asc, metric.id asc
             """,
             countQuery = """
@@ -70,7 +72,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
                   and (metric.allowedRole is null or metric.allowedRole = :role)
             """
     )
-    Page<Long> findVisibleMetricNameIdsPageByTagIds(
+    Page<DictionaryOptionDto> findVisibleMetricOptionsPageByTagIds(
             @Param("tagIds") Collection<Long> tagIds,
             @Param("role") Role role,
             Pageable pageable
@@ -78,7 +80,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
 
     @Query(
             value = """
-                select distinct metric.id
+                select new com.example.activity_diary.dto.dictionary.DictionaryOptionDto(metric.id, metric.label)
                 from TagMetricLink link
                 join link.metricName metric
                 where link.tag.id in :tagIds
@@ -86,6 +88,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
                   and metric.type = com.example.activity_diary.entity.enums.DictionaryType.METRIC_NAME
                   and (metric.allowedRole is null or metric.allowedRole = :role)
                   and lower(metric.label) like concat('%', :query, '%')
+                group by metric.id, metric.label
                 order by lower(metric.label) asc, metric.id asc
             """,
             countQuery = """
@@ -99,7 +102,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
                   and lower(metric.label) like concat('%', :query, '%')
             """
     )
-    Page<Long> findVisibleMetricNameIdsPageByTagIdsAndLabelSearch(
+    Page<DictionaryOptionDto> findVisibleMetricOptionsPageByTagIdsAndLabelSearch(
             @Param("tagIds") Collection<Long> tagIds,
             @Param("role") Role role,
             @Param("query") String query,
