@@ -10,6 +10,7 @@ import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ class TagMetricServiceImplTest {
 
     @Mock
     private TagRepository tagRepository;
+
+    @Mock
+    private DictionaryRepository dictionaryRepository;
 
     @Mock
     private DictionaryMapper dictionaryMapper;
@@ -71,8 +75,9 @@ class TagMetricServiceImplTest {
         DictionaryOptionDto thirdDto = new DictionaryOptionDto(30L, "Weight");
 
         when(tagRepository.findAllById(Set.of(7L, 8L))).thenReturn(List.of(firstTag, secondTag));
-        when(tagMetricLinkRepository.findVisibleMetricNamesPageByTagIds(Set.of(7L, 8L), Role.USER, PageRequest.of(0, 6)))
-                .thenReturn(new PageImpl<>(List.of(firstMetric, secondMetric, thirdMetric), PageRequest.of(0, 6), 3));
+        when(tagMetricLinkRepository.findVisibleMetricNameIdsPageByTagIds(Set.of(7L, 8L), Role.USER, PageRequest.of(0, 6)))
+                .thenReturn(new PageImpl<>(List.of(10L, 20L, 30L), PageRequest.of(0, 6), 3));
+        when(dictionaryRepository.findAllById(List.of(10L, 20L, 30L))).thenReturn(List.of(firstMetric, secondMetric, thirdMetric));
         when(dictionaryMapper.toOptionDto(firstMetric)).thenReturn(firstDto);
         when(dictionaryMapper.toOptionDto(secondMetric)).thenReturn(secondDto);
         when(dictionaryMapper.toOptionDto(thirdMetric)).thenReturn(thirdDto);
@@ -81,7 +86,7 @@ class TagMetricServiceImplTest {
 
         assertEquals(List.of(firstDto, secondDto, thirdDto), result.items());
         assertEquals(3L, result.totalElements());
-        verify(tagMetricLinkRepository).findVisibleMetricNamesPageByTagIds(Set.of(7L, 8L), Role.USER, PageRequest.of(0, 6));
+        verify(tagMetricLinkRepository).findVisibleMetricNameIdsPageByTagIds(Set.of(7L, 8L), Role.USER, PageRequest.of(0, 6));
     }
 
     @Test
@@ -91,7 +96,7 @@ class TagMetricServiceImplTest {
 
         assertThrows(NotFoundException.class, () -> service.getMetricsByTagId(7L, 5L, Role.USER));
 
-        verify(tagMetricLinkRepository, never()).findVisibleMetricNamesPageByTagIds(Set.of(7L), Role.USER, PageRequest.of(0, 6));
+        verify(tagMetricLinkRepository, never()).findVisibleMetricNameIdsPageByTagIds(Set.of(7L), Role.USER, PageRequest.of(0, 6));
     }
 
     @Test

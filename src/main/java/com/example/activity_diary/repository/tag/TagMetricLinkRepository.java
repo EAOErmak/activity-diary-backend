@@ -51,7 +51,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
 
     @Query(
             value = """
-                select distinct metric
+                select distinct metric.id
                 from TagMetricLink link
                 join link.metricName metric
                 where link.tag.id in :tagIds
@@ -70,7 +70,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
                   and (metric.allowedRole is null or metric.allowedRole = :role)
             """
     )
-    Page<DictionaryItem> findVisibleMetricNamesPageByTagIds(
+    Page<Long> findVisibleMetricNameIdsPageByTagIds(
             @Param("tagIds") Collection<Long> tagIds,
             @Param("role") Role role,
             Pageable pageable
@@ -78,7 +78,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
 
     @Query(
             value = """
-                select distinct metric
+                select distinct metric.id
                 from TagMetricLink link
                 join link.metricName metric
                 where link.tag.id in :tagIds
@@ -99,7 +99,7 @@ public interface TagMetricLinkRepository extends JpaRepository<TagMetricLink, Lo
                   and lower(metric.label) like concat('%', :query, '%')
             """
     )
-    Page<DictionaryItem> findVisibleMetricNamesPageByTagIdsAndLabelSearch(
+    Page<Long> findVisibleMetricNameIdsPageByTagIdsAndLabelSearch(
             @Param("tagIds") Collection<Long> tagIds,
             @Param("role") Role role,
             @Param("query") String query,

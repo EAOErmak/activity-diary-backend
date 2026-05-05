@@ -8,6 +8,7 @@ import com.example.activity_diary.entity.enums.Role;
 import com.example.activity_diary.entity.enums.TagStatus;
 import com.example.activity_diary.exception.types.BadRequestException;
 import com.example.activity_diary.exception.types.NotFoundException;
+import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.tag.TagMetricLinkRepository;
 import com.example.activity_diary.repository.tag.TagRepository;
 import com.example.activity_diary.service.diary.TagMetricService;
@@ -21,8 +22,10 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +35,7 @@ public class TagMetricServiceImpl implements TagMetricService {
 
     private final TagMetricLinkRepository tagMetricLinkRepository;
     private final TagRepository tagRepository;
+    private final DictionaryRepository dictionaryRepository;
     private final DictionaryMapper dictionaryMapper;
 
     @Override
@@ -52,11 +56,20 @@ public class TagMetricServiceImpl implements TagMetricService {
     ) {
         Set<Long> visibleTagIds = getVisibleTagIds(tagIds, userId, role);
         String query = normalizeQuery(q);
-        Page<DictionaryOptionDto> page = (query == null
-                ? tagMetricLinkRepository.findVisibleMetricNamesPageByTagIds(visibleTagIds, role, pageable)
-                : tagMetricLinkRepository.findVisibleMetricNamesPageByTagIdsAndLabelSearch(visibleTagIds, role, query, pageable))
-                .map(dictionaryMapper::toOptionDto);
-        return PageResponseDto.from(page);
+        Page<Long> page = query == null
+                ? tagMetricLinkRepository.findVisibleMetricNameIdsPageByTagIds(visibleTagIds, role, pageable)
+                : tagMetricLinkRepository.findVisibleMetricNameIdsPageByTagIdsAndLabelSearch(visibleTagIds, role, query, pageable);
+
+        List<DictionaryOptionDto> items = mapMetricIdsToOptions(page.getContent());
+        return new PageResponseDto<>(
+                items,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.hasNext(),
+                page.hasPrevious()
+        );
     }
 
     @Override
@@ -146,5 +159,20 @@ public class TagMetricServiceImpl implements TagMetricService {
         }
 
         return query.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private List<DictionaryOptionDto> mapMetricIdsToOptions(List<Long> metricIds) {
+        if (metricIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, DictionaryOptionDto> optionsById = dictionaryRepository.findAllById(metricIds).stream()
+                .map(dictionaryMapper::toOptionDto)
+                .collect(Collectors.toMap(DictionaryOptionDto::getId, Function.identity()));
+
+        return metricIds.stream()
+                .map(optionsById::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 }
