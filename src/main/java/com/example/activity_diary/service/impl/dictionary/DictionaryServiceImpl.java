@@ -1,6 +1,7 @@
 // src/main/java/com/example/activity_diary/service/impl/dictionary/DictionaryServiceImpl.java
 package com.example.activity_diary.service.impl.dictionary;
 
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
 import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
@@ -15,6 +16,8 @@ import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
 import com.example.activity_diary.service.dictionary.DictionaryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,12 +98,11 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type) {
-        return dictionaryRepository
-                .findAllByTypeOrderByLabelAsc(type)
-                .stream()
-                .map(mapper::toDto)
-                .toList();
+    public PageResponseDto<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type, String q, Pageable pageable) {
+        String query = normalizeQuery(q);
+        Page<DictionaryResponseDto> page = dictionaryRepository.findAdminPageByType(type, query, pageable)
+                .map(mapper::toDto);
+        return PageResponseDto.from(page);
     }
 
     @Override
@@ -169,6 +171,14 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .stream()
                 .map(mapper::toDto)
                 .toList();
+    }
+
+    private String normalizeQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+
+        return query.trim();
     }
 
     private boolean isVisibleForRole(DictionaryItem item, Role role) {

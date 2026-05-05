@@ -1,12 +1,14 @@
 // src/main/java/com/example/activity_diary/service/dictionary/DictionaryService.java
 package com.example.activity_diary.service.dictionary;
 
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryCreateDto;
 import com.example.activity_diary.dto.dictionary.DictionaryOptionDto;
 import com.example.activity_diary.dto.dictionary.DictionaryResponseDto;
 import com.example.activity_diary.dto.dictionary.DictionaryUpdateDto;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public interface DictionaryService {
 
     List<DictionaryOptionDto> getUnitsByMetricNameId(Long metricNameId, Role role);
 
-    List<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type);
+    PageResponseDto<DictionaryResponseDto> getByTypeForAdmin(DictionaryType type, String q, Pageable pageable);
 
     DictionaryResponseDto update(Long id, DictionaryUpdateDto dto);
 

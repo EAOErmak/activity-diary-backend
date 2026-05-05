@@ -4,6 +4,8 @@ package com.example.activity_diary.repository.diary;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.enums.DictionaryType;
 import com.example.activity_diary.entity.enums.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -36,6 +38,27 @@ public interface DictionaryRepository extends JpaRepository<DictionaryItem, Long
 
     List<DictionaryItem> findAllByLabelContainingIgnoreCaseOrderByTypeAscLabelAsc(
             String label
+    );
+
+    @Query(
+            value = """
+                SELECT d
+                FROM DictionaryItem d
+                WHERE d.type = :type
+                  AND (:query IS NULL OR lower(d.label) LIKE lower(concat('%', :query, '%')))
+                ORDER BY lower(d.label) ASC, d.id ASC
+            """,
+            countQuery = """
+                SELECT count(d)
+                FROM DictionaryItem d
+                WHERE d.type = :type
+                  AND (:query IS NULL OR lower(d.label) LIKE lower(concat('%', :query, '%')))
+            """
+    )
+    Page<DictionaryItem> findAdminPageByType(
+            DictionaryType type,
+            String query,
+            Pageable pageable
     );
 
     @Query("""

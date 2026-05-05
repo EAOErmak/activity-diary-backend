@@ -17,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -112,6 +114,46 @@ class DictionaryServiceImplTest {
         verifyNoInteractions(metricNameUnitLinkRepository, mapper);
     }
 
+    @Test
+    void getByTypeForAdmin_returnsPagedItems() {
+        DictionaryItem alpha = dictionaryItem(1L, DictionaryType.METRIC_NAME, "Alpha");
+        DictionaryItem beta = dictionaryItem(2L, DictionaryType.METRIC_NAME, "beta");
+        DictionaryResponseDto alphaDto = dto(1L, DictionaryType.METRIC_NAME, "Alpha");
+        DictionaryResponseDto betaDto = dto(2L, DictionaryType.METRIC_NAME, "beta");
+
+        when(dictionaryRepository.findAdminPageByType(
+                DictionaryType.METRIC_NAME,
+                "bench",
+                PageRequest.of(0, 20)
+        )).thenReturn(new PageImpl<>(List.of(alpha, beta), PageRequest.of(0, 20), 25));
+        when(mapper.toDto(alpha)).thenReturn(alphaDto);
+        when(mapper.toDto(beta)).thenReturn(betaDto);
+
+        var result = service.getByTypeForAdmin(DictionaryType.METRIC_NAME, " bench ", PageRequest.of(0, 20));
+
+        assertEquals(List.of(alphaDto, betaDto), result.items());
+        assertEquals(0, result.page());
+        assertEquals(20, result.limit());
+        assertEquals(25L, result.totalElements());
+        assertEquals(2, result.totalPages());
+        assertEquals(true, result.hasNext());
+        assertEquals(false, result.hasPrevious());
+    }
+
+    @Test
+    void getByTypeForAdmin_blankQueryDoesNotFilter() {
+        when(dictionaryRepository.findAdminPageByType(
+                DictionaryType.METRIC_UNIT,
+                null,
+                PageRequest.of(1, 10)
+        )).thenReturn(new PageImpl<>(List.of(), PageRequest.of(1, 10), 0));
+
+        var result = service.getByTypeForAdmin(DictionaryType.METRIC_UNIT, "   ", PageRequest.of(1, 10));
+
+        assertEquals(List.of(), result.items());
+        verify(dictionaryRepository).findAdminPageByType(DictionaryType.METRIC_UNIT, null, PageRequest.of(1, 10));
+    }
+
     private static DictionaryItem dictionaryItem(Long id, DictionaryType type, String label) {
         DictionaryItem item = DictionaryItem.builder()
                 .type(type)
@@ -120,5 +162,14 @@ class DictionaryServiceImplTest {
                 .build();
         item.setId(id);
         return item;
+    }
+
+    private static DictionaryResponseDto dto(Long id, DictionaryType type, String label) {
+        DictionaryResponseDto dto = new DictionaryResponseDto();
+        dto.setId(id);
+        dto.setType(type);
+        dto.setLabel(label);
+        dto.setActive(true);
+        return dto;
     }
 }

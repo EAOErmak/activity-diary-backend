@@ -195,7 +195,7 @@ class AdminPanelDesktopIntegrationTest {
                         .andExpect(status().isOk())
                         .andReturn()
         );
-        assertThat(extractLongField(metricNames.path("data"), "id")).contains(metricNameId);
+        assertThat(extractLongField(metricNames.path("data").path("items"), "id")).contains(metricNameId);
 
         mockMvc.perform(post("/api/admin/metric-links")
                         .contentType(MediaType.APPLICATION_JSON)
