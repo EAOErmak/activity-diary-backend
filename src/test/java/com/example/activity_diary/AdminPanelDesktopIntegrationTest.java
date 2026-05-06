@@ -180,7 +180,7 @@ class AdminPanelDesktopIntegrationTest {
                                 .content("""
                                         {
                                           "type": "METRIC_UNIT",
-                                          "label": "Gram"
+                                          "label": "Gram 01"
                                         }
                                         """))
                         .andExpect(status().isOk())
@@ -207,11 +207,59 @@ class AdminPanelDesktopIntegrationTest {
                                 """.formatted(metricNameId, metricUnitId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(metricUnitId))
-                .andExpect(jsonPath("$.data.label").value("Gram"));
+                .andExpect(jsonPath("$.data.label").value("Gram 01"));
 
-        mockMvc.perform(get("/api/admin/metric-links/metric-name/{id}/units", metricNameId))
+        for (int index = 2; index <= 11; index++) {
+            JsonNode extraMetricUnit = readData(
+                    mockMvc.perform(post("/api/admin/dict")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("""
+                                            {
+                                              "type": "METRIC_UNIT",
+                                              "label": "Gram %02d"
+                                            }
+                                            """.formatted(index)))
+                            .andExpect(status().isOk())
+                            .andReturn()
+            );
+
+            mockMvc.perform(post("/api/admin/metric-links")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "metricNameId": %d,
+                                      "metricUnitId": %d
+                                    }
+                                    """.formatted(metricNameId, extraMetricUnit.path("id").asLong())))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/admin/metric-links/metric-name/{id}/units", metricNameId)
+                        .param("page", "0")
+                        .param("limit", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(metricUnitId));
+                .andExpect(jsonPath("$.data.items.length()").value(10))
+                .andExpect(jsonPath("$.data.items[0].id").value(metricUnitId))
+                .andExpect(jsonPath("$.data.items[0].label").value("Gram 01"))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.limit").value(10))
+                .andExpect(jsonPath("$.data.totalElements").value(11))
+                .andExpect(jsonPath("$.data.totalPages").value(2))
+                .andExpect(jsonPath("$.data.hasNext").value(true))
+                .andExpect(jsonPath("$.data.hasPrevious").value(false));
+
+        mockMvc.perform(get("/api/admin/metric-links/metric-name/{id}/units", metricNameId)
+                        .param("page", "1")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].label").value("Gram 11"))
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.limit").value(10))
+                .andExpect(jsonPath("$.data.totalElements").value(11))
+                .andExpect(jsonPath("$.data.totalPages").value(2))
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.hasPrevious").value(true));
 
         mockMvc.perform(post("/api/admin/general-foods")
                         .contentType(MediaType.APPLICATION_JSON)

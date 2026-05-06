@@ -1,5 +1,6 @@
 package com.example.activity_diary.service.impl.admin;
 
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.admin.MetricLinkResponseDto;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.dict.MetricNameUnitLink;
@@ -9,10 +10,9 @@ import com.example.activity_diary.repository.diary.DictionaryRepository;
 import com.example.activity_diary.repository.diary.MetricNameUnitLinkRepository;
 import com.example.activity_diary.service.admin.AdminMetricLinkService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,13 +51,16 @@ public class AdminMetricLinkServiceImpl implements AdminMetricLinkService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MetricLinkResponseDto> getUnitsByMetricName(Long metricNameId) {
+    public PageResponseDto<MetricLinkResponseDto> getUnitsByMetricName(Long metricNameId, int page, int limit) {
         getDictionaryItem(metricNameId, DictionaryType.METRIC_NAME, "Metric name");
 
-        return metricNameUnitLinkRepository.findByMetricNameId(metricNameId).stream()
-                .map(MetricNameUnitLink::getMetricUnit)
-                .map(this::toDto)
-                .toList();
+        return PageResponseDto.from(
+                metricNameUnitLinkRepository.findUnitsPageByMetricNameId(
+                                metricNameId,
+                                PageRequest.of(page, limit)
+                        )
+                        .map(this::toDto)
+        );
     }
 
     private DictionaryItem getDictionaryItem(Long id, DictionaryType expectedType, String fieldName) {

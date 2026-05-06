@@ -1,9 +1,8 @@
 package com.example.activity_diary.service.admin;
 
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.admin.MetricLinkRequestDto;
 import com.example.activity_diary.dto.admin.MetricLinkResponseDto;
-
-import java.util.List;
 
 public interface AdminMetricLinkService {
 
@@ -15,5 +14,5 @@ public interface AdminMetricLinkService {
 
     void deleteLink(Long metricNameId, Long metricUnitId);
 
-    List<MetricLinkResponseDto> getUnitsByMetricName(Long metricNameId);
+    PageResponseDto<MetricLinkResponseDto> getUnitsByMetricName(Long metricNameId, int page, int limit);
 }

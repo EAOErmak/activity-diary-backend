@@ -14,14 +14,22 @@ public interface MetricNameUnitLinkRepository extends JpaRepository<MetricNameUn
 
     boolean existsByMetricNameIdAndMetricUnitId(Long metricNameId, Long metricUnitId);
 
-    @Query("""
-        select link
-        from MetricNameUnitLink link
-        join fetch link.metricUnit unit
-        where link.metricName.id = :metricNameId
-        order by unit.label asc
-    """)
-    List<MetricNameUnitLink> findByMetricNameId(Long metricNameId);
+    @Query(
+            value = """
+                select unit
+                from MetricNameUnitLink link
+                join link.metricUnit unit
+                where link.metricName.id = :metricNameId
+                order by lower(unit.label) asc, unit.id asc
+            """,
+            countQuery = """
+                select count(unit.id)
+                from MetricNameUnitLink link
+                join link.metricUnit unit
+                where link.metricName.id = :metricNameId
+            """
+    )
+    Page<DictionaryItem> findUnitsPageByMetricNameId(Long metricNameId, Pageable pageable);
 
     void deleteByMetricNameIdAndMetricUnitId(Long metricNameId, Long metricUnitId);
 

@@ -1,6 +1,7 @@
 package com.example.activity_diary.platform.api.controller.admin;
 
 import com.example.activity_diary.dto.ApiResponse;
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.admin.MetricLinkRequestDto;
 import com.example.activity_diary.dto.admin.MetricLinkResponseDto;
 import com.example.activity_diary.service.admin.AdminMetricLinkService;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/metric-links")
@@ -54,12 +53,17 @@ public class AdminMetricLinkController {
     }
 
     @GetMapping("/metric-name/{id}/units")
-    public ResponseEntity<ApiResponse<List<MetricLinkResponseDto>>> getUnitsByMetricName(
-            @PathVariable @Positive Long id
+    public ResponseEntity<ApiResponse<PageResponseDto<MetricLinkResponseDto>>> getUnitsByMetricName(
+            @PathVariable @Positive Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
     ) {
-        log.info("Admin metric links requested for metricNameId={}", id);
+        int safePage = Math.max(page, 0);
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+
+        log.info("Admin metric links requested for metricNameId={}, page={}, limit={}", id, safePage, safeLimit);
         return ResponseEntity.ok(
-                ApiResponse.ok(adminMetricLinkService.getUnitsByMetricName(id))
+                ApiResponse.ok(adminMetricLinkService.getUnitsByMetricName(id, safePage, safeLimit))
         );
     }
 }

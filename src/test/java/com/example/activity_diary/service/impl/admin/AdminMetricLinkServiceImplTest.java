@@ -1,5 +1,6 @@
 package com.example.activity_diary.service.impl.admin;
 
+import com.example.activity_diary.dto.PageResponseDto;
 import com.example.activity_diary.dto.admin.MetricLinkResponseDto;
 import com.example.activity_diary.entity.dict.DictionaryItem;
 import com.example.activity_diary.entity.dict.MetricNameUnitLink;
@@ -13,6 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -94,21 +97,46 @@ class AdminMetricLinkServiceImplTest {
     }
 
     @Test
-    void getUnitsByMetricName_mapsUnits() {
+    void getUnitsByMetricName_mapsUnitsWithPaginationMetadata() {
         DictionaryItem metricName = dictionaryItem(10L, DictionaryType.METRIC_NAME, "Weight");
         DictionaryItem kilogram = dictionaryItem(20L, DictionaryType.METRIC_UNIT, "kg");
         DictionaryItem pound = dictionaryItem(30L, DictionaryType.METRIC_UNIT, "lb");
+        PageRequest pageable = PageRequest.of(0, 10);
 
         when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(metricName));
-        when(metricNameUnitLinkRepository.findByMetricNameId(10L)).thenReturn(List.of(
-                MetricNameUnitLink.create(metricName, kilogram),
-                MetricNameUnitLink.create(metricName, pound)
-        ));
+        when(metricNameUnitLinkRepository.findUnitsPageByMetricNameId(10L, pageable))
+                .thenReturn(new PageImpl<>(List.of(kilogram, pound), pageable, 12));
 
-        List<MetricLinkResponseDto> result = service.getUnitsByMetricName(10L);
+        PageResponseDto<MetricLinkResponseDto> result = service.getUnitsByMetricName(10L, 0, 10);
 
-        assertEquals(2, result.size());
-        assertEquals(List.of("kg", "lb"), result.stream().map(MetricLinkResponseDto::getLabel).toList());
+        assertEquals(2, result.items().size());
+        assertEquals(List.of("kg", "lb"), result.items().stream().map(MetricLinkResponseDto::getLabel).toList());
+        assertEquals(0, result.page());
+        assertEquals(10, result.limit());
+        assertEquals(12, result.totalElements());
+        assertEquals(2, result.totalPages());
+        assertEquals(true, result.hasNext());
+        assertEquals(false, result.hasPrevious());
+    }
+
+    @Test
+    void getUnitsByMetricName_withoutLinks_returnsEmptyPageResponse() {
+        DictionaryItem metricName = dictionaryItem(10L, DictionaryType.METRIC_NAME, "Weight");
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        when(dictionaryRepository.findById(10L)).thenReturn(Optional.of(metricName));
+        when(metricNameUnitLinkRepository.findUnitsPageByMetricNameId(10L, pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        PageResponseDto<MetricLinkResponseDto> result = service.getUnitsByMetricName(10L, 0, 10);
+
+        assertEquals(List.of(), result.items());
+        assertEquals(0, result.page());
+        assertEquals(10, result.limit());
+        assertEquals(0, result.totalElements());
+        assertEquals(0, result.totalPages());
+        assertEquals(false, result.hasNext());
+        assertEquals(false, result.hasPrevious());
     }
 
     private static DictionaryItem dictionaryItem(Long id, DictionaryType type, String label) {
