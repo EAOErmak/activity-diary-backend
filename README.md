@@ -23,6 +23,12 @@ The **Activity Diary Backend** is the core service for the Activity Diary applic
 - **Authentication**: JJWT (Java JWT)
 - **Build Tool**: Gradle
 
+## 🔗 Related Repositories
+
+This repository is part of the Activity Diary ecosystem. Check out the other components:
+- **Frontend**: [activity-diary-frontend](https://github.com/EAOErmak/activity-diary-frontend) - The web user interface.
+- **Desktop Wrapper**: [activity-diary-desktop](https://github.com/EAOErmak/activity-diary-desktop) - Used for building the desktop version of the application.
+
 ---
 
 ## 🛠 Local `.env` setup
