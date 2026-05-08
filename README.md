@@ -1,6 +1,31 @@
 # Activity Diary Backend
 
-## Local `.env` setup
+The **Activity Diary Backend** is the core service for the Activity Diary application. It provides a robust API for tracking daily activities, food intake, goals, and analytics. The project is designed with a dual-profile approach, supporting both a traditional web-based deployment (PostgreSQL) and a local desktop mode (SQLite).
+
+## 🚀 Features
+
+- **Activity Tracking**: Log daily entries, tags, and metrics.
+- **Food & Nutrition**: Manage general and user-specific food databases.
+- **Goals & Templates**: Set goals and use templates (day/week) for recurring activities.
+- **Analytics**: Generate charts and aggregate data based on tags and metrics.
+- **Multi-Profile Support**: 
+  - `web`: Aimed at server deployments using PostgreSQL.
+  - `desktop`: Aimed at local use with an embedded SQLite database.
+- **Security**: JWT-based authentication and secure password handling.
+- **Integrations**: Google API integration (Gmail) for notifications or messaging.
+
+## 🛠 Tech Stack
+
+- **Language**: Java 21
+- **Framework**: Spring Boot 3.5.7
+- **Database**: PostgreSQL (Web) / SQLite (Desktop)
+- **Migration Tool**: Liquibase
+- **Authentication**: JJWT (Java JWT)
+- **Build Tool**: Gradle
+
+---
+
+## 🛠 Local `.env` setup
 
 1. Copy [`.env.example`](./.env.example) to `.env`.
 2. Replace placeholder values in `.env` with the real values from your IntelliJ IDEA Spring Boot run configuration.
@@ -69,3 +94,20 @@ java -jar build/libs/activity-diary-backend.jar --spring.profiles.active=web
 - Use `.env` only to provide concrete values for externalized settings.
 - `spring.profiles.active` inside `.env` is the right place for a local default profile if you want to avoid configuring `Active profiles` in IntelliJ.
 - One `.env` is enough for the current project because the same base set of secrets and database values is reused by the active profile, while desktop-only overrides already have safe defaults in `application-desktop.properties`.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to contribute, please follow these steps:
+
+1. **Fork** the repository.
+2. **Create a feature branch** (`git checkout -b feature/AmazingFeature`).
+3. **Commit your changes** (`git commit -m 'Add some AmazingFeature'`).
+4. **Push to the branch** (`git push origin feature/AmazingFeature`).
+5. **Open a Pull Request**.
+
+### Code Style
+- Please follow standard Java coding conventions.
+- Ensure all tests pass before submitting a pull request (`.\gradlew test`).
+
